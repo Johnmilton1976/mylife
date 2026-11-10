@@ -542,7 +542,17 @@
     #wheelWrap{transform:scale(.78);transform-origin:bottom left}
     #dock{gap:7px}
     .dockBtn{width:40px;height:40px;font-size:18px}
-    #finPanel,#actPanel,#mktPanel,#realtyPanel,#portPanel{max-width:calc(100vw - 24px)}
+    /* Desktop anchors the side sheets beside a 228px HUD (#actPanel at
+       right:324px) and parks market/realty/portfolio at left:80px + 340px wide.
+       On a phone the act sheet lands almost fully OFF-SCREEN (a 36px sliver
+       draping over the side buttons, the brand and the dock) and the others
+       overflow the right edge by ~56px — which lets the WeChat webview pan the
+       whole fixed layer. Anchor every sheet INSIDE the viewport instead. */
+    #finPanel,#mktPanel,#realtyPanel,#portPanel{left:12px;right:12px;width:auto;max-width:none}
+    /* the three left sheets drop below the side-button stack (buttons end at
+       y≈340) so the buttons stay visible and the user can flip between them */
+    #mktPanel,#realtyPanel,#portPanel{top:360px;max-height:calc(100vh - 430px)}
+    #actPanel{left:12px;right:12px;width:auto;top:auto;bottom:70px;max-height:52vh}
     .stlabel{display:none}            /* street lettering is noise on a small screen */
     body.mobile-lite #traffic{display:none}
     /* ---- the fold: phones boot with a 3-line HUD (clock · health · fold) ---- */
