@@ -1038,6 +1038,24 @@
   }
   #lifeEnd button:hover{filter:brightness(1.04)}
   #lifeEnd .le-primary{background:linear-gradient(180deg,#3a2513,#241608);color:#ffe9b0;border-color:#c9a35f}
+
+  /* ---------- share card ---------- */
+  #shareModal{position:fixed;inset:0;z-index:88;display:none;align-items:center;justify-content:center;
+    background:rgba(3,7,11,.86);padding:14px}
+  #shareModal.show{display:flex}
+  #shareBox{position:relative;width:min(94vw,400px);max-height:94vh;overflow:auto;padding:12px;
+    background:linear-gradient(180deg,rgba(30,24,18,.99),rgba(11,8,6,1));
+    border:1px solid rgba(201,163,95,.5);border-radius:14px;box-shadow:0 30px 70px rgba(0,0,0,.85)}
+  #shareCanvas{display:block;width:100%;height:auto;border-radius:9px}
+  #shareBox .sc-btns{display:flex;gap:8px;margin-top:11px}
+  #shareBox button{flex:1;cursor:pointer;font-family:Georgia,serif;font-size:11px;font-weight:bold;
+    letter-spacing:1.4px;padding:11px 6px;border-radius:8px;border:1px solid rgba(201,163,95,.42);
+    background:linear-gradient(180deg,#1a2731,#101820);color:#e8dcc0}
+  #shareBox button:hover{filter:brightness(1.12)}
+  #shareBox button.sc-primary{background:linear-gradient(180deg,#3a2513,#241608);color:#ffe9b0;border-color:#c9a35f}
+  #shareClose{position:absolute;top:6px;right:9px;width:26px;height:26px;line-height:1;font-size:17px;
+    background:none;border:none;color:#9d8a68;cursor:pointer;z-index:2}
+  #shareClose:hover{color:#ffe9b0}
 </style>
 </head>
 <body>
@@ -1262,7 +1280,20 @@
     <div class="le-quote" id="leQuote">&ldquo;The rich don&rsquo;t work for money.&rdquo;</div>
     <div class="le-btns">
       <button id="leKeep" class="le-primary">KEEP WALKING</button>
+      <button id="leShare">&#10150; SHARE THIS LIFE</button>
       <button id="leNew">START ANOTHER LIFE</button>
+    </div>
+  </div>
+</div>
+
+<div id="shareModal" role="dialog" aria-modal="true" aria-label="Share your life">
+  <div id="shareBox">
+    <button id="shareClose" aria-label="Close">&times;</button>
+    <canvas id="shareCanvas" width="1080" height="1350"></canvas>
+    <div class="sc-btns">
+      <button id="scShare" class="sc-primary">&#10150; SHARE</button>
+      <button id="scDownload">&#11015; SAVE IMAGE</button>
+      <button id="scCopy">&#128279; COPY LINK</button>
     </div>
   </div>
 </div>
@@ -1273,6 +1304,7 @@
   <button id="musicDock" class="dockBtn" title="Music ON">&#9834;</button>
   <button id="btnSaveNow" class="dockBtn" title="Save now">&#128190;</button>
   <button id="btnLoad" class="dockBtn" title="Load last save">&#9654;</button>
+  <button id="btnShare" class="dockBtn" title="Share my life">&#10150;</button>
   <button id="setBtn" class="dockBtn" title="Settings">&#9881;</button>
 </div>
 <div id="hintPop">
@@ -6626,6 +6658,162 @@ document.getElementById('btnLoad').addEventListener('click',()=>{
   resumeGame();
 });
 
+/* ===================== SHARE CARD =====================
+   Draws a 1080x1350 portrait card of the life so far. No server, no fonts to
+   fetch: everything is canvas + the same palette the game already uses. */
+const SC_URL='https://mylifesim.com';
+const shareModal=document.getElementById('shareModal');
+const shareCanvas=document.getElementById('shareCanvas');
+let shareBlob=null;
+
+function scRound(x,y,w,h,r){
+  const c=shareCanvas.getContext('2d');
+  c.beginPath();
+  c.moveTo(x+r,y); c.lineTo(x+w-r,y); c.quadraticCurveTo(x+w,y,x+w,y+r);
+  c.lineTo(x+w,y+h-r); c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  c.lineTo(x+r,y+h); c.quadraticCurveTo(x,y+h,x,y+h-r);
+  c.lineTo(x,y+r); c.quadraticCurveTo(x,y,x+r,y); c.closePath();
+}
+
+function drawShareCard(){
+  const c=shareCanvas.getContext('2d'), W=1080, H=1350;
+  const name=((lastLife&&lastLife.name)||'WALKER').toUpperCase();
+  const month=Math.floor((ST.day||0)/30)+1, day=ST.day||0;
+  const worth=Math.round(myWorth());
+  const passive=Math.round(passiveIncome());
+  const free=freedomPct();
+  const goals=goalsDoneCount();
+  const rank=ST.rank||0, rankOf=ST.rankOf||0;
+  const money=n=>'$'+n.toLocaleString('en-US');
+
+  /* background */
+  const g=c.createLinearGradient(0,0,W,H);
+  g.addColorStop(0,'#0a141d'); g.addColorStop(.55,'#111f2a'); g.addColorStop(1,'#0b1420');
+  c.fillStyle=g; c.fillRect(0,0,W,H);
+
+  /* soft vignette + frame */
+  const vg=c.createRadialGradient(W/2,H*0.36,120,W/2,H*0.36,W*0.92);
+  vg.addColorStop(0,'rgba(90,120,140,.14)'); vg.addColorStop(1,'rgba(0,0,0,0)');
+  c.fillStyle=vg; c.fillRect(0,0,W,H);
+  c.strokeStyle='rgba(201,163,95,.42)'; c.lineWidth=2; c.strokeRect(44,44,W-88,H-88);
+  c.strokeStyle='rgba(201,163,95,.16)'; c.lineWidth=1; c.strokeRect(58,58,W-116,H-116);
+
+  /* wordmark */
+  c.textAlign='center';
+  c.fillStyle='#e9c86a';
+  c.font='600 74px Georgia, "Times New Roman", serif';
+  c.letterSpacing='10px';
+  c.fillText('MY LIFE', W/2, 200);
+  c.letterSpacing='0px';
+  c.fillStyle='#8ea3b2';
+  c.font='18px Georgia, serif';
+  c.fillText('A LIFE ON THE STREETS OF NEW YORK', W/2, 244);
+
+  /* name + time */
+  c.fillStyle='#f0e4c8';
+  c.font='28px Georgia, serif';
+  c.fillText(name, W/2, 356);
+  c.fillStyle='#9b8a6b';
+  c.font='19px Georgia, serif';
+  c.fillText('MONTH '+month+'   \u00B7   DAY '+day, W/2, 394);
+
+  /* net worth hero */
+  c.fillStyle='#7f8f9c';
+  c.font='16px Georgia, serif';
+  c.letterSpacing='5px';
+  c.fillText('NET WORTH', W/2, 486);
+  c.letterSpacing='0px';
+  const big=money(worth);
+  c.fillStyle='#f7ecd0';
+  c.font='600 '+(big.length>11?66:82)+'px Georgia, serif';
+  c.fillText(big, W/2, 566);
+
+  /* divider */
+  c.strokeStyle='rgba(201,163,95,.3)'; c.lineWidth=1;
+  c.beginPath(); c.moveTo(150,618); c.lineTo(W-150,618); c.stroke();
+
+  /* stat rows */
+  const rows=[
+    ['PASSIVE INCOME', passive?money(passive)+' / mo':'nothing yet'],
+    ['FINANCIAL FREEDOM', free+'% of the bills'],
+    ['LIFE GOALS', goals+' / '+GOALS.length],
+    ['CITY RANK', rank?('#'+rank+' of '+rankOf):'not on the board']
+  ];
+  let y=706;
+  for(const [k,v] of rows){
+    c.textAlign='left';
+    c.fillStyle='#8d9aa6'; c.font='17px Georgia, serif';
+    c.letterSpacing='3px'; c.fillText(k,150,y); c.letterSpacing='0px';
+    c.textAlign='right';
+    c.fillStyle='#ecdcbc'; c.font='29px Georgia, serif';
+    c.fillText(v, W-150, y+2);
+    y+=86;
+  }
+
+  /* quote */
+  c.textAlign='center';
+  c.fillStyle='#c9a35f'; c.font='italic 23px Georgia, serif';
+  c.fillText('\u201CThe rich don\u2019t work for money.\u201D', W/2, 1128);
+
+  /* footer */
+  c.fillStyle='#6f8090'; c.font='17px Georgia, serif';
+  c.fillText('mylifesim.com', W/2, 1204);
+  c.fillStyle='#4d5c68'; c.font='14px Georgia, serif';
+  c.fillText('free \u00B7 no install \u00B7 no account', W/2, 1236);
+
+  /* gold corner ticks */
+  c.strokeStyle='#c9a35f'; c.lineWidth=3;
+  const t=26;
+  [[44,44,1,1],[W-44,44,-1,1],[44,H-44,1,-1],[W-44,H-44,-1,-1]].forEach(([px,py,dx,dy])=>{
+    c.beginPath(); c.moveTo(px+dx*t,py); c.lineTo(px,py); c.lineTo(px,py+dy*t); c.stroke();
+  });
+}
+
+function openShare(){
+  if(!started || !ST.day){ toast('Walk a little first \u2014 then your card is worth sharing.'); return; }
+  drawShareCard();
+  shareBlob=null;
+  shareModal.classList.add('show');
+}
+function closeShare(){ shareModal.classList.remove('show'); }
+document.getElementById('shareClose').addEventListener('click',closeShare);
+shareModal.addEventListener('click',e=>{ if(e.target===shareModal) closeShare(); });
+document.getElementById('btnShare').addEventListener('click',openShare);
+
+document.getElementById('scShare').addEventListener('click',async()=>{
+  try{
+    if(!shareBlob) shareBlob=await new Promise(r=>shareCanvas.toBlob(r,'image/png'));
+    const file=new File([shareBlob],'my-life.png',{type:'image/png'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({ files:[file], title:'MY LIFE', text:'My life so far \u2014 play yours at '+SC_URL });
+      return;
+    }
+    toast('This browser can\u2019t share files \u2014 long-press the card to save it, then post it.');
+  }catch(e){ /* user cancelled the share sheet: nothing to do */ }
+});
+
+document.getElementById('scDownload').addEventListener('click',async()=>{
+  if(!shareBlob) shareBlob=await new Promise(r=>shareCanvas.toBlob(r,'image/png'));
+  if(!shareBlob){ toast('Could not render the card \u2014 try another browser.'); return; }
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(shareBlob);
+  a.download='my-life-'+(lastLife&&lastLife.name?lastLife.name.toLowerCase():'card')+'-day'+(ST.day||0)+'.png';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+  toast('Card saved \u2014 post it anywhere.');
+});
+
+document.getElementById('scCopy').addEventListener('click',async()=>{
+  try{ await navigator.clipboard.writeText(SC_URL); toast('Link copied \u2014 '+SC_URL); }
+  catch(e){
+    const ta=document.createElement('textarea'); ta.value=SC_URL; document.body.appendChild(ta);
+    ta.select(); try{ document.execCommand('copy'); toast('Link copied \u2014 '+SC_URL); }
+    catch(e2){ toast(SC_URL); }
+    ta.remove();
+  }
+});
+document.getElementById('leShare').addEventListener('click',openShare);
+
 /* new life: two taps, so a stray click can't restart you */
 let newArm=0;
 const btnNew=document.getElementById('btnNew');
@@ -6647,7 +6835,7 @@ addEventListener('keydown',e=>{
   if(k==='o'){ e.preventDefault(); toggleSet(); }
   else if(k==='m'){ STG.music=!STG.music; saveSettings(); applySettings(); syncSetUI(); }
   else if(k===' '){ e.preventDefault(); if(pickerGone()) spinAndGo(['wheelSvg']); }
-  else if(k==='escape'){ hintPop.classList.remove('show'); document.getElementById('moodPop').classList.remove('show'); document.getElementById('rankPanel').classList.remove('show'); rankOpen=false; closeSet(); closeFin(); closeKChart(); closeMkt(); closeRealty(); closePort(); }
+  else if(k==='escape'){ hintPop.classList.remove('show'); document.getElementById('moodPop').classList.remove('show'); document.getElementById('rankPanel').classList.remove('show'); rankOpen=false; closeSet(); closeFin(); closeKChart(); closeMkt(); closeRealty(); closePort(); closeShare(); }
 });
 function pickerGone(){ return document.getElementById('picker').classList.contains('hide'); }
 
