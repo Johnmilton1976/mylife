@@ -1,0 +1,22 @@
+# QA 截图与过程产物（体积大，不进仓库）
+qa/
+shot_*.png
+route-*.png
+route-*.svg
+route-*.html
+route-plans*.html
+route-map.png
+route-in-game.png
+
+# 路线设计稿（历史过程稿，正式地图已并入 index.html）
+map_draft.html
+route-map.svg
+route-map.html
+
+# 旧版本备份
+index_v1_backup.html
+
+# 编辑器 / 系统
+*.log
+.DS_Store
+Thumbs.db
