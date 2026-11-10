@@ -429,17 +429,31 @@
   #create h1::after{background:linear-gradient(90deg,#c9a35f,transparent)}
   #create p{color:#cdbc86}
   #create.show{display:flex}
-  .cardRow{display:flex;align-items:center;gap:14px}
-  .pgBtn{
-    width:44px;height:44px;border-radius:50%;cursor:pointer;flex:none;
-    background:rgba(30,20,8,.85);border:2px solid #b8965a;color:#ffe9b0;
-    font-size:19px;font-family:Georgia,serif;text-shadow:0 1px 2px #000;
-    transition:background .15s;
+  /* ---- onboarding: name + sex, the face is dealt by the city ---- */
+  .sexRow{display:flex;gap:12px;margin-top:2px}
+  .sexBtn{
+    min-width:136px;padding:11px 26px;cursor:pointer;
+    font-family:Georgia,serif;font-size:15px;font-weight:bold;letter-spacing:3px;
+    color:#cdbc86;background:rgba(10,22,16,.75);
+    border:2px solid #6a5a34;border-radius:11px;
+    transition:color .15s,border-color .15s,background .15s,box-shadow .15s;
   }
-  .pgBtn:hover{background:rgba(90,60,20,.9)}
-  #dots{display:flex;gap:9px}
-  #dots .dot{width:11px;height:11px;border-radius:50%;background:#173426;border:1.5px solid #6a5a34;cursor:pointer;transition:background .15s,border-color .15s}
-  #dots .dot.on{background:#e8c88a;border-color:#ffe9b0;box-shadow:0 0 8px rgba(232,200,138,.5)}
+  .sexBtn .ic{font-size:18px;margin-right:7px;vertical-align:-1px}
+  .sexBtn:hover{border-color:#b8965a;color:#ffe9b0}
+  .sexBtn.on{
+    color:#2e1c08;background:linear-gradient(180deg,#fdf0b8,#e8c88a);border-color:#8a6a2a;
+    box-shadow:0 0 0 3px rgba(232,200,138,.22),0 6px 18px rgba(0,0,0,.45);
+  }
+  #faceBox{
+    position:relative;width:186px;height:244px;
+    display:flex;align-items:flex-end;justify-content:center;
+    background:radial-gradient(ellipse at 50% 82%,rgba(232,200,138,.15),transparent 64%);
+  }
+  #faceBox svg{width:100%;height:100%;filter:drop-shadow(0 14px 16px rgba(0,0,0,.5))}
+  #faceTag{
+    position:absolute;bottom:2px;left:-30px;right:-30px;text-align:center;
+    font-size:9px;letter-spacing:2.4px;color:#7f9a88;
+  }
   #backBtn{
     background:none;border:none;cursor:pointer;color:#7fa08c;
     font-family:Georgia,serif;font-size:14px;letter-spacing:2px;margin-top:-8px;
@@ -452,18 +466,6 @@
     text-shadow:0 1px 6px rgba(0,0,0,.55);
   }
   .picker-dedi b{color:#d8c48a;font-weight:bold;font-style:normal;letter-spacing:1.5px}
-  #cards{display:grid;grid-template-columns:repeat(4,148px);gap:13px;margin-top:4px}
-  .card{
-    background:radial-gradient(ellipse at 50% 36%,#2a5c44 0%,#1a4234 46%,#0f2b21 100%);
-    border:2px solid #c9a35f;border-radius:10px;padding:6px 6px 8px;cursor:pointer;
-    display:flex;flex-direction:column;align-items:center;
-    transition:transform .15s, box-shadow .15s, border-color .15s;
-    box-shadow:0 6px 16px rgba(0,0,0,.5), inset 0 0 26px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,233,176,.12);
-  }
-  .card:hover{transform:translateY(-6px);border-color:#ffe9b0;box-shadow:0 14px 26px rgba(0,0,0,.6), inset 0 0 26px rgba(0,0,0,.4)}
-  .card.sel{border-color:#ffe9b0;box-shadow:0 0 0 3px rgba(255,233,176,.4), 0 12px 26px rgba(0,0,0,.6), 0 0 32px rgba(232,200,138,.35), inset 0 0 26px rgba(0,0,0,.4)}
-  .card .nm{font-size:15px;font-weight:bold;color:#e8c88a;letter-spacing:2px;margin-top:2px;text-shadow:0 1px 3px #000}
-  .card svg{display:block;width:128px;height:170px;filter:drop-shadow(0 10px 10px rgba(0,0,0,.45))}
   #goBtn,#coverBtn{
     margin-top:6px;padding:13px 58px;font-size:20px;font-weight:bold;letter-spacing:4px;
     font-family:Georgia,serif;color:#2e1c08;cursor:pointer;
@@ -526,10 +528,19 @@
   @media (max-width:760px){
     #picker h1{font-size:clamp(40px,12vw,86px) !important;letter-spacing:clamp(8px,3vw,26px) !important}
     #picker p{font-size:12px;padding:0 18px}
-    #cards{grid-template-columns:repeat(2,132px) !important;gap:9px}
-    .card svg{width:104px;height:140px}
     #coverBtn{padding:13px 40px;font-size:19px}
     #resumeBtn{padding:10px 34px;font-size:15px}
+    /* onboarding on a phone: two thumb-sized sex buttons, a smaller standee */
+    #create{padding-top:84px;gap:12px}
+    #create h1{font-size:clamp(22px,6.4vw,38px) !important;letter-spacing:clamp(3px,1.6vw,9px) !important}
+    #create h1::before,#create h1::after{width:26px}
+    #create p{font-size:10.5px;letter-spacing:2px;padding:0 12px}
+    #nameInput{width:min(300px,calc(100vw - 44px))}
+    .sexRow{width:calc(100vw - 44px);max-width:340px;gap:10px}
+    #goBtn{padding:12px 18px;font-size:17px;letter-spacing:2px}
+    .sexBtn{flex:1;min-width:0;padding:11px 8px;font-size:14px;letter-spacing:2px}
+    #faceBox{width:140px;height:184px}
+    #faceTag{left:-24px;right:-24px;letter-spacing:1.8px}
     #tutCard{padding:18px 18px}
     .tutRow{font-size:13px}
     /* the mini map AND its collapsed round button would fight the wheel and
@@ -1401,15 +1412,14 @@
 </div>
 
 <div id="create">
-  <h1>CHOOSE YOURSELF</h1>
-  <p>WRITE YOUR NAME &amp; PICK WHO YOU WILL LIVE AS</p>
+  <h1>WHO ARE YOU?</h1>
+  <p>TYPE YOUR NAME &middot; PICK MALE OR FEMALE</p>
   <input id="nameInput" maxlength="14" placeholder="Type your name..." autocomplete="off" spellcheck="false">
-  <div class="cardRow">
-    <button id="pgPrev" class="pgBtn">&#10094;</button>
-    <div id="cards"></div>
-    <button id="pgNext" class="pgBtn">&#10095;</button>
+  <div class="sexRow">
+    <button id="sexM" class="sexBtn on"><span class="ic">&#9794;</span>MALE</button>
+    <button id="sexF" class="sexBtn"><span class="ic">&#9792;</span>FEMALE</button>
   </div>
-  <div id="dots"></div>
+  <div id="faceBox"><div id="faceTag">A FACE HANDED TO YOU AT BIRTH</div></div>
   <button id="goBtn">THIS IS ME &mdash; GO!</button>
   <button id="backBtn">&#10094; BACK</button>
 </div>
@@ -3282,6 +3292,14 @@ const ROSTER = [
   {name:'TIA',   shirt:'#c8783c', hairColor:'#2e1c12', hairStyle:6, skin:'#c98a5e', pants:'#4a3a3a', build:'slim', scarf:true, scarfColor:'#a8433a'},
   {name:'MAX',   shirt:'#c8b83c', hairColor:'#1e1a16', hairStyle:1, skin:'#f2c9a0', pants:'#3a3f4a', bag:true, beard:true}
 ];
+/* sex tag for the onboarding choice, looked up by name so the roster ORDER
+   never moves — a saved life stores the roster index, not the look */
+const SEX_OF={
+  JOHN:'m',MAYA:'f',KEN:'m',LIN:'f',ROSA:'f',AVA:'f',DAN:'m',MIO:'f',
+  IVY:'f',NOAH:'m',ZOE:'f',LIAM:'m',EMA:'f',OTTO:'m',RUBY:'f',HUGO:'m',
+  NINA:'f',CARL:'m',LILY:'f',SEAN:'m',MAY:'f',VLAD:'m',TIA:'f',MAX:'m'
+};
+ROSTER.forEach(o=>{ o.g = SEX_OF[o.name] || 'm'; });
 
 /* ===================== build world ===================== */
 /* the board, painted straight onto the asphalt: a stud at every cell on every street,
@@ -6141,37 +6159,35 @@ document.getElementById('newsPanel').addEventListener('click',()=>document.getEl
 /* ===================== flow ===================== */
 let cur=0, curCell=PATH[0], busy=false, started=false, newsStreak=0;
 
-const cards=document.getElementById('cards');
-let selIdx=0, cardPage=0;
-const PER=8, PAGES=Math.ceil(ROSTER.length/PER);
-function renderDots(){
-  const dt=document.getElementById('dots');
-  dt.innerHTML='';
-  for(let i=0;i<PAGES;i++){
-    const s=document.createElement('span');
-    s.className='dot'+(i===cardPage?' on':'');
-    s.onclick=()=>{ cardPage=i; renderCards(); };
-    dt.appendChild(s);
-  }
+/* ---- onboarding: name + sex, then the city deals you a face ----
+   The old 24-card roster page is gone: picking a look was a slow, low-stakes
+   decision at the exact moment a new player wants to be walking. Sex is the
+   only identity choice left; the face is random within it, and re-rolls every
+   time the create screen opens, so each new life starts as someone new. */
+let sex='m';
+function pickFace(s){
+  const pool=ROSTER.map((o,i)=>i).filter(i=>ROSTER[i].g===s);
+  return pool[Math.floor(Math.random()*pool.length)];
 }
-function renderCards(){
-  cards.innerHTML='';
-  const start=cardPage*PER;
-  ROSTER.slice(start,start+PER).forEach((o,k)=>{
-    const gi=start+k;
-    const d=document.createElement('div');
-    d.className='card'+(gi===selIdx?' sel':'');
-    d.innerHTML=`<svg viewBox="-130 -430 260 450">${character('pv'+gi,-10,30,o)}</svg>`;
-    d.onclick=()=>{ selIdx=gi; [...cards.children].forEach((c,j)=>c.classList.toggle('sel',j===k)); };
-    cards.appendChild(d);
-  });
-  renderDots();
+let selIdx=pickFace(sex);
+function renderFace(){
+  const box=document.getElementById('faceBox');
+  box.innerHTML=`<svg viewBox="-130 -430 260 450">${character('fc',-10,30,ROSTER[selIdx])}</svg>
+    <div id="faceTag">A FACE HANDED TO YOU AT BIRTH</div>`;
 }
-document.getElementById('pgPrev').addEventListener('click',()=>{ cardPage=(cardPage-1+PAGES)%PAGES; renderCards(); });
-document.getElementById('pgNext').addEventListener('click',()=>{ cardPage=(cardPage+1)%PAGES; renderCards(); });
-renderCards();
+function setSex(s){
+  if(sex!==s){ sex=s; selIdx=pickFace(s); }
+  document.getElementById('sexM').classList.toggle('on',sex==='m');
+  document.getElementById('sexF').classList.toggle('on',sex==='f');
+  renderFace();
+}
+document.getElementById('sexM').addEventListener('click',()=>setSex('m'));
+document.getElementById('sexF').addEventListener('click',()=>setSex('f'));
+renderFace();
 
 document.getElementById('coverBtn').addEventListener('click',()=>{
+  /* every fresh attempt rolls a new face inside the chosen sex */
+  selIdx=pickFace(sex); renderFace();
   document.getElementById('picker').classList.add('hide');
   document.getElementById('create').classList.add('show');
   setTimeout(()=>document.getElementById('nameInput').focus(),420);
