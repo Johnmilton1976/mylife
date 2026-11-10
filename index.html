@@ -1249,7 +1249,7 @@
   <b>BANK</b> BAD DEBT buys consumption (15% APR) &nbsp;&#183;&nbsp; GOOD DEBT buys an asset yielding more than its 6% APR &nbsp;&#183;&nbsp; interest is a monthly bill<br>
   <b>NIGHT</b> windows, street lamps, bridge lights and neon switch on at dusk and off at dawn &nbsp;&#183;&nbsp; toggle CITY LIGHTS in settings<br>
   <b>GAME STORE</b> &#127918; a few shops sell fictional copies of GTA VI &amp; Zelda &nbsp;&#183;&nbsp; hover a title for original fan-made box art &nbsp;&#183;&nbsp; virtual only, no real purchase<br>
-  <b>SAVE</b> &#128190; autosaves every few seconds &nbsp;&#183;&nbsp; close the tab anytime &nbsp;&#183;&nbsp; LOAD in settings (or CONTINUE on the cover) brings it back<br>
+  <b>SAVE</b> &#128190; autosaves every few seconds &nbsp;&#183;&nbsp; close the tab anytime &nbsp;&#183;&nbsp; <b>&#9654;</b> on the dock (or CONTINUE on the cover) brings it back<br>
   <b>LEGAL</b> fan-made &amp; non-commercial parody &nbsp;&#183;&nbsp; not affiliated with any brand or publisher &nbsp;&#183;&nbsp; original art only &nbsp;&#183;&nbsp; virtual items, no real value
 </div>
 
@@ -6579,7 +6579,7 @@ btnSaveNow.addEventListener('click',()=>{
   if(!started){ toast('No life in progress yet \u2014 start one first.'); return; }
   const ok=saveGame(true);
   toast(ok
-    ? '\uD83D\uDCBE Saved. \u25B6 right here reloads it \u2014 or CONTINUE on the cover.'
+    ? '\uD83D\uDCBE Saved. \u25B6 right here reloads it.'
     : '\u26A0\uFE0F Save FAILED \u2014 this view blocks browser storage. Open the file directly in Edge.');
 });
 
@@ -6655,7 +6655,7 @@ function saveGame(force){
         ? '<br><span style="color:#e0a868">&#9888; MEMORY ONLY &mdash; this view blocks browser storage, gone when the tab closes.</span>'
         : '';
       el.innerHTML='AUTOSAVE is always ON &mdash; your life is written every few seconds.<br>'+
-        'LOAD restores the last save; the <b>CONTINUE</b> button on the cover does the same.<br>'+
+        '&#9654; on the dock restores the last save.<br>'+
         '<span style="color:#a8d68a">&#10003; Last saved '+hh+':'+mm+':'+ss+' \u00B7 '+(lastLife?lastLife.name:'')+' \u00B7 Month '+(Math.floor(ST.day/30)+1)+'</span>'+mode;
     }
     return true;
