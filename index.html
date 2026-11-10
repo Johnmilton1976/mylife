@@ -3389,11 +3389,13 @@ function animateCam(toScale, ms, trackMe, cx, cy){
   const fromS=cam.scale, t0=performance.now();
   const fcx=cx!==undefined?cx:cam.x+VW()/2/fromS;
   const fcy=cy!==undefined?cy:cam.y+VH()/2/fromS;
+  /* phones centre the walker exactly; desktop keeps the classic slight look-ahead */
+  const trackY=()=>IS_LITE?mePos.y:(mePos.y-40);
   cancelAnimationFrame(camAnimId);
   /* the OS says "reduce motion": cut to the destination, keep the destination */
   if(REDUCED){
     cam.scale=toScale;
-    const gx=trackMe?mePos.x:fcx, gy=trackMe?(mePos.y-40):fcy;
+    const gx=trackMe?mePos.x:fcx, gy=trackMe?trackY():fcy;
     camAnimId=0; centerOn(gx,gy);
     return Promise.resolve();
   }
@@ -3402,7 +3404,7 @@ function animateCam(toScale, ms, trackMe, cx, cy){
       const k=Math.min(1,(performance.now()-t0)/ms);
       const e=k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2;      /* easeInOutQuad */
       cam.scale=fromS+(toScale-fromS)*e;
-      const gx=trackMe?mePos.x:fcx, gy=trackMe?(mePos.y-40):fcy;
+      const gx=trackMe?mePos.x:fcx, gy=trackMe?trackY():fcy;
       centerOn(fcx+(gx-fcx)*e, fcy+(gy-fcy)*e);
       if(k<1) camAnimId=requestAnimationFrame(step); else { camAnimId=0; res(); }
     })();
@@ -3713,6 +3715,15 @@ let camFollow=true;
 function followCam(x,y){
   if(!camFollow||camAnimId) return;     /* the cinematic pull owns the camera while it runs */
   const vw=VW()/cam.scale, vh=VH()/cam.scale;
+  /* phones: keep the walker dead-centre. The desktop rim-follow parks him at
+     40-60% of the frame, which on a phone is exactly where the HUD lives —
+     the walker kept ending up under the panel. Centre always, eased the same. */
+  if(IS_LITE){
+    cam.x+=((x-vw*0.5)-cam.x)*0.16;
+    cam.y+=((y-vh*0.5)-cam.y)*0.16;
+    applyCam();
+    return;
+  }
   const sx=x-cam.x, sy=y-cam.y;
   const mx=vw*0.30, my=vh*0.30;
   let tx=cam.x, ty=cam.y;
