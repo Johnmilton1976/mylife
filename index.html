@@ -384,6 +384,27 @@
   #brand small{display:block;font-size:12px;letter-spacing:3px;color:#c8d8c0;margin-top:3px}
   #zoomhint{position:fixed;left:18px;top:84px;z-index:15;color:#a8bfae;font-size:12px;letter-spacing:1px;text-shadow:0 2px 4px #000}
 
+  /* ---------- the cab talks: hover a parked taxi for a line of wisdom ---------- */
+  #cab{position:fixed;z-index:42;display:none;max-width:min(336px,84vw);pointer-events:none;
+    background:linear-gradient(180deg,rgba(36,28,17,.97),rgba(10,8,5,.98));
+    border:1px solid rgba(232,200,138,.52);border-radius:12px;padding:12px 15px 10px;
+    box-shadow:0 18px 44px rgba(0,0,0,.66),inset 0 1px 0 rgba(255,233,176,.14);
+    opacity:0;transform:translateY(6px);transition:opacity .18s ease,transform .18s ease}
+  #cab.show{display:block;opacity:1;transform:translateY(0)}
+  /* the little yellow roof sign */
+  #cab::before{content:'';position:absolute;left:15px;right:15px;top:0;height:2px;border-radius:2px;
+    background:linear-gradient(90deg,#f2c21a,rgba(242,194,26,0))}
+  #cabQ{font-family:Georgia,serif;font-size:14px;line-height:1.62;color:#f4ebd6;letter-spacing:.2px}
+  #cabBy{margin-top:8px;font-size:9px;letter-spacing:2px;color:#c9a35f;text-transform:uppercase}
+  #cabBy::before{content:'\2014\00A0'}
+  #world g.taxi{cursor:help}
+  #world g.taxi .txhit{fill:transparent;stroke:none;pointer-events:all}
+  #world g.taxi:hover{filter:drop-shadow(0 0 7px rgba(255,226,140,.8)) brightness(1.09)}
+  @media (max-width:760px){
+    #cab{max-width:min(310px,86vw);padding:10px 13px 9px}
+    #cabQ{font-size:13px;line-height:1.55}
+  }
+
   /* ---------- character select ---------- */
   #picker{position:fixed;inset:0;z-index:60;background:linear-gradient(180deg,#04120c 0%,#0b2318 34%,#0f2b1e 55%,#0a1c13 78%,#061109 100%);display:flex;flex-direction:column;align-items:center;justify-content:safe center;gap:16px;transition:opacity .4s;padding-top:120px;overflow:auto}
   #picker.hide{opacity:0;pointer-events:none}
@@ -1143,6 +1164,7 @@
 
 <div id="brand">MY LIFE<small>NEW YORK &#183; A LIFE, WALKED</small></div>
 <div id="zoomhint">zoom out = city overview &#183; zoom in = street level</div>
+<div id="cab" role="status" aria-live="polite"><div id="cabQ"></div><div id="cabBy"></div></div>
 
 <div id="tabs">
   <div class="tab" style="background:#b0483a">FUNDS</div>
@@ -1406,6 +1428,7 @@
     <div class="tutRow"><span class="tutIc">&#127922;</span><div><b>SPIN THE GOLD WHEEL</b> (or press SPACE) &mdash; you walk the route. At some junctions you will <b>randomly turn off</b> for a detour, then rejoin. Every street gets visited eventually.</div></div>
     <div class="tutRow"><span class="tutIc">&#127970;</span><div><b>STOP ON A BUILDING CELL</b> to act: find a job, eat, shop, buy stocks &amp; property, take loans. Restaurants feed you once per visit.</div></div>
     <div class="tutRow"><span class="tutIc">&#128200;</span><div><b>THE PANEL</b> (top right) keeps the Rich Dad books: assets pay you, liabilities charge you. A car is a liability. Watch your stress &amp; happiness.</div></div>
+    <div class="tutRow"><span class="tutIc">&#128663;</span><div><b>HOVER A PARKED YELLOW CAB</b> (tap it on a phone) &mdash; the driver hands you a line from Munger, Buffett or the Rich Dad, or a tip about this city.</div></div>
     <div class="tutRow"><span class="tutIc">&#128190;</span><div><b>AUTOSAVE</b> runs constantly &mdash; close the tab anytime, then hit CONTINUE on the cover. Time speed (&times;1&ndash;&times;8) is the clock, top left.</div></div>
     <button id="tutBtn">GOT IT &mdash; LET'S WALK</button>
   </div>
@@ -2739,7 +2762,8 @@ function steamVent(x,y,anim){
   </g>`);
 }
 function taxi(x,y,rot){
-  put(`<g transform="translate(${x},${y}) rotate(${rot})">
+  put(`<g class="taxi" transform="translate(${x},${y}) rotate(${rot})">
+    <rect class="txhit" x="-96" y="-72" width="192" height="112"/>
     <ellipse cx="0" cy="8" rx="80" ry="24" fill="#000" opacity=".3"/>
     <rect x="-78" y="-34" width="156" height="68" rx="16" fill="#f2c21a" stroke="#1a150f" stroke-width="3"/>
     <rect x="-78" y="-34" width="156" height="13" rx="12" fill="#fff" opacity=".18"/>
@@ -3779,6 +3803,109 @@ setInterval(()=>{
   if(keys['s']||keys['arrowdown']){cam.y+=v;m=true;}
   if(m) applyCam();
 },16);
+
+/* ===================== the cab talks ===================== */
+/* Parked taxis are the city's lectern. Hover one (desktop) or tap one (phone)
+   and the driver hands you a line: Munger, Buffett, the Rich Dad — or something
+   about this game. Advice nobody asked for is the most New York thing there is. */
+const CAB_LINES=[
+  {q:'The big money is not in the buying and the selling, but in the waiting.', by:'Charlie Munger'},
+  {q:"It's not supposed to be easy. Anyone who finds it easy is stupid.", by:'Charlie Munger'},
+  {q:'Spend each day trying to be a little wiser than you were when you woke up.', by:'Charlie Munger'},
+  {q:'Invert, always invert.', by:'Charlie Munger'},
+  {q:'It is remarkable how much long-term advantage people like us have gotten by trying to be consistently not stupid.', by:'Charlie Munger'},
+  {q:"Knowing what you don't know is more useful than being brilliant.", by:'Charlie Munger'},
+  {q:'Take a simple idea and take it seriously.', by:'Charlie Munger'},
+  {q:'Mimicking the herd invites regression to the mean.', by:'Charlie Munger'},
+
+  {q:'Price is what you pay. Value is what you get.', by:'Warren Buffett'},
+  {q:'Be fearful when others are greedy, and greedy when others are fearful.', by:'Warren Buffett'},
+  {q:"Someone's sitting in the shade today because someone planted a tree a long time ago.", by:'Warren Buffett'},
+  {q:'The stock market is a device for transferring money from the impatient to the patient.', by:'Warren Buffett'},
+  {q:"Only when the tide goes out do you discover who's been swimming naked.", by:'Warren Buffett'},
+  {q:'Rule No. 1: never lose money. Rule No. 2: never forget rule No. 1.', by:'Warren Buffett'},
+  {q:'Widespread fear is your friend as an investor; it serves the basic needs of the buyer.', by:'Warren Buffett'},
+
+  {q:'The poor and the middle class work for money. The rich have money work for them.', by:'Rich Dad, Poor Dad'},
+  {q:"It's not how much money you make, but how much you keep, how hard it works for you, and how many generations you keep it for.", by:'Rich Dad, Poor Dad'},
+  {q:'An asset puts money in my pocket. A liability takes money out of my pocket.', by:'Rich Dad, Poor Dad'},
+  {q:'The single most powerful asset we all have is our mind.', by:'Rich Dad, Poor Dad'},
+  {q:'Winners are not afraid of losing. But losers are. Failure is part of the process of success.', by:'Rich Dad, Poor Dad'},
+  {q:'The main reason people struggle financially is that they spent years in school and learned nothing about money.', by:'Rich Dad, Poor Dad'},
+
+  {q:"Tap a stock's row and look at its 30-day chart. Buy what fell on a bad week, not what everybody is shouting about.", by:'From the back seat'},
+  {q:'A property pays rent every month whether you feel like working or not. That is the whole trick.', by:'From the back seat'},
+  {q:'You win when passive income covers every bill — not when your salary is the biggest.', by:'From the back seat'},
+  {q:'Every skill level is a raise nobody can fire you out of.', by:'From the back seat'},
+  {q:"Never spend your last few hundred on a lottery ticket. Rent comes first.", by:'From the back seat'},
+  {q:"A loan is a promise about who you'll be next month. Make sure the two of you agree.", by:'From the back seat'},
+  {q:'Health buys back the only currency you cannot earn more of.', by:'From the back seat'},
+  {q:'The wheel decides where you land. What you buy there is up to you.', by:'From the back seat'},
+  {q:'Cash sitting idle is a slow leak. Cash waiting for a crash is a loaded gun.', by:'From the back seat'},
+  {q:'Boredom is the price of a long hold. Pay it.', by:'From the back seat'}
+];
+(function cabTalk(){
+  const tip=document.getElementById('cab');
+  if(!tip) return;
+  const qEl=document.getElementById('cabQ'), byEl=document.getElementById('cabBy');
+  let last=-1, over=null, hoverT=0, closeT=0, stayT=0, downX=0, downY=0, downAt=0, downCab=null;
+
+  function pick(){
+    let i=Math.floor(Math.random()*CAB_LINES.length);
+    if(i===last) i=(i+1+Math.floor(Math.random()*(CAB_LINES.length-1)))%CAB_LINES.length;
+    last=i; return CAB_LINES[i];
+  }
+  function place(cx,topY,botY){
+    tip.style.left='0px'; tip.style.top='0px';           /* measure unshifted */
+    const w=tip.offsetWidth||260, h=tip.offsetHeight||84;
+    let left=Math.max(10, Math.min(window.innerWidth-w-10, Math.round(cx-w/2)));
+    let top=Math.round(topY-h-12);
+    if(top<12) top=Math.round(botY+12);                   /* no room above: sit below */
+    top=Math.max(12, Math.min(window.innerHeight-h-12, top));
+    tip.style.left=left+'px'; tip.style.top=top+'px';
+  }
+  function show(cx,topY,botY){
+    const L=pick();
+    qEl.textContent='\u201C'+L.q+'\u201D';
+    byEl.textContent=L.by;
+    tip.classList.add('show');
+    place(cx,topY,botY);
+  }
+  function hide(){ tip.classList.remove('show'); }
+
+  /* desktop: a beat of hover before the window rolls down */
+  vp.addEventListener('pointermove',e=>{
+    if(IS_LITE || (e.pointerType && e.pointerType!=='mouse')) return;
+    const t=e.target && e.target.closest ? e.target.closest('g.taxi') : null;
+    if(t===over) return;
+    over=t;
+    clearTimeout(hoverT); clearTimeout(closeT); clearTimeout(stayT);
+    if(!t){ closeT=setTimeout(hide,80); return; }
+    const r=t.getBoundingClientRect();
+    hoverT=setTimeout(()=>show(r.left+r.width/2, r.top, r.bottom), 120);
+  });
+  vp.addEventListener('wheel',()=>{ clearTimeout(hoverT); over=null; hide(); },{passive:true});
+
+  /* phone: no hovering, so a clean tap on the cab opens the same window.
+     The pan handler calls setPointerCapture on the viewport, which retargets
+     pointerup away from the SVG — remember what was under the finger on down. */
+  vp.addEventListener('pointerdown',e=>{
+    downX=e.clientX; downY=e.clientY; downAt=performance.now();
+    downCab=e.target && e.target.closest ? e.target.closest('g.taxi') : null;
+    clearTimeout(hoverT); clearTimeout(stayT);
+    if(over){ over=null; hide(); }
+  });
+  vp.addEventListener('pointerup',e=>{
+    if(!IS_LITE) return;
+    const t=downCab || (e.target && e.target.closest ? e.target.closest('g.taxi') : null);
+    const tap=Math.hypot(e.clientX-downX, e.clientY-downY)<14 && performance.now()-downAt<700;
+    if(t && tap){
+      const r=t.getBoundingClientRect();
+      show(r.left+r.width/2, r.top, r.bottom);
+      clearTimeout(stayT); stayT=setTimeout(hide, 5600);
+    } else if(!t) hide();
+  });
+})();
 mini.addEventListener('click',e=>{
   const r=mini.getBoundingClientRect();
   centerOn((e.clientX-r.left)/r.width*W,(e.clientY-r.top)/r.height*H);
