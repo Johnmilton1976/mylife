@@ -176,11 +176,11 @@ const QA = 'C:/Users/Johnmilton/WorkBuddy/2026-11-08-10-33-18/my-life-game/qa/';
   }));
   ck('save & load are dock icons, not in settings', R.dock.saveDocked && R.dock.loadDocked && !R.dock.inSetPanel, JSON.stringify(R.dock));
 
-  /* dock save tells the truth: points at CONTINUE on the cover */
+  /* dock save tells the truth: points at the dock load button */
   await page.evaluate(() => document.getElementById('btnSaveNow').click());
   await page.waitForTimeout(300);
-  R.saveToast = await page.evaluate(() => [...document.querySelectorAll('#toastWrap .toast,#toastWrap div')].map(t => t.textContent).join(' | '));
-  ck('save toast points at CONTINUE', R.saveToast.indexOf('CONTINUE') >= 0, R.saveToast);
+  R.saveToast = await page.evaluate(() => [...document.querySelectorAll('#toastWrap .tmsg,#toastWrap div')].map(t => t.textContent).join(' | '));
+  ck('save toast points at the dock load button', R.saveToast.indexOf('\u25B6') >= 0 && R.saveToast.indexOf('CONTINUE') < 0, R.saveToast);
 
   await page.reload(); await page.waitForTimeout(800);
   R.contactPersist = await page.evaluate(() => ({ mail: document.getElementById('ccMail').value, git: document.getElementById('ccGit') }));
