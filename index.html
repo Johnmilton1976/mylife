@@ -6579,7 +6579,7 @@ btnSaveNow.addEventListener('click',()=>{
   if(!started){ toast('No life in progress yet \u2014 start one first.'); return; }
   const ok=saveGame(true);
   toast(ok
-    ? '\uD83D\uDCBE Saved. CONTINUE on the cover brings it back.'
+    ? '\uD83D\uDCBE Saved. \u25B6 right here reloads it \u2014 or CONTINUE on the cover.'
     : '\u26A0\uFE0F Save FAILED \u2014 this view blocks browser storage. Open the file directly in Edge.');
 });
 
