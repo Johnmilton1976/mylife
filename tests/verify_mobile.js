@@ -48,6 +48,35 @@ const ok = (c, msg) => { if (c) { pass++; console.log('  PASS', msg); } else { f
     await page.click('#hudToggle'); await page.waitForTimeout(200);
     ok(await page.evaluate(() => document.body.classList.contains('hud-min')), 'tap re-folds HUD');
 
+    /* the whole panel folds into ONE corner badge, and the badge brings it back */
+    ok(await page.evaluate(() => getComputedStyle(document.getElementById('hudMin')).display !== 'none'),
+      'phone shows the panel-fold button');
+    await page.click('#hudMin'); await page.waitForTimeout(250);
+    const off = await page.evaluate(() => {
+      const i = document.getElementById('hudIcon'), r = i.getBoundingClientRect();
+      return {
+        off: document.body.classList.contains('hud-off'),
+        panelGone: getComputedStyle(document.getElementById('panel')).display === 'none',
+        iconShown: getComputedStyle(i).display !== 'none',
+        face: !!i.querySelector('#pAvatar2 svg'),
+        box: [Math.round(r.left), Math.round(r.right), Math.round(r.top), Math.round(r.bottom)],
+        hp: i.style.getPropertyValue('--hp'),
+        saved: (() => { try { return STORE.getItem('mylife.hudoff.v1'); } catch (e) { return 'x'; } })()
+      };
+    });
+    ok(off.off && off.panelGone, 'tapping - folds the whole panel away');
+    ok(off.iconShown && off.face, 'a single badge appears in the corner, wearing the player face');
+    ok(off.box[0] >= 0 && off.box[1] <= 390 && off.box[2] >= 0 && off.box[3] <= 844,
+      `badge fully inside 390x844 (${off.box.join(',')})`);
+    ok(/%/.test(off.hp || ''), `badge carries the health ring (${off.hp})`);
+    ok(off.saved === '1', 'folded state is remembered across reloads');
+    await page.click('#hudIcon'); await page.waitForTimeout(250);
+    ok(await page.evaluate(() => !document.body.classList.contains('hud-off') &&
+        getComputedStyle(document.getElementById('panel')).display !== 'none'),
+      'tapping the badge restores the panel');
+    ok(await page.evaluate(() => getComputedStyle(document.getElementById('hudIcon')).display === 'none'),
+      'badge hides again once the panel is back');
+
     /* side sheets must live INSIDE the viewport on a phone (the old desktop
        anchors parked actPanel almost fully off-screen as a 36px sliver) */
     for (const id of ['actPanel','mktPanel','realtyPanel','portPanel','finPanel']) {
@@ -125,6 +154,26 @@ const ok = (c, msg) => { if (c) { pass++; console.log('  PASS', msg); } else { f
       'all HUD rows visible on desktop (except unlock-gated WORK/RANK)');
     ok(await page.evaluate(() => getComputedStyle(document.getElementById('miniWrap')).display !== 'none'),
       'mini map alive on desktop');
+
+    /* desktop folds too: one badge, same corner, one click back */
+    await page.click('#hudMin'); await page.waitForTimeout(250);
+    const dOff = await page.evaluate(() => {
+      const i = document.getElementById('hudIcon'), r = i.getBoundingClientRect();
+      return {
+        off: document.body.classList.contains('hud-off'),
+        panelGone: getComputedStyle(document.getElementById('panel')).display === 'none',
+        iconShown: getComputedStyle(i).display !== 'none',
+        box: [Math.round(r.left), Math.round(r.right), Math.round(r.top), Math.round(r.bottom)],
+        vw: innerWidth, vh: innerHeight
+      };
+    });
+    ok(dOff.off && dOff.panelGone && dOff.iconShown, 'desktop: - folds the panel into the badge');
+    ok(dOff.box[0] >= 0 && dOff.box[1] <= dOff.vw && dOff.box[2] >= 0 && dOff.box[3] <= dOff.vh,
+      `desktop badge sits inside the viewport (${dOff.box.join(',')})`);
+    await page.click('#hudIcon'); await page.waitForTimeout(250);
+    ok(await page.evaluate(() => !document.body.classList.contains('hud-off') &&
+        getComputedStyle(document.getElementById('panel')).display !== 'none'),
+      'desktop: tapping the badge restores the panel');
     ok(errs.length === 0, 'no page errors on desktop: ' + (errs.join(' | ') || 'clean'));
     await page.close();
   }
