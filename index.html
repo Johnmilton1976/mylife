@@ -1373,14 +1373,14 @@
     fictional and has no real-world value &mdash; nothing can be bought, sold or won for
     real money. Place names are used geographically, nothing more. All trademarks remain
     the property of their respective owners; rights holders may request removal of any
-    reference and it will be honored. Autosave and your name live only in your own
+    reference and it will be honored. Your save and your name live only in your own
     browser (localStorage) and are never uploaded to any server.
   </div>
 
   <div class="set-sec">YOUR LIFE</div>
   <div id="saveStatus" style="font-size:10px;color:#8a7a5c;line-height:1.5;margin:2px 2px 8px">
-    AUTOSAVE is always ON &mdash; your life is written to this browser every few seconds.<br>
-    <b>&#128190;</b> saves now; <b>&#9654;</b> restores the last save &mdash; both live on the icon dock below the screen.
+    <b>&#128190;</b> SAVES NOW &mdash; press it whenever you like; the game also writes a backup every few seconds, so closing the tab is safe.<br>
+    <b>&#9654;</b> RESTORES the last save &mdash; both live on the icon dock below the screen.
   </div>
   <button class="set-btn danger" id="btnNew">&#8635; START A NEW LIFE</button>
 </div>
@@ -1443,7 +1443,7 @@
   <b>BANK</b> BAD DEBT buys consumption (15% APR) &nbsp;&#183;&nbsp; GOOD DEBT buys an asset yielding more than its 6% APR &nbsp;&#183;&nbsp; interest is a monthly bill<br>
   <b>NIGHT</b> windows, street lamps, bridge lights and neon switch on at dusk and off at dawn &nbsp;&#183;&nbsp; toggle CITY LIGHTS in settings<br>
   <b>GAME STORE</b> &#127918; a few shops sell fictional copies of GTA VI &amp; Zelda &nbsp;&#183;&nbsp; hover a title for original fan-made box art &nbsp;&#183;&nbsp; virtual only, no real purchase<br>
-  <b>SAVE</b> &#128190; autosaves every few seconds &nbsp;&#183;&nbsp; close the tab anytime &nbsp;&#183;&nbsp; <b>&#9654;</b> on the dock (or CONTINUE on the cover) brings it back<br>
+  <b>SAVE</b> &#128190; on the dock saves right now &nbsp;&#183;&nbsp; a backup is also written every few seconds &nbsp;&#183;&nbsp; <b>&#9654;</b> on the dock (or CONTINUE on the cover) brings it back<br>
   <b>LEGAL</b> fan-made &amp; non-commercial parody &nbsp;&#183;&nbsp; not affiliated with any brand or publisher &nbsp;&#183;&nbsp; original art only &nbsp;&#183;&nbsp; virtual items, no real value
 </div>
 
@@ -1462,7 +1462,7 @@
     A non-commercial fan-made parody. Not affiliated with, endorsed or sponsored by any brand, publisher or rights holder.
     All trademarks (game, vehicle, store &amp; landmark names) belong to their owners and appear only as fictional,
     nominative references. 100% original procedural art &middot; every item, price and currency is virtual and has no
-    real-world value &middot; autosave stays in your browser (localStorage), never uploaded.
+    real-world value &middot; your save stays in your browser (localStorage), never uploaded.
   </div>
   <button id="coverMusicBtn" class="coverMusic">&#9834; MUSIC ON</button>
 </div>
@@ -1474,7 +1474,7 @@
     <div class="tutRow"><span class="tutIc">&#127970;</span><div><b>STOP ON A BUILDING CELL</b> to act: find a job, eat, shop, buy stocks &amp; property, take loans. Restaurants feed you once per visit.</div></div>
     <div class="tutRow"><span class="tutIc">&#128200;</span><div><b>THE PANEL</b> (top right) keeps the Rich Dad books: assets pay you, liabilities charge you. A car is a liability. Watch your stress &amp; happiness.</div></div>
     <div class="tutRow"><span class="tutIc">&#128663;</span><div><b>HOVER ANY CAR</b> (tap it on a phone) &mdash; the driver hands you a line from Munger, Buffett or the Rich Dad, or a tip about this city.</div></div>
-    <div class="tutRow"><span class="tutIc">&#128190;</span><div><b>AUTOSAVE</b> runs constantly &mdash; close the tab anytime, then hit CONTINUE on the cover. Time speed (&times;1&ndash;&times;8) is the clock, top left.</div></div>
+    <div class="tutRow"><span class="tutIc">&#128190;</span><div><b>SAVING</b> &mdash; <b>&#128190;</b> on the dock writes a save right now (a backup is also written every few seconds). Close the tab anytime, then hit CONTINUE on the cover. Time speed (&times;1&ndash;&times;8) is the clock, top left.</div></div>
     <button id="tutBtn">GOT IT &mdash; LET'S WALK</button>
   </div>
 </div>
@@ -6981,7 +6981,7 @@ btnSaveNow.addEventListener('click',()=>{
   if(!started){ toast('No life in progress yet \u2014 start one first.'); return; }
   const ok=saveGame(true);
   toast(ok
-    ? '\uD83D\uDCBE Saved. \u25B6 right here reloads it.'
+    ? '\uD83D\uDCBE Saved. \u25B6 right here reloads it \u2014 closing the tab is safe too.'
     : '\u26A0\uFE0F Save FAILED \u2014 this view blocks browser storage. Open the file directly in Edge.');
 });
 
@@ -6989,7 +6989,7 @@ btnSaveNow.addEventListener('click',()=>{
 document.getElementById('btnLoad').addEventListener('click',()=>{
   let s=null;
   try{ s=JSON.parse(STORE.getItem(SAVE_KEY)||'null'); }catch(e){}
-  if(!s || !s.ST){ toast('No save found yet \u2014 play a little, the autosave writes every few seconds.'); return; }
+  if(!s || !s.ST){ toast('No save found yet \u2014 press \uD83D\uDCBE on the dock first.'); return; }
   closeSet();
   resumeGame();
 });
@@ -7212,7 +7212,7 @@ function saveGame(force){
       const mode=STORE.memoryOnly
         ? '<br><span style="color:#e0a868">&#9888; MEMORY ONLY &mdash; this view blocks browser storage, gone when the tab closes.</span>'
         : '';
-      el.innerHTML='AUTOSAVE is always ON &mdash; your life is written every few seconds.<br>'+
+      el.innerHTML='&#128190; SAVED &mdash; a backup is also written every few seconds.<br>'+
         '&#9654; on the dock restores the last save.<br>'+
         '<span style="color:#a8d68a">&#10003; Last saved '+hh+':'+mm+':'+ss+' \u00B7 '+(lastLife?lastLife.name:'')+' \u00B7 Month '+(Math.floor(ST.day/30)+1)+'</span>'+mode;
     }
