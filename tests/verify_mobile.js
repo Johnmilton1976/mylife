@@ -93,12 +93,14 @@ const ok = (c, msg) => { if (c) { pass++; console.log('  PASS', msg); } else { f
     });
     ok(wd.sep, `wheel and dock do not intersect (wheel ${wd.w.join(',')} dock ${wd.d.join(',')})`);
 
-    /* the walker must stay centred vertically on a phone (desktop rim-follow
-       parks him at 40-60% of the frame — under the HUD on a tall screen) */
+    /* the walker must sit low-centre (~60% of the frame) on a phone: below the
+       HUD, above the wheel. Desktop rim-follow is untouched. */
     for (let k = 0; k < 3; k++) { await page.keyboard.press('Space'); await page.waitForTimeout(1600); }
     await page.waitForTimeout(2500);
     const frac = await page.evaluate(() => (mePos.y - cam.y) * cam.scale / window.innerHeight);
-    ok(Math.abs(frac - 0.5) < 0.06, `walker stays vertically centred while walking (feet at ${(frac * 100).toFixed(1)}% of screen)`);
+    ok(Math.abs(frac - 0.60) < 0.06, `walker parked low-centre while walking (feet at ${(frac * 100).toFixed(1)}% of screen)`);
+    const zh = await page.evaluate(() => parseFloat(getComputedStyle(document.getElementById('zoomhint')).fontSize));
+    ok(zh <= 11, `zoom hint is small on phone (${zh}px)`);
 
     ok(errs.length === 0, 'no page errors on phone: ' + (errs.join(' | ') || 'clean'));
     await page.close();

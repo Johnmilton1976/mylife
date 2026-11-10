@@ -561,6 +561,8 @@
     #newsPanel.show{transform:translateY(0)}
     .stlabel{display:none}            /* street lettering is noise on a small screen */
     body.mobile-lite #traffic{display:none}
+    /* the zoom hint reads huge under WeChat's font boosting — keep it a whisper */
+    #zoomhint{font-size:9.5px;letter-spacing:.5px;opacity:.75}
     /* ---- the fold: phones boot with a 3-line HUD (clock · health · fold) ---- */
     body.hud-min #panel .row,
     body.hud-min #panel .sub,
@@ -3389,8 +3391,10 @@ function animateCam(toScale, ms, trackMe, cx, cy){
   const fromS=cam.scale, t0=performance.now();
   const fcx=cx!==undefined?cx:cam.x+VW()/2/fromS;
   const fcy=cy!==undefined?cy:cam.y+VH()/2/fromS;
-  /* phones centre the walker exactly; desktop keeps the classic slight look-ahead */
-  const trackY=()=>IS_LITE?mePos.y:(mePos.y-40);
+  /* phones park the walker at 60% of the frame (see followCam); desktop keeps
+     the classic slight look-ahead. The offset is computed in world units from
+     the live scale, so it holds at any zoom. */
+  const trackY=()=>IS_LITE?(mePos.y-VH()*0.10/cam.scale):(mePos.y-40);
   cancelAnimationFrame(camAnimId);
   /* the OS says "reduce motion": cut to the destination, keep the destination */
   if(REDUCED){
@@ -3715,12 +3719,13 @@ let camFollow=true;
 function followCam(x,y){
   if(!camFollow||camAnimId) return;     /* the cinematic pull owns the camera while it runs */
   const vw=VW()/cam.scale, vh=VH()/cam.scale;
-  /* phones: keep the walker dead-centre. The desktop rim-follow parks him at
-     40-60% of the frame, which on a phone is exactly where the HUD lives —
-     the walker kept ending up under the panel. Centre always, eased the same. */
+  /* phones park the walker a touch below centre: 60% of the frame — below the
+     HUD, above the wheel/dock, with more street ahead. Hard lock, no easing:
+     an eased chase lags the walk and freezes mid-frame when the walk stops,
+     which is exactly how he kept drifting back under the HUD. */
   if(IS_LITE){
-    cam.x+=((x-vw*0.5)-cam.x)*0.16;
-    cam.y+=((y-vh*0.5)-cam.y)*0.16;
+    cam.x=x-vw*0.5;
+    cam.y=y-vh*0.60;
     applyCam();
     return;
   }
