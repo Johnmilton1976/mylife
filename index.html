@@ -520,6 +520,9 @@
   /* ===================== MOBILE · phones & tablets ===================== */
   html,body{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
   #viewport{touch-action:none}
+  /* the HUD fold toggle is created by JS on touch/small devices only —
+     it must never exist visually on a desktop layout */
+  #hudToggle{display:none}
   @media (max-width:760px){
     #picker h1{font-size:clamp(40px,12vw,86px) !important;letter-spacing:clamp(8px,3vw,26px) !important}
     #picker p{font-size:12px;padding:0 18px}
@@ -529,15 +532,36 @@
     #resumeBtn{padding:10px 34px;font-size:15px}
     #tutCard{padding:18px 18px}
     .tutRow{font-size:13px}
-    /* the mini map would fight the wheel for thumb space */
-    #mini{display:none}
-    #panel{transform:scale(.86);transform-origin:top right}
-    #wheelWrap{transform:scale(.9);transform-origin:bottom left}
+    /* the mini map AND its collapsed round button would fight the wheel and
+       the dock for thumb space — a phone needs neither */
+    #miniWrap{display:none}
+    /* a tighter HUD shell — the fold toggle below does the real simplifying */
+    #panel{transform:none;width:206px;padding:7px 9px 9px}
+    #brand{font-size:15px;letter-spacing:3px;top:10px;left:12px}
+    #brand small{font-size:9px;letter-spacing:2px}
+    #wheelWrap{transform:scale(.78);transform-origin:bottom left}
+    #dock{gap:7px}
+    .dockBtn{width:40px;height:40px;font-size:18px}
+    #finPanel,#actPanel,#mktPanel,#realtyPanel,#portPanel{max-width:calc(100vw - 24px)}
     .stlabel{display:none}            /* street lettering is noise on a small screen */
     body.mobile-lite #traffic{display:none}
+    /* ---- the fold: phones boot with a 3-line HUD (clock · health · fold) ---- */
+    body.hud-min #panel .row,
+    body.hud-min #panel .sub,
+    body.hud-min #panel .finHint{display:none}
+    body.hud-min #panel .p-head{margin-bottom:2px}
+    #hudToggle{
+      display:block;width:100%;margin-top:7px;padding:5px 0;text-align:center;
+      font:bold 10px Georgia,serif;letter-spacing:2px;color:#ffe9b0;cursor:pointer;
+      background:linear-gradient(180deg,#3a2513,#231508);
+      border:1px solid rgba(201,163,95,.6);border-radius:7px;
+    }
+    #hudToggle:active{filter:brightness(1.25)}
   }
   @media (pointer:coarse){
     #hintPop{max-width:86vw;font-size:12.5px}
+    /* wide touch devices (tablets) boot IS_LITE: the base #hudToggle{display:none}
+       above keeps the fold button off them — only the narrow-screen block re-enables it */
   }
 
   /* ==================================================================
@@ -6949,6 +6973,19 @@ loadSettings();
 /* small screens drop the decorative weight automatically — perf first */
 const IS_LITE = matchMedia('(max-width:760px)').matches || matchMedia('(pointer:coarse)').matches;
 if(IS_LITE){ document.body.classList.add('mobile-lite'); STG.labels=false; }
+/* phones fold the HUD: boot with clock + health only, one tap unfurls the rest.
+   The toggle element only exists on touch/small screens — desktop never gets it. */
+if(IS_LITE){
+  const ht=document.createElement('button');
+  ht.id='hudToggle';ht.type='button';
+  ht.innerHTML='&#9662; FULL HUD';
+  ht.addEventListener('click',()=>{
+    const folded=document.body.classList.toggle('hud-min');
+    ht.innerHTML=folded?'&#9662; FULL HUD':'&#9652; FOLD';
+  });
+  document.getElementById('panel').appendChild(ht);
+  document.body.classList.add('hud-min');
+}
 applySettings();
 syncSetUI();
 
