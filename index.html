@@ -1379,7 +1379,7 @@
 
   <div class="set-sec">YOUR LIFE</div>
   <div id="saveStatus" style="font-size:10px;color:#8a7a5c;line-height:1.5;margin:2px 2px 8px">
-    <b>&#128190;</b> SAVES NOW &mdash; press it whenever you like; the game also writes a backup every few seconds, so closing the tab is safe.<br>
+    <b>&#128190;</b> SAVES NOW &mdash; your life is only banked when you press it. Close the tab without saving and the walk is gone.<br>
     <b>&#9654;</b> RESTORES the last save &mdash; both live on the icon dock below the screen.
   </div>
   <button class="set-btn danger" id="btnNew">&#8635; START A NEW LIFE</button>
@@ -1443,7 +1443,7 @@
   <b>BANK</b> BAD DEBT buys consumption (15% APR) &nbsp;&#183;&nbsp; GOOD DEBT buys an asset yielding more than its 6% APR &nbsp;&#183;&nbsp; interest is a monthly bill<br>
   <b>NIGHT</b> windows, street lamps, bridge lights and neon switch on at dusk and off at dawn &nbsp;&#183;&nbsp; toggle CITY LIGHTS in settings<br>
   <b>GAME STORE</b> &#127918; a few shops sell fictional copies of GTA VI &amp; Zelda &nbsp;&#183;&nbsp; hover a title for original fan-made box art &nbsp;&#183;&nbsp; virtual only, no real purchase<br>
-  <b>SAVE</b> &#128190; on the dock saves right now &nbsp;&#183;&nbsp; a backup is also written every few seconds &nbsp;&#183;&nbsp; <b>&#9654;</b> on the dock (or CONTINUE on the cover) brings it back<br>
+  <b>SAVE</b> &#128190; on the dock saves right now &nbsp;&#183;&nbsp; nothing saves by itself &nbsp;&#183;&nbsp; <b>&#9654;</b> on the dock (or CONTINUE on the cover) brings it back<br>
   <b>LEGAL</b> fan-made &amp; non-commercial parody &nbsp;&#183;&nbsp; not affiliated with any brand or publisher &nbsp;&#183;&nbsp; original art only &nbsp;&#183;&nbsp; virtual items, no real value
 </div>
 
@@ -1474,7 +1474,7 @@
     <div class="tutRow"><span class="tutIc">&#127970;</span><div><b>STOP ON A BUILDING CELL</b> to act: find a job, eat, shop, buy stocks &amp; property, take loans. Restaurants feed you once per visit.</div></div>
     <div class="tutRow"><span class="tutIc">&#128200;</span><div><b>THE PANEL</b> (top right) keeps the Rich Dad books: assets pay you, liabilities charge you. A car is a liability. Watch your stress &amp; happiness.</div></div>
     <div class="tutRow"><span class="tutIc">&#128663;</span><div><b>HOVER ANY CAR</b> (tap it on a phone) &mdash; the driver hands you a line from Munger, Buffett or the Rich Dad, or a tip about this city.</div></div>
-    <div class="tutRow"><span class="tutIc">&#128190;</span><div><b>SAVING</b> &mdash; <b>&#128190;</b> on the dock writes a save right now (a backup is also written every few seconds). Close the tab anytime, then hit CONTINUE on the cover. Time speed (&times;1&ndash;&times;8) is the clock, top left.</div></div>
+    <div class="tutRow"><span class="tutIc">&#128190;</span><div><b>SAVING</b> &mdash; nothing saves by itself. <b>&#128190;</b> on the dock banks your life; <b>&#9654;</b> (or CONTINUE on the cover) brings it back. Close the tab without saving and the walk is gone. Time speed (&times;1&ndash;&times;8) is the clock, top left.</div></div>
     <button id="tutBtn">GOT IT &mdash; LET'S WALK</button>
   </div>
 </div>
@@ -3488,7 +3488,9 @@ ROSTER.forEach(o=>{ o.g = SEX_OF[o.name] || 'm'; });
    then startTraffic() wires them up right after the world mounts */
 const TRAFFIC=[];
 (function trafficStage(){
-  const COLORS=['#e8c33a','#e8c33a','#e8c33a','#3a5a8a','#8a3a3a','#2f4a3a','#6a6a72','#c87828'];
+  /* no taxi yellow here: a yellow car at speed reads as a second cab stacking
+     the kerb lane — moving cars stay clearly not-cabs */
+  const COLORS=['#3a5a8a','#8a3a3a','#2f4a3a','#6a6a72','#c87828','#7a4a8a','#b8b0a0','#4a6a8a'];
   const laneOK=(lane,horiz)=>{
     /* a street is cut where it meets Central Park — keep cars off the lawn */
     return horiz ? !(lane>PARK.y1+EDGE && lane<PARK.y2-EDGE)
@@ -3506,7 +3508,7 @@ const TRAFFIC=[];
     markup+=`<use class="drive" href="#carShape" color="${COLORS[Math.floor(rc()*COLORS.length)]}"/>`;
     TRAFFIC.push({horiz,dir,
       pos:(horiz?2000:1500)+rc()*(horiz?15300:11300),
-      line:lane+(horiz?(dir>0?56:-56):(dir>0?-56:56)),
+      line:lane+(horiz?(dir>0?46:-46):(dir>0?-46:46)),
       speed:150+rc()*130});
   }
   put(`<g id="traffic" style="pointer-events:none">${markup}</g>`);
@@ -6975,13 +6977,13 @@ tgFollow.addEventListener('click',()=>{
 tgLabels.addEventListener('click',()=>{ STG.labels=!STG.labels; saveSettings(); applySettings(); syncSetUI(); });
 tgNight.addEventListener('click',()=>{ STG.night=!STG.night; saveSettings(); applySettings(); syncSetUI(); });
 
-/* manual save button (dock icon): same file the autosave uses, just on demand */
+/* manual save button (dock icon): the one way a life gets banked */
 const btnSaveNow=document.getElementById('btnSaveNow');
 btnSaveNow.addEventListener('click',()=>{
   if(!started){ toast('No life in progress yet \u2014 start one first.'); return; }
   const ok=saveGame(true);
   toast(ok
-    ? '\uD83D\uDCBE Saved. \u25B6 right here reloads it \u2014 closing the tab is safe too.'
+    ? '\uD83D\uDCBE Saved. \u25B6 right here reloads it.'
     : '\u26A0\uFE0F Save FAILED \u2014 this view blocks browser storage. Open the file directly in Edge.');
 });
 
@@ -7181,10 +7183,10 @@ hintBtn.addEventListener('click',e=>{ e.stopPropagation(); closeSet(); hintPop.c
 hintPop.addEventListener('click',e=>e.stopPropagation());
 document.addEventListener('click',()=>hintPop.classList.remove('show'));
 
-/* ===================== AUTOSAVE · your life survives a refresh =====================
-   Everything that defines a life is plain data: ST, market history, the clock,
-   where you stand. Saved to localStorage every few seconds and whenever the tab
-   hides or closes. The cover screen grows a CONTINUE button when a save exists. */
+/* ===================== SAVE · manual, like a console game =====================
+   Nothing writes behind your back: 💾 on the dock is the only way a life is
+   banked (plus the ending card and a re-bank right after CONTINUE). A save
+   exists only if you made it. The cover grows a CONTINUE button when one does. */
 const SAVE_KEY='mylife.save.v1';
 let saveDirty=false;
 function snapshot(){
@@ -7212,16 +7214,14 @@ function saveGame(force){
       const mode=STORE.memoryOnly
         ? '<br><span style="color:#e0a868">&#9888; MEMORY ONLY &mdash; this view blocks browser storage, gone when the tab closes.</span>'
         : '';
-      el.innerHTML='&#128190; SAVED &mdash; a backup is also written every few seconds.<br>'+
+      el.innerHTML='&#128190; SAVED &mdash; your life is only banked when you press it.<br>'+
         '&#9654; on the dock restores the last save.<br>'+
         '<span style="color:#a8d68a">&#10003; Last saved '+hh+':'+mm+':'+ss+' \u00B7 '+(lastLife?lastLife.name:'')+' \u00B7 Month '+(Math.floor(ST.day/30)+1)+'</span>'+mode;
     }
     return true;
   }catch(e){ return false; }
 }
-setInterval(()=>saveGame(true), 4000);
-addEventListener('beforeunload', ()=>saveGame(true));
-document.addEventListener('visibilitychange', ()=>{ if(document.hidden) saveGame(true); });
+/* no timer, no hidden writes — saving is a decision, not a side effect */
 
 function resumeGame(){
   let s=null;

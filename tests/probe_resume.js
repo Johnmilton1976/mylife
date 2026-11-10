@@ -25,13 +25,14 @@ const URL = process.argv[2] || 'https://mylifesim.com';
   const before = await page.evaluate(() => ({ day: ST.day, cash: ST.cash, name: lastLife && lastLife.name }));
   console.log('in game:', JSON.stringify(before));
 
-  /* give the autosave a beat, then reload without pressing save */
-  await page.waitForTimeout(5000);
+  /* saving is manual now: press 💾, then reload without anything else */
+  await page.click('#btnSaveNow');
+  await page.waitForTimeout(400);
   const saved = await page.evaluate(() => {
     const raw = localStorage.getItem('mylife.save.v1');
     return raw ? JSON.parse(raw) : null;
   });
-  console.log('autosave present before reload:', !!saved, saved && { name: saved.name, day: saved.day });
+  console.log('manual save present before reload:', !!saved, saved && { name: saved.name, day: saved.day });
 
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1800);
