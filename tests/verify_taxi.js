@@ -50,6 +50,38 @@ const cabState = page => page.evaluate(() => {
     const nCabs = await page.evaluate(() => document.querySelectorAll('#world g.taxi').length);
     ok(nCabs >= 60, `${nCabs} cabs parked across the city (dense enough to be findable)`);
 
+    /* every cab sits on asphalt: its centre within 150 world units of a road
+       centreline (kerb lane is 134; the sidewalk starts at 190) */
+    const offRoad = await page.evaluate(() => {
+      const lat = (x, y) => Math.min(
+        ...STS_Y.map(s => Math.abs(y - s)), ...AVES_X.map(a => Math.abs(x - a)));
+      let worst = 0, bad = 0;
+      document.querySelectorAll('#world g.taxi').forEach(g => {
+        const m = /translate\(([-\d.e]+),([-\d.e]+)\)/.exec(g.getAttribute('transform') || '');
+        if (!m) return;
+        const d = lat(+m[1], +m[2]);
+        worst = Math.max(worst, d);
+        if (d > 150) bad++;
+      });
+      return { worst: Math.round(worst), bad };
+    });
+    ok(offRoad.bad === 0, `no cab on the sidewalk (worst lateral offset ${offRoad.worst}, limit 150)`);
+
+    /* no double-parking: any two cab centres stay clear of each other's body */
+    const tooClose = await page.evaluate(() => {
+      const pts = [...document.querySelectorAll('#world g.taxi')].map(g => {
+        const m = /translate\(([-\d.e]+),([-\d.e]+)\)/.exec(g.getAttribute('transform') || '');
+        return m ? [+m[1], +m[2]] : null;
+      }).filter(Boolean);
+      for (let i = 0; i < pts.length; i++)
+        for (let j = i + 1; j < pts.length; j++) {
+          const dx = pts[i][0] - pts[j][0], dy = pts[i][1] - pts[j][1];
+          if (dx * dx + dy * dy < 175 * 175) return [pts[i], pts[j]];
+        }
+      return null;
+    });
+    ok(!tooClose, `no two cabs overlap (closest pair ${tooClose ? JSON.stringify(tooClose) : '>= 175 apart'})`);
+
     /* there is a cab in view right at spawn — the old build had none, ever */
     const inView = await page.evaluate(() => {
       const iv = r => r.width > 0 && r.right > 0 && r.left < innerWidth && r.bottom > 0 && r.top < innerHeight;
@@ -102,9 +134,35 @@ const cabState = page => page.evaluate(() => {
       'moving-car card stays on screen');
     ok(s2.quote !== s1.quote, 'next window does not repeat the same line');
 
-    /* the card auto-closes for a car that drove away */
-    await page.mouse.move(cPt.x - 400, cPt.y + 200); await page.waitForTimeout(200);
+    /* the card auto-closes for a car that drove away — park the cursor on a
+       spot that is provably not another cab (the city is dense now) */
+    await page.mouse.move(5, 5); await page.waitForTimeout(150);
+    const safe = await page.evaluate(() => {
+      for (let y = 120; y < innerHeight - 140; y += 40)
+        for (let x = 60; x < innerWidth - 60; x += 40) {
+          const el = document.elementFromPoint(x, y);
+          if (!el || !el.closest || !el.closest('g.taxi')) return { x, y };
+        }
+      return { x: 5, y: 5 };
+    });
+    await page.mouse.move(safe.x, safe.y); await page.waitForTimeout(250);
     ok(!(await cabState(page)).shown, 'leaving the car closes the window');
+
+    /* a pulled-over cab never parks on top of the walker */
+    for (let k = 0; k < 4; k++) { await page.keyboard.press('Space'); await page.waitForTimeout(1300); }
+    await page.waitForTimeout(2500);
+    const nearWalker = await page.evaluate(() => {
+      let best = 1e9;
+      document.querySelectorAll('#world g.taxi').forEach(g => {
+        const m = /translate\(([-\d.e]+),([-\d.e]+)\)/.exec(g.getAttribute('transform') || '');
+        if (!m) return;
+        const dx = +m[1] - mePos.x, dy = +m[2] - mePos.y;
+        best = Math.min(best, Math.sqrt(dx * dx + dy * dy));
+      });
+      return Math.round(best);
+    });
+    ok(nearWalker >= 140, `no cab on top of the walker (closest cab ${nearWalker} world units away, limit 140)`);
+
     ok(errs.length === 0, 'no page errors on desktop: ' + (errs.join(' | ') || 'clean'));
     await page.close();
   }

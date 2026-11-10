@@ -2790,25 +2790,56 @@ function spawnCab(x,y,rot){
   svg.appendChild(g);
 }
 /* wherever you stop, a driver is within reach: parked cabs are scattered and a
-   narrow phone viewport shows only a cell or two, so if no cab sits fully on
-   screen when you come to rest, one pulls over at the kerb beside you */
-let cabSide=0, cabSpawns=0, cabToastDone=false;
+   narrow phone viewport shows only a cell or two, so if no cab sits with its
+   centre on screen when you come to rest, one pulls over at the kerb beside you */
+let cabSpawns=0, cabToastDone=false, cabSpots=null;
+function cabSpotsLazy(){
+  if(cabSpots) return cabSpots;
+  cabSpots=[];
+  document.querySelectorAll('#world g.taxi').forEach(g=>{
+    const m=/translate\(([-\d.e]+),([-\d.e]+)\)/.exec(g.getAttribute('transform')||'');
+    if(m) cabSpots.push({x:+m[1], y:+m[2]});
+  });
+  return cabSpots;
+}
 function ensureCabNearby(){
   if(!started || cabSpawns>=50) return;
   const svg=document.querySelector('#world>svg'); if(!svg) return;
-  const iv=r=>r.width>0 && r.left>8 && r.right<innerWidth-8 && r.top>8 && r.bottom<innerHeight-8;
-  if([...document.querySelectorAll('#world g.taxi')].some(g=>iv(g.getBoundingClientRect()))) return;
+  /* a cab whose centre is on screen can already be hovered/tapped where it sits */
+  const centred=g=>{
+    const r=g.getBoundingClientRect(); if(r.width<=0) return false;
+    const cx=r.left+r.width/2, cy=r.top+r.height/2;
+    return cx>40 && cx<innerWidth-40 && cy>70 && cy<innerHeight-130;
+  };
+  if([...document.querySelectorAll('#world g.taxi')].some(centred)) return;
   const p=curCell||PATH[cur]||PATH[0]; if(!p) return;
-  const prev=PATH[cur-1];
-  const vert = prev && prev.u===p.u;        /* this stretch runs north-south */
-  const ahead = (cabSide^=1)===0;
-  const along=ahead?60:-60, lane=ahead?-94:94;
-  if(vert) spawnCab(p.x+lane, p.y+along, ahead?270:90);
-  else     spawnCab(p.x+along, p.y+lane, ahead?0:180);
-  cabSpawns++;
-  if(!cabToastDone){
-    cabToastDone=true;
-    toast('\uD83D\uDE95 A cab pulls over \u2014 hover it for a line of advice. (tap it on a phone)');
+  const prev=PATH[cur-1], next=PATH[cur+1];
+  const vert = prev ? prev.u===p.u : (next ? next.u===p.u : false);
+  const spots=cabSpotsLazy();
+  /* the kerb parking lane sits 134 off the centreline (where the painted
+     dashes are) - always asphalt, never the sidewalk. Along-offset shrinks
+     170->110->0 until the cab lands fully inside a phone's narrow viewport;
+     desktop always takes the roomiest 170. */
+  for(const ALONG of [170,110,0]){
+    for(const ahead of [true,false]){
+      const lane=ahead?-134:134;
+      const along=ALONG===0?0:(ahead?ALONG:-ALONG);
+      const x=vert ? p.x+lane : p.x+along;
+      const y=vert ? p.y+along : p.y+lane;
+      if(spots.some(s=>(s.x-x)*(s.x-x)+(s.y-y)*(s.y-y)<420*420)) continue;  /* no double-parking */
+      if(IS_LITE){
+        const s=cam.scale, hx=(vert?34:78)*s, hy=(vert?78:34)*s;
+        const L=(x-cam.x)*s-hx, R=(x-cam.x)*s+hx, T=(y-cam.y)*s-hy, B=(y-cam.y)*s+hy;
+        if(!(L>10 && R<innerWidth-10 && T>80 && B<innerHeight-95)) continue;
+      }
+      spawnCab(x, y, vert ? (ahead?270:90) : (ahead?0:180));
+      spots.push({x,y}); cabSpawns++;
+      if(!cabToastDone){
+        cabToastDone=true;
+        toast('\uD83D\uDE95 A cab pulls over \u2014 hover it for a line of advice. (tap it on a phone)');
+      }
+      return;
+    }
   }
 }
 
@@ -2950,22 +2981,25 @@ SPOTS.forEach((sp,i)=>{
   if(!nearPath(sp.x,sp.y,520)) return;
   if(i%11===4) subwayEntrance(sp.x + WALK_HALF + 130, sp.y + WALK_HALF + 68);
   if(i%13===7) hotDogCart(sp.x - WALK_HALF - 150, sp.y + WALK_HALF + 64);
-  if(i%9===2)  taxi(sp.x + 340, sp.y - 92, 0);
-  if(i%9===5)  taxi(sp.x - 300, sp.y + 92, 180);
   if(i%7===3)  steamVent(sp.x + 180, sp.y + 44, i%14===3);
   if(i%17===9) steamVent(sp.x - 220, sp.y - 44, false);
 });
 /* a cab every few blocks sitting right on the route: the scattered ones above
    can be a whole neighbourhood away, and an advice feature you cannot find is
-   not a feature. Cabs hug the kerb lane of the street you are actually walking
-   (94 world units off the cell), so one is on screen even on a narrow phone. */
+   not a feature. Cabs sit in the kerb parking lane (134 off the centreline,
+   where the painted dashes are) of the street you are actually walking, so
+   one is on screen even on a narrow phone - and never under the walker.
+   The loop revisits some junctions, so skip a cell that already has a cab. */
+const cabTaken=[];
 PATH.forEach((p,i)=>{
   const k=i%8; if(k!==2 && k!==6) return;
   const prev=PATH[i-1];
   const vert = prev && prev.u===p.u;          /* this stretch runs north-south */
-  const ahead=k===2, along=ahead?60:-60, lane=ahead?-94:94;
-  if(vert) taxi(p.x + lane, p.y + along, ahead?270:90);
-  else     taxi(p.x + along, p.y + lane, ahead?0:180);
+  const ahead=k===2, along=ahead?60:-60, lane=ahead?-134:134;
+  const x=vert?p.x+lane:p.x+along, y=vert?p.y+along:p.y+lane;
+  if(cabTaken.some(s=>(s[0]-x)*(s[0]-x)+(s[1]-y)*(s[1]-y)<175*175)) return;
+  cabTaken.push([x,y]);
+  taxi(x, y, vert?(ahead?270:90):(ahead?0:180));
 });
 /* a few "I NY" boards on the rooftops, exactly where the skyline needs a logo */
 let nBoards=0;
