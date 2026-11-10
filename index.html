@@ -1028,7 +1028,7 @@
 </div>
 <div id="vig"></div>
 
-<div id="brand">MY LIFE<small>NEW YORK &#183; STREET DRAFT v2</small></div>
+<div id="brand">MY LIFE<small>NEW YORK &#183; A LIFE, WALKED</small></div>
 <div id="zoomhint">zoom out = city overview &#183; zoom in = street level</div>
 
 <div id="tabs">
@@ -1178,7 +1178,6 @@
 
   <div class="set-sec">CREATOR / CONTACT</div>
   <div class="set-row cc-row"><span>GMAIL</span><input id="ccMail" type="email" value="steven.jones.19760904@gmail.com" readonly spellcheck="false" style="opacity:.75;cursor:not-allowed" title="Fixed by the creator"></div>
-  <div class="set-row cc-row"><span>GITHUB</span><input id="ccGit" type="url" maxlength="160" placeholder="https://github.com/you" spellcheck="false"></div>
   <div style="font-size:10px;color:#8a7a5c;line-height:1.5;margin:2px 2px 8px">
     Lives HERE in settings only &mdash; not on the cover, not in-game. Saved automatically
     as you type (no button), stored ONLY in this browser (localStorage), never uploaded.
@@ -1201,10 +1200,8 @@
   <div class="set-sec">YOUR LIFE</div>
   <div id="saveStatus" style="font-size:10px;color:#8a7a5c;line-height:1.5;margin:2px 2px 8px">
     AUTOSAVE is always ON &mdash; your life is written to this browser every few seconds.<br>
-    LOAD restores the last save; the <b>CONTINUE</b> button on the cover does the same.
+    <b>&#128190;</b> saves now; <b>&#9654;</b> restores the last save &mdash; both live on the icon dock below the screen.
   </div>
-  <button class="set-btn" id="btnSaveNow">&#128190; SAVE NOW</button>
-  <button class="set-btn" id="btnLoad">&#9654; LOAD LAST SAVE</button>
   <button class="set-btn danger" id="btnNew">&#8635; START A NEW LIFE</button>
 </div>
 
@@ -1240,6 +1237,8 @@
 <div id="dock">
   <button id="hintBtn" class="dockBtn" title="Controls">&#8505;</button>
   <button id="musicDock" class="dockBtn" title="Music ON">&#9834;</button>
+  <button id="btnSaveNow" class="dockBtn" title="Save now">&#128190;</button>
+  <button id="btnLoad" class="dockBtn" title="Load last save">&#9654;</button>
   <button id="setBtn" class="dockBtn" title="Settings">&#9881;</button>
 </div>
 <div id="hintPop">
@@ -6533,48 +6532,10 @@ function syncSetUI(){
 
 
 /* ===================== CREATOR CONTACT =====================
-   Opt-in, local-only, and empty by default. Nothing here is invented on the
-   creator's behalf: the two addresses are whatever they type into settings.
-   We never collect, transmit or embed a third party's contact details. */
-const CONTACT_KEY='MYLIFE_CONTACT_V1';
-/* the public contact ships hardcoded; the settings fields may still override it per browser */
-const CONTACT_MAIL_DEFAULT='steven.jones.19760904@gmail.com';
-const CONTACT={mail:CONTACT_MAIL_DEFAULT, github:''};
-function loadContact(){
-  try{
-    const d=JSON.parse(STORE.getItem(CONTACT_KEY)||'null');
-    if(d&&typeof d==='object'){
-      /* mail is FIXED: only github is user-editable */
-      if(typeof d.github==='string') CONTACT.github=d.github.slice(0,160);
-    }
-  }catch(e){}
-}
-function syncContactUI(){
-  const m=document.getElementById('ccMail'), g=document.getElementById('ccGit');
-  if(m) m.value=CONTACT.mail;
-  if(g) g.value=CONTACT.github;
-}
-loadContact(); syncContactUI();
-/* auto-save as you type: no button, the GitHub field IS the save. Mail is fixed. */
-let ccTimer=null;
-function saveContact(){
-  const g=(document.getElementById('ccGit').value||'').trim();
-  const okGit =!g || /^https?:\/\/[^\s<>"']+$/i.test(g);
-  if(!okGit) return false;                            /* invalid input: keep the old value */
-  CONTACT.mail=CONTACT_MAIL_DEFAULT;                  /* locked by the creator, always */
-  CONTACT.github=g;
-  try{ STORE.setItem(CONTACT_KEY, JSON.stringify(CONTACT)); }catch(e){}
-  return true;
-}
-['ccGit'].forEach(id=>{
-  const el=document.getElementById(id);
-  el.addEventListener('input',()=>{ clearTimeout(ccTimer); ccTimer=setTimeout(()=>{
-    if(saveContact()) toast('\u2713 Contact saved in this browser only.');
-  },700); });
-  el.addEventListener('change',()=>{ clearTimeout(ccTimer); saveContact(); });
-});
+   One fixed address, shipped in the HTML, never editable and never stored:
+   nothing here is collected, transmitted or kept in localStorage. */
 /* ---- panel open / close ---- */
-function openSet(){ clearToasts(); loadSettings(); syncSetUI(); syncContactUI(); document.getElementById('hintPop').classList.remove('show');
+function openSet(){ clearToasts(); loadSettings(); syncSetUI(); document.getElementById('hintPop').classList.remove('show');
   setPanel.classList.add('show'); setBtn.classList.add('on'); }
 function closeSet(){ setPanel.classList.remove('show'); setBtn.classList.remove('on'); }
 function toggleSet(){ setPanel.classList.contains('show') ? closeSet() : openSet(); }
@@ -6612,17 +6573,17 @@ tgFollow.addEventListener('click',()=>{
 tgLabels.addEventListener('click',()=>{ STG.labels=!STG.labels; saveSettings(); applySettings(); syncSetUI(); });
 tgNight.addEventListener('click',()=>{ STG.night=!STG.night; saveSettings(); applySettings(); syncSetUI(); });
 
-/* manual save button: same file the autosave uses, just on demand */
+/* manual save button (dock icon): same file the autosave uses, just on demand */
 const btnSaveNow=document.getElementById('btnSaveNow');
 btnSaveNow.addEventListener('click',()=>{
   if(!started){ toast('No life in progress yet \u2014 start one first.'); return; }
   const ok=saveGame(true);
   toast(ok
-    ? '\uD83D\uDCBE Saved. LOAD LAST SAVE (right below) or CONTINUE on the cover brings it back.'
+    ? '\uD83D\uDCBE Saved. CONTINUE on the cover brings it back.'
     : '\u26A0\uFE0F Save FAILED \u2014 this view blocks browser storage. Open the file directly in Edge.');
 });
 
-/* manual load: restore the last save right here, no need to leave the page */
+/* manual load (dock icon): restore the last save right here, no need to leave the page */
 document.getElementById('btnLoad').addEventListener('click',()=>{
   let s=null;
   try{ s=JSON.parse(STORE.getItem(SAVE_KEY)||'null'); }catch(e){}

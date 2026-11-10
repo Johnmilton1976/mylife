@@ -17,14 +17,14 @@ const QA = 'C:/Users/Johnmilton/WorkBuddy/2026-11-08-10-33-18/my-life-game/qa/';
   const R = {};
   const ck = (label, cond, extra) => { R[label] = !!cond ? 'PASS' : 'FAIL' + (extra ? ' ' + extra : ''); };
 
-  /* ---------- contact lives in settings only (floating card was retired) ---------- */
+  /* ---------- contact lives in settings only, github field removed ---------- */
   R.contactDefault = await page.evaluate(() => ({
     gone: !document.getElementById('contactCard'),
+    gitGone: !document.getElementById('ccGit'),
     stored: localStorage.getItem('MYLIFE_CONTACT_V1'),
-    mailFixed: document.getElementById('ccMail').readOnly && document.getElementById('ccMail').value.indexOf('@') > 0,
-    gitEmpty: document.getElementById('ccGit').value === ''
+    mailFixed: document.getElementById('ccMail').readOnly && document.getElementById('ccMail').value.indexOf('@') > 0
   }));
-  ck('contact lives only in settings, mail locked', R.contactDefault.gone && R.contactDefault.mailFixed && R.contactDefault.gitEmpty);
+  ck('contact: mail only (readonly), github field removed', R.contactDefault.gone && R.contactDefault.gitGone && R.contactDefault.mailFixed, JSON.stringify(R.contactDefault));
 
   await page.click('#coverBtn'); await page.waitForTimeout(300);
   await page.fill('#nameInput', 'Zhu'); await page.click('#goBtn'); await page.waitForTimeout(1000);
@@ -156,7 +156,7 @@ const QA = 'C:/Users/Johnmilton/WorkBuddy/2026-11-08-10-33-18/my-life-game/qa/';
   await page.screenshot({ path: QA + 'store_fin.png' });
   await page.evaluate(() => { closeFin(); closeAct(); });
 
-  /* ---------- contact: github persists automatically, mail is locked ---------- */
+  /* ---------- contact: mail is locked, github was removed ---------- */
   await page.evaluate(() => openSet());
   /* the mail input is readonly: typing must not change it */
   const mailLocked = await page.evaluate(() => {
@@ -166,31 +166,25 @@ const QA = 'C:/Users/Johnmilton/WorkBuddy/2026-11-08-10-33-18/my-life-game/qa/';
     return { v: el.value, ro: el.readOnly };
   });
   ck('mail input is readonly', mailLocked.ro && mailLocked.v.indexOf('19760904') >= 0, JSON.stringify(mailLocked));
-  await page.fill('#ccGit', 'https://github.com/zhuzhu-life');
-  await page.waitForTimeout(1000);                             /* debounced auto-save (700ms), no button */
-  R.contactFilled = await page.evaluate(() => {
-    let stored = null;
-    try { stored = JSON.parse(localStorage.getItem('MYLIFE_CONTACT_V1') || 'null'); } catch (e) {}
-    return { stored, git: document.getElementById('ccGit').value };
-  });
-  ck('github saved automatically', R.contactFilled.stored && R.contactFilled.stored.github === 'https://github.com/zhuzhu-life', JSON.stringify(R.contactFilled));
   await page.screenshot({ path: QA + 'contact_settings.png' });
 
-  R.invalid = await page.evaluate(() => {
-    document.getElementById('ccGit').value = 'javascript:alert(1)';
-    document.getElementById('ccGit').dispatchEvent(new Event('input'));
-    return { github: CONTACT.github };
-  });
-  ck('rejects non-http URLs', R.invalid.github === 'https://github.com/zhuzhu-life', R.invalid.github);
+  /* ---------- save / load live on the dock now, not in settings ---------- */
+  R.dock = await page.evaluate(() => ({
+    saveDocked: document.getElementById('btnSaveNow').classList.contains('dockBtn'),
+    loadDocked: document.getElementById('btnLoad').classList.contains('dockBtn'),
+    inSetPanel: !!document.getElementById('setPanel').querySelector('#btnSaveNow,#btnLoad')
+  }));
+  ck('save & load are dock icons, not in settings', R.dock.saveDocked && R.dock.loadDocked && !R.dock.inSetPanel, JSON.stringify(R.dock));
+
+  /* dock save tells the truth: points at CONTINUE on the cover */
+  await page.evaluate(() => document.getElementById('btnSaveNow').click());
+  await page.waitForTimeout(300);
+  R.saveToast = await page.evaluate(() => [...document.querySelectorAll('#toastWrap .toast,#toastWrap div')].map(t => t.textContent).join(' | '));
+  ck('save toast points at CONTINUE', R.saveToast.indexOf('CONTINUE') >= 0, R.saveToast);
 
   await page.reload(); await page.waitForTimeout(800);
-  R.contactPersist = await page.evaluate(() => {
-    let stored = null;
-    try { stored = JSON.parse(localStorage.getItem('MYLIFE_CONTACT_V1') || 'null'); } catch (e) {}
-    return { git: document.getElementById('ccGit').value, stored, mail: document.getElementById('ccMail').value };
-  });
-  ck('contact persists after reload', R.contactPersist.git === 'https://github.com/zhuzhu-life' || (R.contactPersist.stored && R.contactPersist.stored.github === 'https://github.com/zhuzhu-life'), JSON.stringify(R.contactPersist));
-  ck('mail default restored after reload', R.contactPersist.mail.indexOf('19760904') >= 0);
+  R.contactPersist = await page.evaluate(() => ({ mail: document.getElementById('ccMail').value, git: document.getElementById('ccGit') }));
+  ck('mail default restored after reload', R.contactPersist.mail.indexOf('19760904') >= 0 && R.contactPersist.git === null);
 
   /* ---------- balance regression: one worker, 120 real day ticks ---------- */
   R.balance = await page.evaluate(() => {
