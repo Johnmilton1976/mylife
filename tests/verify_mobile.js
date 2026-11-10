@@ -72,6 +72,27 @@ const ok = (c, msg) => { if (c) { pass++; console.log('  PASS', msg); } else { f
     for (const id of ['actPanel','mktPanel','realtyPanel','portPanel','finPanel']) {
       await page.evaluate(id => document.getElementById(id).classList.remove('show'), id);
     }
+
+    /* the newspaper must slide in fully on-screen (desktop parks it half off-screen) */
+    await page.evaluate(() => document.getElementById('newsPanel').classList.add('show'));
+    await page.waitForTimeout(400);
+    const np = await page.evaluate(() => {
+      const r = document.getElementById('newsPanel').getBoundingClientRect();
+      return [Math.round(r.left), Math.round(r.right), Math.round(r.top), Math.round(r.bottom)];
+    });
+    ok(np[0] >= 0 && np[1] <= 390 && np[3] <= 844, `newsPanel fully inside viewport (${np.join(',')})`);
+    await page.evaluate(() => document.getElementById('newsPanel').classList.remove('show'));
+
+    /* wheel and dock must not overlap on a phone */
+    const wd = await page.evaluate(() => {
+      const w = document.getElementById('wheelWrap').getBoundingClientRect();
+      const d = document.getElementById('dock').getBoundingClientRect();
+      const sep = d.top >= w.bottom || w.left >= d.right || d.left >= w.right;
+      return { sep, w: [Math.round(w.left), Math.round(w.right), Math.round(w.top), Math.round(w.bottom)],
+               d: [Math.round(d.left), Math.round(d.right), Math.round(d.top), Math.round(d.bottom)] };
+    });
+    ok(wd.sep, `wheel and dock do not intersect (wheel ${wd.w.join(',')} dock ${wd.d.join(',')})`);
+
     ok(errs.length === 0, 'no page errors on phone: ' + (errs.join(' | ') || 'clean'));
     await page.close();
   }

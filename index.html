@@ -553,6 +553,12 @@
        y≈340) so the buttons stay visible and the user can flip between them */
     #mktPanel,#realtyPanel,#portPanel{top:360px;max-height:calc(100vh - 430px)}
     #actPanel{left:12px;right:12px;width:auto;top:auto;bottom:70px;max-height:52vh}
+    /* the newspaper slides in "centered minus 200px" on desktop to clear the HUD —
+       on a phone that parks half of it off-screen. Bottom sheet above the dock.
+       (wheel lift lives in a later block — see "phone z-order overrides") */
+    #newsPanel{left:12px;right:12px;width:auto;top:auto;bottom:70px;
+      max-height:52vh;overflow:auto;transform:translateY(24px)}
+    #newsPanel.show{transform:translateY(0)}
     .stlabel{display:none}            /* street lettering is noise on a small screen */
     body.mobile-lite #traffic{display:none}
     /* ---- the fold: phones boot with a 3-line HUD (clock · health · fold) ---- */
@@ -1026,6 +1032,14 @@
     #toastWrap{bottom:calc(80px + env(safe-area-inset-bottom))}
     .sideBtn{right:calc(12px + env(safe-area-inset-right))}
     #hintPop{bottom:calc(72px + env(safe-area-inset-bottom))}
+  }
+  /* ---------- phone z-order overrides ----------
+     Deliberately AFTER the safe-area block so these win the cascade on phones.
+     The wheel and the centered dock overlap on a 360-390px screen — lift the
+     wheel clear of the dock row, honouring the notch inset while doing it. */
+  @media (max-width:760px){
+    #wheelWrap{bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+    #newsPanel{bottom:calc(70px + env(safe-area-inset-bottom,0px))}
   }
   /* very short screens (landscape phones): the HUD shrinks instead of scrolling away */
   @media (max-height:560px){
