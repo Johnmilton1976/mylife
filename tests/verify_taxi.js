@@ -1,26 +1,23 @@
-/* verify_taxi.js — the parked cab gives advice.
-   Desktop: hovering a taxi opens #cab with a quote + attribution that stays
-   inside the viewport, never repeats back-to-back, and closes when the pointer
-   leaves. Phone: a clean tap opens it, a tap elsewhere closes it.
+/* verify_taxi.js — any car can talk: parked cabs and moving traffic.
+   Desktop: hovering a parked cab or a moving car opens #cab with a quote +
+   attribution that stays inside the viewport, never repeats back-to-back, and
+   closes on leave/zoom. Phone: a clean tap opens it, a tap elsewhere closes it,
+   and there is a fully-visible cab to tap at spawn.
    Run: node tests/verify_taxi.js */
 const { chromium } = require('C:/Users/Johnmilton/.workbuddy/binaries/node/versions/24.14.0/node_modules/@playwright/cli/node_modules/playwright');
 const PAGE = 'file:///C:/Users/Johnmilton/WorkBuddy/2026-11-08-10-33-18/my-life-game/index.html';
 let pass = 0, fail = 0;
 const ok = (c, msg) => { if (c) { pass++; console.log('  PASS', msg); } else { fail++; console.log('  FAIL', msg); } };
 
-/* put the camera on a parked cab and hand back its screen centre */
-async function parkOnCab(page) {
-  return page.evaluate(() => {
-    const g = document.querySelector('#world g.taxi');
-    if (!g) return null;
-    const m = /translate\(([-\d.]+),([-\d.]+)\)/.exec(g.getAttribute('transform') || '');
-    if (!m) return null;
-    const tx = +m[1], ty = +m[2];
-    cam.scale = 0.62; centerOn(tx, ty);
+/* a target fully inside the viewport, so taps land for real */
+const findInView = sel => page => page.evaluate(sel => {
+  const iv = r => r.width > 0 && r.left > 20 && r.right < innerWidth - 20 && r.top > 20 && r.bottom < innerHeight - 20;
+  for (const g of document.querySelectorAll(sel)) {
     const r = g.getBoundingClientRect();
-    return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2), cabs: document.querySelectorAll('#world g.taxi').length };
-  });
-}
+    if (iv(r)) return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) };
+  }
+  return null;
+}, sel);
 const cabState = page => page.evaluate(() => {
   const el = document.getElementById('cab');
   const r = el.getBoundingClientRect();
@@ -50,8 +47,16 @@ const cabState = page => page.evaluate(() => {
     }
     await page.waitForTimeout(1200);
 
-    ok(await page.evaluate(() => document.querySelectorAll('#world g.taxi').length > 0), 'parked taxis exist in the world');
-    ok(await page.evaluate(() => document.querySelectorAll('#world g.taxi .txhit').length > 0), 'each cab carries a hover hit area');
+    const nCabs = await page.evaluate(() => document.querySelectorAll('#world g.taxi').length);
+    ok(nCabs >= 60, `${nCabs} cabs parked across the city (dense enough to be findable)`);
+
+    /* there is a cab in view right at spawn — the old build had none, ever */
+    const inView = await page.evaluate(() => {
+      const iv = r => r.width > 0 && r.right > 0 && r.left < innerWidth && r.bottom > 0 && r.top < innerHeight;
+      return [...document.querySelectorAll('#world g.taxi')].filter(g => iv(g.getBoundingClientRect())).length;
+    });
+    ok(inView > 0, `a parked cab is visible from spawn (${inView} in view)`);
+
     const pool = await page.evaluate(() => ({
       n: CAB_LINES.length,
       munger: CAB_LINES.filter(l => /Munger/.test(l.by)).length,
@@ -65,9 +70,9 @@ const cabState = page => page.evaluate(() => {
     ok(await page.evaluate(() => getComputedStyle(document.getElementById('cab')).pointerEvents === 'none'),
       'cab card never eats pointer events');
 
-    const cab = await parkOnCab(page);
-    ok(!!cab, 'camera parked on a cab');
-    await page.mouse.move(cab.x, cab.y);
+    const pt = await findInView('g.taxi')(page);
+    ok(!!pt, 'a fully-visible parked cab found');
+    await page.mouse.move(pt.x, pt.y);
     await page.waitForTimeout(320);
     const s1 = await cabState(page);
     ok(s1.shown, 'hover opens the cab window');
@@ -75,19 +80,31 @@ const cabState = page => page.evaluate(() => {
     ok(/MUNGER|BUFFETT|RICH DAD|BACK SEAT/i.test(s1.by), `attribution rendered (${s1.by})`);
     ok(s1.box.L >= 0 && s1.box.R <= s1.vw && s1.box.T >= 0 && s1.box.B <= s1.vh,
       `cab card fully on screen (${s1.box.L},${s1.box.T},${s1.box.R},${s1.box.B})`);
-
-    /* the camera pans on wheel — that dismisses the card too */
     await page.mouse.wheel(0, 120); await page.waitForTimeout(220);
     ok(!(await cabState(page)).shown, 'zooming closes the cab window');
 
-    const cab2 = await parkOnCab(page);
-    await page.mouse.move(cab2.x, cab2.y); await page.waitForTimeout(320);
+    /* moving traffic talks too — stage a car beside the walker and hover it */
+    const mCar = await page.evaluate(() => {
+      const c = TRAFFIC[0];
+      c.horiz = true; c.dir = 1;
+      c.line = cam.y + innerHeight / cam.scale * 0.42;
+      c.pos = cam.x + 280;
+    });
+    await page.waitForTimeout(400);
+    const cPt = await page.evaluate(() => {
+      const r = document.querySelector('#traffic .drive').getBoundingClientRect();
+      return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) };
+    });
+    await page.mouse.move(cPt.x, cPt.y); await page.waitForTimeout(320);
     const s2 = await cabState(page);
-    ok(s2.shown && s2.quote !== s1.quote, 'next cab does not repeat the same line');
+    ok(s2.shown && s2.quote.length > 20, 'hovering a MOVING car opens the window');
+    ok(s2.box.L >= 0 && s2.box.R <= s2.vw && s2.box.T >= 0 && s2.box.B <= s2.vh,
+      'moving-car card stays on screen');
+    ok(s2.quote !== s1.quote, 'next window does not repeat the same line');
 
-    /* pointer leaves the cab -> closes */
-    await page.mouse.move(Math.min(cab2.x + 300, 1400), cab2.y); await page.waitForTimeout(320);
-    ok(!(await cabState(page)).shown, 'leaving the cab closes the window');
+    /* the card auto-closes for a car that drove away */
+    await page.mouse.move(cPt.x - 400, cPt.y + 200); await page.waitForTimeout(200);
+    ok(!(await cabState(page)).shown, 'leaving the car closes the window');
     ok(errs.length === 0, 'no page errors on desktop: ' + (errs.join(' | ') || 'clean'));
     await page.close();
   }
@@ -104,18 +121,20 @@ const cabState = page => page.evaluate(() => {
     }
     await page.waitForTimeout(1200);
 
-    const cab = await parkOnCab(page);
-    await page.touchscreen.tap(cab.x, cab.y); await page.waitForTimeout(350);
-    const s = await cabState(page);
-    ok(s.shown, 'tap opens the cab window on a phone');
-    ok(s.quote.length > 20, 'phone shows a quote too');
-    ok(s.box.L >= 0 && s.box.R <= s.vw && s.box.T >= 0 && s.box.B <= s.vh,
-      `phone cab card inside 390x844 (${s.box.L},${s.box.T},${s.box.R},${s.box.B})`);
-    ok(await page.evaluate(() => document.documentElement.scrollWidth <= 390), 'no horizontal overflow on phone');
+    const pt = await findInView('g.taxi')(page);
+    ok(!!pt, 'phone: a fully-visible cab exists to tap');
+    if (pt) {
+      await page.touchscreen.tap(pt.x, pt.y); await page.waitForTimeout(350);
+      const s = await cabState(page);
+      ok(s.shown, 'tap opens the cab window on a phone');
+      ok(s.quote.length > 20, 'phone shows a quote too');
+      ok(s.box.L >= 0 && s.box.R <= s.vw && s.box.T >= 0 && s.box.B <= s.vh,
+        `phone cab card inside 390x844 (${s.box.L},${s.box.T},${s.box.R},${s.box.B})`);
+      ok(await page.evaluate(() => document.documentElement.scrollWidth <= 390), 'no horizontal overflow on phone');
 
-    /* a tap on bare sidewalk puts it away */
-    await page.touchscreen.tap(195, 300); await page.waitForTimeout(300);
-    ok(!(await cabState(page)).shown, 'tapping elsewhere closes it');
+      await page.touchscreen.tap(195, 300); await page.waitForTimeout(300);
+      ok(!(await cabState(page)).shown, 'tapping elsewhere closes it');
+    }
     ok(errs.length === 0, 'no page errors on phone: ' + (errs.join(' | ') || 'clean'));
     await page.close();
   }
