@@ -2181,6 +2181,10 @@ STS_Y.forEach((y,si)=>{
 /* every window becomes a subpath of ONE path per look (lit/dark/reflection/sill):
    same skyline, a fraction of the SVG nodes — the city stays smooth on old laptops */
 const NIGHT={low:'',mid:'',high:''};             /* night-glow buckets, painted as 3 paths */
+/* nameplates are collected here and painted after EVERY roof decoration:
+   tanks, spires, antennas and billboards all predate the plate, so no roof
+   gear can ever sit on top of a building's name */
+const PLATES=[];
 function windows(x,y,w,h,rows,cols,pal){
   const cw=w/cols, ch=h/rows;
   let lit='', dark='', refl='', sill='';
@@ -2319,12 +2323,6 @@ function bld(b){
     s += `<rect x="${x+6}" y="${gfTop-38}" width="${w-12}" height="8" fill="#8a3a3a"/>`;
   }
   s += `<rect x="${x+w/2-26}" y="${base-74}" width="52" height="66" rx="3" fill="#3a2a1c" stroke="#211610" stroke-width="2"/>`;
-  const pw2=Math.max(150,name.length*17+40);
-  s += `<g class="nameplate" transform="translate(${x+w/2},${top-52})" filter="url(#signGlow)">
-    <rect x="${-pw2/2}" y="-32" width="${pw2}" height="34" rx="6" fill="#171519" stroke="#d8b470" stroke-width="2.5"/>
-    <rect x="${-pw2/2+4}" y="-28" width="${pw2-8}" height="4" rx="2" fill="#d8b470" opacity=".18"/>
-    <text x="0" y="-9" text-anchor="middle" font-family="Georgia,serif" font-weight="bold" font-size="22" fill="#ffd98a" letter-spacing="1">${name}</text>
-  </g>`;
   /* ---- rooftop life: the wooden water tank is the most New York thing there is ---- */
   s += b.noTank ? '' : `<g transform="translate(${x+w*(type==='tower'?0.7:0.28)},${top-26})">
     <path d="M-34 -4 h68 l0 10 h-68 Z" fill="#000" opacity=".16"/>
@@ -2342,6 +2340,14 @@ function bld(b){
     s += `<line x1="${x+w*0.86}" y1="${top-26}" x2="${x+w*0.86}" y2="${top-150}" stroke="#5a5a60" stroke-width="5"/>
           <circle cx="${x+w*0.86}" cy="${top-154}" r="7" fill="#d84a3a"/>`;
   }
+  /* the nameplate waits for the PLATES layer: painted after every tank, spire
+     and billboard, so nothing on the roof covers the name */
+  const pw2=Math.max(150,name.length*17+40);
+  PLATES.push(`<g class="nameplate" transform="translate(${x+w/2},${top-52})" filter="url(#signGlow)">
+    <rect x="${-pw2/2}" y="-32" width="${pw2}" height="34" rx="6" fill="#171519" stroke="#d8b470" stroke-width="2.5"/>
+    <rect x="${-pw2/2+4}" y="-28" width="${pw2-8}" height="4" rx="2" fill="#d8b470" opacity=".18"/>
+    <text x="0" y="-9" text-anchor="middle" font-family="Georgia,serif" font-weight="bold" font-size="22" fill="#ffd98a" letter-spacing="1">${name}</text>
+  </g>`);
   return s;
 }
 
@@ -3073,6 +3079,8 @@ BUILT.forEach(b=>{
       font-size="${Math.min(44,Math.round(1500/txt.length))}" fill="#fff6e0" letter-spacing="3">${txt}</text>
   </g>`);
 });
+/* the name layer goes up after every roof decoration in the city */
+PLATES.forEach(p=>put(p));
 for(let i=0;i<150;i++){
   const tx=1300+rc()*16000, ty=1100+rc()*12400;
   if(!inIslandBBox(tx,ty)) continue;                     /* no palms growing in the river */
