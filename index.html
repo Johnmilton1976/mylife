@@ -462,10 +462,21 @@
   #coverSky{position:absolute;inset:0;z-index:1;pointer-events:none}
   #coverSky svg{position:absolute;inset:0;width:100%;height:100%}
   #coverSky .far{opacity:.5}#coverSky .mid{opacity:.78}
-  #picker h1,#create h2{font-size:78px;letter-spacing:22px;text-indent:22px;font-weight:bold;
+  #picker h1,#create h2{font-size:78px;letter-spacing:22px;text-indent:0;font-weight:bold;text-align:center;
     background:linear-gradient(180deg,#fdf3c8 8%,#f2d98a 38%,#c9992e 62%,#f5e3a6 88%);
     -webkit-background-clip:text;background-clip:text;color:transparent;
     filter:drop-shadow(0 4px 16px rgba(0,0,0,.65)) drop-shadow(0 0 34px rgba(232,200,138,.30))}
+  /* WHY text-indent:0 — two bugs stacked here:
+     1) the h1 is a shrink-to-fit flex item, so its width is set by the SUBTITLE;
+        with text-align:start the word sat left inside that wider box (−44px).
+     2) letter-spacing is not a centring problem at all: Blink/WebKit trim the
+        trailing gap after the last letter, so a plain centred line is already
+        optically centred. The old text-indent:22px "compensation" was pushing it
+        +11px the other way. Indent stays 0 on purpose — do not reintroduce it. */
+  #picker h1{text-indent:0}
+  .coverSub{font-size:15px;letter-spacing:7px;text-indent:0;font-weight:normal;
+    font-family:Verdana,sans-serif;margin-top:14px;color:#e2cf8f;text-align:center;
+    text-shadow:0 2px 8px rgba(0,0,0,.55)}
   #picker p,#create p{color:#c8d8c8;font-size:14.5px;letter-spacing:4px;text-shadow:0 2px 8px rgba(0,0,0,.6)}
   #picker p{color:#cdbc86;text-shadow:0 0 14px rgba(232,200,138,.35),0 2px 8px rgba(0,0,0,.6)}
   #nameInput{
@@ -607,7 +618,8 @@
      it must never exist visually on a desktop layout */
   #hudToggle{display:none}
   @media (max-width:760px){
-    #picker h1{font-size:clamp(40px,12vw,86px) !important;letter-spacing:clamp(8px,3vw,26px) !important;text-indent:clamp(8px,3vw,26px) !important}
+    #picker h1{font-size:clamp(40px,12vw,86px) !important;letter-spacing:clamp(8px,3vw,26px) !important;text-indent:0 !important}
+    .coverSub{font-size:12px;letter-spacing:4px;padding:0 14px}
     #picker p{font-size:12px;padding:0 18px}
     #coverBtn{padding:13px 40px;font-size:19px}
     #resumeBtn{padding:10px 34px;font-size:15px}
@@ -1477,7 +1489,8 @@
 
 <div id="picker">
   <div id="coverSky"></div>
-  <h1 style="font-size:86px;letter-spacing:26px">MY LIFE<span style="display:block;font-size:15px;letter-spacing:7px;font-weight:normal;font-family:Verdana,sans-serif;margin-top:14px;color:#e2cf8f;background:none">A FREE LIFE SIMULATOR GAME IN YOUR BROWSER</span></h1>
+  <h1 style="font-size:86px;letter-spacing:26px">MY LIFE</h1>
+  <div class="coverSub">A FREE LIFE SIMULATOR GAME IN YOUR BROWSER</div>
   <p>A LIFE SIMULATOR ON THE STREETS OF NEW YORK</p>
   <button id="coverBtn" style="margin-top:18px">START LIFE</button>
   <button id="resumeBtn">&#9654; CONTINUE</button>
