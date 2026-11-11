@@ -432,6 +432,12 @@
   #toastWrap{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:85;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;max-width:min(92vw,760px)}
   .tmsg{background:rgba(18,14,8,.93);color:#ffe9b0;font-size:21px;font-weight:bold;padding:11px 28px;border-radius:12px;border:2px solid #b8965a;letter-spacing:1px;max-width:100%;text-align:center;opacity:0;transform:translateY(14px);transition:opacity .3s ease, transform .3s ease}
   .tmsg.in{opacity:1;transform:translateY(0)}
+  /* a sticky message: readable at leisure, dismissed with a tap (the ✕ is the hint) */
+  .tmsg.stick{display:flex;align-items:center;gap:12px;pointer-events:auto;cursor:pointer;text-align:left}
+  .tmsg.stick .tm-t{flex:1;min-width:0}
+  .tmsg.stick .tm-x{flex:0 0 auto;font-size:12px;line-height:1;opacity:.42;letter-spacing:0}
+  .tmsg.stick:hover .tm-x{opacity:1}
+  .tmsg.stick:hover{border-color:#ffe9b0}
   /* the old hint bar, miniaturized: a dock of two round icons + a popover with the controls */
   #dock{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:22;display:flex;gap:10px;align-items:center}
   .dockBtn{width:46px;height:46px;border-radius:50%;cursor:pointer;font-size:21px;display:flex;align-items:center;justify-content:center;
@@ -3042,7 +3048,7 @@ function ensureCabNearby(){
       spots.push({x,y}); cabSpawns++;
       if(!cabToastDone){
         cabToastDone=true;
-        toast('\uD83D\uDE95 A cab pulls over \u2014 hover it for a line of advice. (tap it on a phone)');
+        flash('\uD83D\uDE95 A cab pulls over \u2014 hover it for a line of advice. (tap it on a phone)');
       }
       return;
     }
@@ -4291,7 +4297,7 @@ function setWeather(){
   document.getElementById('wxRain').style.opacity = w==='rain' ? '.55' : '0';
   document.getElementById('wxRain2').style.opacity = w==='rain' ? '.4' : '0';
   document.getElementById('wxSnow').style.opacity = w==='snow' ? '.9' : '0';
-  if(w!=='clear') toast(w==='snow' ? '\u2744\uFE0F Snow is falling over New York.' : '\uD83C\uDF27\uFE0F Rain sweeps across the city.');
+  if(w!=='clear') flash(w==='snow' ? '\u2744\uFE0F Snow is falling over New York.' : '\uD83C\uDF27\uFE0F Rain sweeps across the city.');
 }
 const GRASS_SEASON={0:'#5a8a5e',1:'#5a8a5e',2:'#5f9a46',3:'#63a24a',4:'#5f9a44',5:'#58903e',
                     6:'#568c3c',7:'#568c3c',8:'#7a9a44',9:'#8f9448',10:'#7a8a4e',11:'#5f8a60'};
@@ -4337,7 +4343,7 @@ document.getElementById('clock').addEventListener('click',()=>{
   speedIdx = (speedIdx + 1) % SPEEDS.length;
   lastShownMin = -1;
   renderClock();
-  toast(`Time speed ${SPEEDS[speedIdx]}\u00D7`);
+  flash(`Time speed ${SPEEDS[speedIdx]}\u00D7`);
 });
 
 renderClock();
@@ -4441,7 +4447,7 @@ document.getElementById('viewport').addEventListener('pointerup', e=>{
         b.kind=FN_ACT[lm.fn]||TYPE_ACT[lm.type]||null;
         b.icon=KIND_ICON[b.kind]||'\u2B50';
         openAction(b);
-      } else toast(`${g.dataset.n} \u00B7 ${g.dataset.f} \u00B7 ${g.dataset.r}`);
+      } else flash(`${g.dataset.n} \u00B7 ${g.dataset.f} \u00B7 ${g.dataset.r}`);
     }
   }
   lmDown=null;
@@ -4471,7 +4477,7 @@ function buyGame(g){
   ST.games[g.id]=h;
   ST.happy=clamp(ST.happy+6,0,100);
   advanceMinutes(30);
-  toast('\uD83C\uDFAE Bought a fictional copy of '+g.n+' for '+fmt$(g.v)+'. HAPPY +6. No money left this game.');
+  flash('\uD83C\uDFAE Bought a fictional copy of '+g.n+' for '+fmt$(g.v)+'. HAPPY +6. No money left this game.');
 }
 /* ---- comfort has a tail, and comfort wears off ----
    A single -35 from an hour of meditation made the whole STRESS system optional:
@@ -4500,7 +4506,7 @@ function playGame(){
   relax('arcade',2);
   playHere=true;
   advanceMinutes(120);
-  toast('\uD83D\uDD79 Two hours well spent. HAPPY +5, STRESS -2. One session per visit.');
+  flash('\uD83D\uDD79 Two hours well spent. HAPPY +5, STRESS -2. One session per visit.');
 }
 /* ---- one XP grant, clamped at LV10, so every source (luck, gigs, books) agrees ---- */
 function grantXp(id, xp){
@@ -4535,7 +4541,7 @@ function oddJobPay(s, preview){
 }
 function oddJob(b, where){
   const s=ST;
-  if((s.daily.odd||0)>=ODD_DAILY_CAP){ toast('Two gigs is all anyone hands out in a day. Walk on.'); return; }
+  if((s.daily.odd||0)>=ODD_DAILY_CAP){ flash('Two gigs is all anyone hands out in a day. Walk on.'); return; }
   s.daily.odd=(s.daily.odd||0)+1;
   const r=oddJobPay(s);
   const strain=gigStrain(where);
@@ -4545,7 +4551,7 @@ function oddJob(b, where){
   const sk=SKILLS[Math.floor(Math.random()*SKILLS.length)];
   const xp=grantXp(sk.id,3);
   advanceMinutes(120);
-  toast('\uD83D\uDCAA Two hours in '+where+': '+fmt$(r.pay)
+  flash('\uD83D\uDCAA Two hours in '+where+': '+fmt$(r.pay)
     +(xp?' \u00B7 +'+xp+' '+skillName(sk.id)+' XP':'')
     +(r.focus<0.9?' \u00B7 stress had your hands slow':'')
     +' \u00B7 gig '+s.daily.odd+'/'+ODD_DAILY_CAP);
@@ -5613,7 +5619,7 @@ const SKILL_XP_CAP = 900;                 /* LV10. After this, take a bigger job
 function studyFee(id){ return 40 + Math.floor((ST.skills[id]||0)/100)*25; }
 function studySession(id){
   const name=skillName(id);
-  if((ST.skills[id]||0)>=SKILL_XP_CAP){ toast(name+' is maxed at LV10. A bigger job is the next step.'); return; }
+  if((ST.skills[id]||0)>=SKILL_XP_CAP){ flash(name+' is maxed at LV10. A bigger job is the next step.'); return; }
   const fee=studyFee(id);
   ST.cash-=fee;
   /* a head full of noise does not take notes: past STRESS 60 every point eats
@@ -5627,7 +5633,7 @@ function studySession(id){
   ST.happy=clamp(ST.happy-2-cram,0,100);
   studyStop=true;
   advanceMinutes(90);
-  toast('+'+gain+' '+name+' XP \u00B7 tuition '+fmt$(fee)
+  flash('+'+gain+' '+name+' XP \u00B7 tuition '+fmt$(fee)
     +(focus<0.9?' \u00B7 you could not focus (STRESS)':'')
     +(cram?' \u00B7 cramming costs you':''));
 }
@@ -5908,7 +5914,7 @@ function sleepUntilMorning(){
   ST.stress=clamp(ST.stress-(rough?14:26),0,100);
   ST.calmDays=2;                                  /* a real night carries into tomorrow */
   ST.workStreak=0;                                /* the streak breaks, the body forgives */
-  toast(rough ? 'You lay awake most of the night — STRESS is too high to sleep it off.'
+  flash(rough ? 'You lay awake most of the night — STRESS is too high to sleep it off.'
               : 'A proper night. A new day begins.');
 }
 function teleport(){
@@ -5921,7 +5927,7 @@ function teleport(){
   centerOn(p.x,p.y);
   setCellMark();
   advanceMinutes(45);
-  toast('Whoosh! The train took you across town.');
+  flash('Whoosh! The train took you across town.');
 }
 
 function openAction(b){
@@ -5987,10 +5993,10 @@ function openAction(b){
       A('BAD DEBT \u00B7 $50,000','repay '+fmt$(Math.round(50000*1.15/12))+'/mo \u00B7 12 months @15%/yr \u00B7 needs a job',
         ()=>takeLoan(50000),{dis:()=>!ST.employed});
     }
-    A('DEPOSIT $1,000','cash \u2192 savings',()=>{ST.cash-=1000;ST.bank+=1000;toast('Deposited $1,000');},{dis:()=>ST.cash<1000});
-    A('DEPOSIT $5,000','cash \u2192 savings',()=>{ST.cash-=5000;ST.bank+=5000;toast('Deposited $5,000');},{dis:()=>ST.cash<5000});
-    A('WITHDRAW $1,000','savings \u2192 cash',()=>{ST.bank-=1000;ST.cash+=1000;toast('Withdrew $1,000');},{dis:()=>ST.bank<1000});
-    A('WITHDRAW $5,000','savings \u2192 cash',()=>{ST.bank-=5000;ST.cash+=5000;toast('Withdrew $5,000');},{dis:()=>ST.bank<5000});
+    A('DEPOSIT $1,000','cash \u2192 savings',()=>{ST.cash-=1000;ST.bank+=1000;flash('Deposited $1,000');},{dis:()=>ST.cash<1000});
+    A('DEPOSIT $5,000','cash \u2192 savings',()=>{ST.cash-=5000;ST.bank+=5000;flash('Deposited $5,000');},{dis:()=>ST.cash<5000});
+    A('WITHDRAW $1,000','savings \u2192 cash',()=>{ST.bank-=1000;ST.cash+=1000;flash('Withdrew $1,000');},{dis:()=>ST.bank<1000});
+    A('WITHDRAW $5,000','savings \u2192 cash',()=>{ST.bank-=5000;ST.cash+=5000;flash('Withdrew $5,000');},{dis:()=>ST.bank<5000});
   } else if(kind==='study'){
     /* one class per visit: you may sit ONE lecture each time you pass a school */
     if(studyStop){
@@ -6003,7 +6009,7 @@ function openAction(b){
         ()=>studySession(ck.id),
         {dis:()=>ST.cash<studyFee(ck.id)||ST.skills[ck.id]>=SKILL_XP_CAP});
       A('DROP '+ck.name+' COURSE','quit \u00B7 pick another skill next time',
-        ()=>{ST.course=null;toast('Dropped '+ck.name+' course');openAction(b);},{cls:'danger'});
+        ()=>{ST.course=null;flash('Dropped '+ck.name+' course');openAction(b);},{cls:'danger'});
     } else {
       descEl.textContent='Evening classes. One skill, one class per visit. Tuition rises with your level (LV10 cap) \u2014 choose well.';
       SKILLS.forEach(sk=>{
@@ -6017,13 +6023,13 @@ function openAction(b){
   } else if(kind==='books'){
     descEl.textContent='A cozy bookshop. Reading grows the mind.';
     A(ST.owned.book?'\u2713 BOOK OWNED':'BUY A BOOK \u00B7 $15','+8 XP to a random skill',
-      ()=>{ST.cash-=15;ST.owned.book=true;const sk=SKILLS[Math.floor(Math.random()*SKILLS.length)];const g=grantXp(sk.id,8);advanceMinutes(45);toast('+'+g+' '+sk.name+' XP'+(g?'':' \u00B7 already LV10'));},
+      ()=>{ST.cash-=15;ST.owned.book=true;const sk=SKILLS[Math.floor(Math.random()*SKILLS.length)];const g=grantXp(sk.id,8);advanceMinutes(45);flash('+'+g+' '+sk.name+' XP'+(g?'':' \u00B7 already LV10'));},
       {dis:()=>ST.owned.book||ST.cash<15});
     A(ST.daily.browse?'\u2713 BROWSED TODAY':'BROWSE FOR FREE','+3 XP to a random skill \u00B7 happy +2',
-      ()=>{ST.daily.browse=true;const sk=SKILLS[Math.floor(Math.random()*SKILLS.length)];const g=grantXp(sk.id,3);ST.happy=clamp(ST.happy+2,0,100);advanceMinutes(30);toast('+'+g+' '+sk.name+' XP'+(g?'':' \u00B7 already LV10'));},
+      ()=>{ST.daily.browse=true;const sk=SKILLS[Math.floor(Math.random()*SKILLS.length)];const g=grantXp(sk.id,3);ST.happy=clamp(ST.happy+2,0,100);advanceMinutes(30);flash('+'+g+' '+sk.name+' XP'+(g?'':' \u00B7 already LV10'));},
       {dis:()=>!!ST.daily.browse});
     A(ST.owned.firstEdition?'\u2713 FIRST EDITION OWNED':'BUY A FIRST EDITION \u00B7 $400','+20 ENGLISH XP \u00B7 happy +6 \u00B7 yours forever',
-      ()=>{ST.cash-=400;ST.owned.firstEdition=true;const g=grantXp('eng',20);ST.happy=clamp(ST.happy+6,0,100);advanceMinutes(60);toast('A collector piece. +'+g+' ENGLISH XP');},
+      ()=>{ST.cash-=400;ST.owned.firstEdition=true;const g=grantXp('eng',20);ST.happy=clamp(ST.happy+6,0,100);advanceMinutes(60);flash('A collector piece. +'+g+' ENGLISH XP');},
       {dis:()=>ST.owned.firstEdition||ST.cash<400});
   } else if(kind==='office'||kind==='fire'||kind==='police'){
     descEl.textContent=ST.biz?('You run '+BIZ.find(x=>x.id===ST.biz.id).name+' from this floor.')
@@ -6032,83 +6038,83 @@ function openAction(b){
   } else if(kind==='church'){
     descEl.textContent='Quiet candlelight. Lay your worries down.';
     A(ST.daily.pray?'\u2713 PRAYED TODAY':'PRAY','stress -20 \u00B7 happy +8 \u00B7 once a day',
-      ()=>{ST.daily.pray=true;const sfx=relax('pray',20);ST.happy=clamp(ST.happy+8,0,100);advanceMinutes(30);toast('You feel lighter.'+sfx);},
+      ()=>{ST.daily.pray=true;const sfx=relax('pray',20);ST.happy=clamp(ST.happy+8,0,100);advanceMinutes(30);flash('You feel lighter.'+sfx);},
       {dis:()=>!!ST.daily.pray});
     /* An hour of stillness is the strongest relief in the game, which is exactly
        why it cannot be -35: that number made STRESS optional (meditate daily and
        it never left 16 even for a broke, fully-invested player). */
     A(ST.daily.med?'\u2713 MEDITATED TODAY':'MEDITATE 1 HOUR','stress -22 \u00B7 happy +4 \u00B7 once a day',
-      ()=>{ST.daily.med=true;const sfx=relax('med',22);ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(60);toast('Deep calm washes over you.'+sfx);},
+      ()=>{ST.daily.med=true;const sfx=relax('med',22);ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(60);flash('Deep calm washes over you.'+sfx);},
       {dis:()=>!!ST.daily.med});
     A(ST.daily.donate?'\u2713 DONATED TODAY':'DONATE TO THE PLATE \u00B7 $100','happy +10 \u00B7 charm +4',
-      ()=>{ST.cash-=100;ST.daily.donate=true;ST.happy=clamp(ST.happy+10,0,100);ST.charm=clamp(ST.charm+4,0,100);advanceMinutes(20);toast('Giving feels good.');},
+      ()=>{ST.cash-=100;ST.daily.donate=true;ST.happy=clamp(ST.happy+10,0,100);ST.charm=clamp(ST.charm+4,0,100);advanceMinutes(20);flash('Giving feels good.');},
       {dis:()=>!!ST.daily.donate||ST.cash<100});
   } else if(kind==='hospital'){
     descEl.textContent=ST.sick
       ? 'St. Vincent ER. You are down with '+ST.sick.name.toLowerCase()+' \u2014 a doctor can end this today.'
       : 'St. Vincent ER. They can patch you up \u2014 for a price.';
     A('FULL CHECK-UP \u00B7 $200',(ST.sick?'cures '+ST.sick.name.toLowerCase()+' \u00B7 ':'')+'restore health to 100',
-      ()=>{ST.cash-=200;ST.health=100;if(ST.sick){ST.sick=null;toast('Treated. You are healthy again.');}else toast('Patched up. HEALTH 100');advanceMinutes(180);},{dis:()=>ST.cash<200});
+      ()=>{ST.cash-=200;ST.health=100;if(ST.sick){ST.sick=null;flash('Treated. You are healthy again.');}else flash('Patched up. HEALTH 100');advanceMinutes(180);},{dis:()=>ST.cash<200});
     A('REST & RECOVER \u00B7 $80','health +20',
-      ()=>{ST.cash-=80;ST.health=clamp(ST.health+20,0,100);advanceMinutes(120);toast('Resting helps. HEALTH +20');},{dis:()=>ST.cash<80});
+      ()=>{ST.cash-=80;ST.health=clamp(ST.health+20,0,100);advanceMinutes(120);flash('Resting helps. HEALTH +20');},{dis:()=>ST.cash<80});
     A('DENTAL WORK \u00B7 $350','health +8 \u00B7 charm +6',
-      ()=>{ST.cash-=350;ST.health=clamp(ST.health+8,0,100);ST.charm=clamp(ST.charm+6,0,100);advanceMinutes(120);toast('A new smile. CHARM +6');},{dis:()=>ST.cash<350});
+      ()=>{ST.cash-=350;ST.health=clamp(ST.health+8,0,100);ST.charm=clamp(ST.charm+6,0,100);advanceMinutes(120);flash('A new smile. CHARM +6');},{dis:()=>ST.cash<350});
   } else if(kind==='gym'){
     descEl.textContent='Iron paradise. Sweat now, shine later.';
     A(ST.daily.gym?'\u2713 TRAINED TODAY':'TRAIN \u00B7 $25','+10 FITNESS XP \u00B7 health +4 \u00B7 happy +6',
-      ()=>{ST.cash-=25;ST.daily.gym=true;const g=grantXp('fit',10);ST.health=clamp(ST.health+4,0,100);ST.happy=clamp(ST.happy+6,0,100);advanceMinutes(60);toast('+'+g+' FITNESS XP');},
+      ()=>{ST.cash-=25;ST.daily.gym=true;const g=grantXp('fit',10);ST.health=clamp(ST.health+4,0,100);ST.happy=clamp(ST.happy+6,0,100);advanceMinutes(60);flash('+'+g+' FITNESS XP');},
       {dis:()=>!!ST.daily.gym||ST.cash<25});
     A(ST.daily.hoops?'\u2713 HOOPS PLAYED TODAY':'SHOOT HOOPS','free \u00B7 happy +5 \u00B7 health +2 \u00B7 once a day',
-      ()=>{ST.daily.hoops=true;ST.happy=clamp(ST.happy+5,0,100);ST.health=clamp(ST.health+2,0,100);advanceMinutes(45);toast('Good game!');},
+      ()=>{ST.daily.hoops=true;ST.happy=clamp(ST.happy+5,0,100);ST.health=clamp(ST.health+2,0,100);advanceMinutes(45);flash('Good game!');},
       {dis:()=>!!ST.daily.hoops});
     A(ST.daily.trainer?'\u2713 TRAINER TODAY':'PERSONAL TRAINER \u00B7 $120','+20 FITNESS XP \u00B7 health +5 \u00B7 happy +4',
-      ()=>{ST.cash-=120;ST.daily.trainer=true;const g=grantXp('fit',20);ST.health=clamp(ST.health+5,0,100);ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(90);toast('+'+g+' FITNESS XP');},
+      ()=>{ST.cash-=120;ST.daily.trainer=true;const g=grantXp('fit',20);ST.health=clamp(ST.health+5,0,100);ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(90);flash('+'+g+' FITNESS XP');},
       {dis:()=>!!ST.daily.trainer||ST.cash<120});
   } else if(kind==='fun'){
     descEl.textContent=(ateHere||showHere)
       ? 'You have had your treat here. Walk to another block for a second helping.'
       : 'Lights, camera, popcorn. One show and one snack per visit.';
     SHOW('WATCH A SHOW \u00B7 $30','happy +14 \u00B7 one show per visit',
-      ()=>{ST.cash-=30;ST.happy=clamp(ST.happy+14,0,100);const sfx=relax('cinema',8);advanceMinutes(120);toast('That was fun!'+sfx);},{dis:()=>ST.cash<30});
+      ()=>{ST.cash-=30;ST.happy=clamp(ST.happy+14,0,100);const sfx=relax('cinema',8);advanceMinutes(120);flash('That was fun!'+sfx);},{dis:()=>ST.cash<30});
     SHOW('VIP SEATS \u00B7 $75','happy +18 \u00B7 stress -14',
-      ()=>{ST.cash-=75;ST.happy=clamp(ST.happy+18,0,100);const sfx=relax('cinema',14);advanceMinutes(130);toast('Front row. Worth it.'+sfx);},{dis:()=>ST.cash<75});
+      ()=>{ST.cash-=75;ST.happy=clamp(ST.happy+18,0,100);const sfx=relax('cinema',14);advanceMinutes(130);flash('Front row. Worth it.'+sfx);},{dis:()=>ST.cash<75});
     EAT('POPCORN COMBO \u00B7 $14','happy +4 \u00B7 one snack per visit',
-      ()=>{ST.cash-=14;ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(15);toast('Extra butter.');},{dis:()=>ST.cash<14});
+      ()=>{ST.cash-=14;ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(15);flash('Extra butter.');},{dis:()=>ST.cash<14});
   } else if(kind==='food'){
     descEl.textContent=ateHere
       ? 'You have had your fill here. Walk to another block before you eat or drink again.'
       : 'Something smells great. ONE meal or drink per visit — happy is not an endless tap.';
     if(ST.cash<50) EAT('SOUP KITCHEN \u00B7 FREE','a hot meal, no questions asked \u00B7 health +5 \u00B7 happy -3',
-      ()=>{ST.health=clamp(ST.health+5,0,100);ST.happy=clamp(ST.happy-3,0,100);advanceMinutes(45);toast('Warm food. Kind volunteers. Tomorrow you try again.');});
+      ()=>{ST.health=clamp(ST.health+5,0,100);ST.happy=clamp(ST.happy-3,0,100);advanceMinutes(45);flash('Warm food. Kind volunteers. Tomorrow you try again.');});
     GIG('\uD83E\uDDFD WASH DISHES \u00B7 2H','the dish pit');
     EAT('HAVE A MEAL \u00B7 $18','happy +6 \u00B7 health +2',
-      ()=>{ST.cash-=18;ST.happy=clamp(ST.happy+6,0,100);ST.health=clamp(ST.health+2,0,100);advanceMinutes(45);toast('Delicious.');},{dis:()=>ST.cash<18});
+      ()=>{ST.cash-=18;ST.happy=clamp(ST.happy+6,0,100);ST.health=clamp(ST.health+2,0,100);advanceMinutes(45);flash('Delicious.');},{dis:()=>ST.cash<18});
     EAT('COFFEE TO GO \u00B7 $6','happy +2 \u00B7 stress -3',
-      ()=>{ST.cash-=6;ST.happy=clamp(ST.happy+2,0,100);ST.stress=clamp(ST.stress-3,0,100);advanceMinutes(10);toast('Caffeine acquired.');},{dis:()=>ST.cash<6});
+      ()=>{ST.cash-=6;ST.happy=clamp(ST.happy+2,0,100);ST.stress=clamp(ST.stress-3,0,100);advanceMinutes(10);flash('Caffeine acquired.');},{dis:()=>ST.cash<6});
     EAT('TAKE A FRIEND TO DINNER \u00B7 $95','happy +9 \u00B7 charm +7 \u00B7 stress -8',
-      ()=>{ST.cash-=95;ST.happy=clamp(ST.happy+9,0,100);ST.charm=clamp(ST.charm+7,0,100);const sfx=relax('dinner',8);advanceMinutes(120);toast('Good food, good company.'+sfx);},{dis:()=>ST.cash<95});
+      ()=>{ST.cash-=95;ST.happy=clamp(ST.happy+9,0,100);ST.charm=clamp(ST.charm+7,0,100);const sfx=relax('dinner',8);advanceMinutes(120);flash('Good food, good company.'+sfx);},{dis:()=>ST.cash<95});
   } else if(kind==='art'){
     descEl.textContent='Canvas and calm. Create something tonight.';
     A(ST.daily.art?'\u2713 SKETCHED TODAY':'SKETCH THE HALLS \u00B7 $20','+10 ART XP \u00B7 happy +5',
-      ()=>{ST.cash-=20;ST.daily.art=true;const g=grantXp('art',10);ST.happy=clamp(ST.happy+5,0,100);advanceMinutes(60);toast('+'+g+' ART XP');},
+      ()=>{ST.cash-=20;ST.daily.art=true;const g=grantXp('art',10);ST.happy=clamp(ST.happy+5,0,100);advanceMinutes(60);flash('+'+g+' ART XP');},
       {dis:()=>!!ST.daily.art||ST.cash<20});
     A(ST.owned.print?'\u2713 PRINT OWNED':'BUY A LIMITED PRINT \u00B7 $220','+8 ART XP \u00B7 happy +8 \u00B7 yours forever',
-      ()=>{ST.cash-=220;ST.owned.print=true;const g=grantXp('art',8);ST.happy=clamp(ST.happy+8,0,100);advanceMinutes(45);toast('Signed and numbered. +'+g+' ART XP');},
+      ()=>{ST.cash-=220;ST.owned.print=true;const g=grantXp('art',8);ST.happy=clamp(ST.happy+8,0,100);advanceMinutes(45);flash('Signed and numbered. +'+g+' ART XP');},
       {dis:()=>ST.owned.print||ST.cash<220});
   } else if(kind==='shop'){
     descEl.textContent='Retail therapy. Try to resist \u2014 or pick up a shift out back: cash today, no interview.';
     GIG('\uD83D\uDCE6 STOCK THE SHELVES \u00B7 2H','the stockroom');
     A(ST.owned.suit?'\u2713 SUIT OWNED':'BUY A SUIT \u00B7 $260','charm +8 \u00B7 yours forever',
-      ()=>{ST.cash-=260;ST.owned.suit=true;ST.charm=clamp(ST.charm+8,0,100);advanceMinutes(60);toast('Looking sharp! CHARM +8');},
+      ()=>{ST.cash-=260;ST.owned.suit=true;ST.charm=clamp(ST.charm+8,0,100);advanceMinutes(60);flash('Looking sharp! CHARM +8');},
       {dis:()=>ST.owned.suit||ST.cash<260});
     A(ST.owned.painting?'\u2713 PAINTING OWNED':'BUY A PAINTING \u00B7 $140','happy +9 \u00B7 yours forever',
-      ()=>{ST.cash-=140;ST.owned.painting=true;ST.happy=clamp(ST.happy+9,0,100);advanceMinutes(30);toast('It will look great at home.');},
+      ()=>{ST.cash-=140;ST.owned.painting=true;ST.happy=clamp(ST.happy+9,0,100);advanceMinutes(30);flash('It will look great at home.');},
       {dis:()=>ST.owned.painting||ST.cash<140});
     A(ST.owned.laptop?'\u2713 LAPTOP OWNED':'BUY A LAPTOP \u00B7 $1,200','+15 IT XP \u00B7 happy +4 \u00B7 yours forever',
-      ()=>{ST.cash-=1200;ST.owned.laptop=true;const g=grantXp('prog',15);ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(60);toast('New laptop. +'+g+' PROGRAMMING XP');},
+      ()=>{ST.cash-=1200;ST.owned.laptop=true;const g=grantXp('prog',15);ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(60);flash('New laptop. +'+g+' PROGRAMMING XP');},
       {dis:()=>ST.owned.laptop||ST.cash<1200});
     A(ST.owned.sneakers?'\u2713 SNEAKERS OWNED':'BUY SNEAKERS \u00B7 $150','fitness +5 \u00B7 charm +3 \u00B7 happy +4',
-      ()=>{ST.cash-=150;ST.owned.sneakers=true;const g=grantXp('fit',5);ST.charm=clamp(ST.charm+3,0,100);ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(45);toast('Fresh kicks. +'+g+' FITNESS XP');},
+      ()=>{ST.cash-=150;ST.owned.sneakers=true;const g=grantXp('fit',5);ST.charm=clamp(ST.charm+3,0,100);ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(45);flash('Fresh kicks. +'+g+' FITNESS XP');},
       {dis:()=>ST.owned.sneakers||ST.cash<150});
   } else if(kind==='game'){
     descEl.textContent='Fictional titles, fictional prices \u2014 no real purchase ever takes place. Prices drift like stocks; hover a title for original box art.';
@@ -6162,27 +6168,27 @@ function openAction(b){
   } else if(kind==='rest'){
     descEl.textContent='A soft bed and room service.';
     if(ST.cash<60) A('PUBLIC SHELTER \u00B7 FREE','a cot for the night \u00B7 health +3 \u00B7 stress -10 \u00B7 happy -6 \u00B7 sleep to 8AM',
-      ()=>{ST.health=clamp(ST.health+3,0,100);ST.stress=clamp(ST.stress-10,0,100);ST.happy=clamp(ST.happy-6,0,100);sleepUntilMorning();toast('You survived the night. Keep moving.');});
+      ()=>{ST.health=clamp(ST.health+3,0,100);ST.stress=clamp(ST.stress-10,0,100);ST.happy=clamp(ST.happy-6,0,100);sleepUntilMorning();flash('You survived the night. Keep moving.');});
     A('TAKE A ROOM \u00B7 $60','health +8 \u00B7 happy +5 \u00B7 6 hours',
-      ()=>{ST.cash-=60;ST.health=clamp(ST.health+8,0,100);ST.happy=clamp(ST.happy+5,0,100);advanceMinutes(360);toast('Well rested.');},{dis:()=>ST.cash<60});
+      ()=>{ST.cash-=60;ST.health=clamp(ST.health+8,0,100);ST.happy=clamp(ST.happy+5,0,100);advanceMinutes(360);flash('Well rested.');},{dis:()=>ST.cash<60});
     A('BOOK THE SUITE \u00B7 $180','health +15 \u00B7 happy +10 \u00B7 stress -15 \u00B7 8 hours',
-      ()=>{ST.cash-=180;ST.health=clamp(ST.health+15,0,100);ST.happy=clamp(ST.happy+10,0,100);const sfx=relax('suite',15);advanceMinutes(480);toast('Room service and silence.'+sfx);},{dis:()=>ST.cash<180});
+      ()=>{ST.cash-=180;ST.health=clamp(ST.health+15,0,100);ST.happy=clamp(ST.happy+10,0,100);const sfx=relax('suite',15);advanceMinutes(480);flash('Room service and silence.'+sfx);},{dis:()=>ST.cash<180});
   } else if(kind==='social'){
     descEl.textContent=ateHere
       ? 'You have already had a drink here. Walk on before you order another round.'
       : 'Faces everywhere. Say hello to somebody. One round of drinks per visit.';
     A(ST.daily.mingle?'\u2713 MINGLED TODAY':'MINGLE','happy +7 \u00B7 charm +2 \u00B7 once a day',
-      ()=>{ST.daily.mingle=true;ST.happy=clamp(ST.happy+7,0,100);ST.charm=clamp(ST.charm+2,0,100);advanceMinutes(30);toast('You made a friend.');},
+      ()=>{ST.daily.mingle=true;ST.happy=clamp(ST.happy+7,0,100);ST.charm=clamp(ST.charm+2,0,100);advanceMinutes(30);flash('You made a friend.');},
       {dis:()=>!!ST.daily.mingle});
     EAT('BUY A ROUND OF DRINKS \u00B7 $120','charm +9 \u00B7 happy +8 \u00B7 stress -6',
-      ()=>{ST.cash-=120;ST.charm=clamp(ST.charm+9,0,100);ST.happy=clamp(ST.happy+8,0,100);const sfx=relax('drinks',6);advanceMinutes(120);toast('Everybody loves you tonight.'+sfx);},{dis:()=>ST.cash<120});
+      ()=>{ST.cash-=120;ST.charm=clamp(ST.charm+9,0,100);ST.happy=clamp(ST.happy+8,0,100);const sfx=relax('drinks',6);advanceMinutes(120);flash('Everybody loves you tonight.'+sfx);},{dis:()=>ST.cash<120});
   } else if(kind==='museum'){
     descEl.textContent='History under glass.';
     A(ST.daily.museum?'\u2713 VISITED TODAY':'ADMIT ONE \u00B7 $20','happy +6 \u00B7 +5 ART XP',
-      ()=>{ST.cash-=20;ST.daily.museum=true;ST.happy=clamp(ST.happy+6,0,100);const g=grantXp('art',5);advanceMinutes(90);toast('Inspiring. +'+g+' ART XP');},
+      ()=>{ST.cash-=20;ST.daily.museum=true;ST.happy=clamp(ST.happy+6,0,100);const g=grantXp('art',5);advanceMinutes(90);flash('Inspiring. +'+g+' ART XP');},
       {dis:()=>!!ST.daily.museum||ST.cash<20});
     A(ST.daily.museumShop?'\u2713 SHOPPED TODAY':'MUSEUM SHOP \u00B7 $45','art +4 \u00B7 happy +3',
-      ()=>{ST.cash-=45;ST.daily.museumShop=true;const g=grantXp('art',4);ST.happy=clamp(ST.happy+3,0,100);advanceMinutes(25);toast('Postcards and prints. +'+g+' ART XP');},
+      ()=>{ST.cash-=45;ST.daily.museumShop=true;const g=grantXp('art',4);ST.happy=clamp(ST.happy+3,0,100);advanceMinutes(25);flash('Postcards and prints. +'+g+' ART XP');},
       {dis:()=>!!ST.daily.museumShop||ST.cash<45});
   } else if(kind==='casino'){
     descEl.textContent='The house always whispers your name. Honest odds, rigged house edge.';
@@ -6193,10 +6199,10 @@ function openAction(b){
           if(Math.random()<chance){
             const win=Math.round(stake*mult); ST.cash+=win;
             ST.happy=clamp(ST.happy+7,0,100); ST.stress=clamp(ST.stress+4,0,100);
-            toast('\uD83C\uDFB0 WINNER! +'+fmt$(win-stake)+' net');
+            flash('\uD83C\uDFB0 WINNER! +'+fmt$(win-stake)+' net');
           } else {
             ST.happy=clamp(ST.happy-5,0,100); ST.stress=clamp(ST.stress+7,0,100);
-            toast('\uD83C\uDFB0 The house takes '+fmt$(stake)+'.');
+            flash('\uD83C\uDFB0 The house takes '+fmt$(stake)+'.');
           }
         },
         {dis:()=>ST.cash<stake});
@@ -6207,8 +6213,8 @@ function openAction(b){
     gamble(5000,0.42,2.40,'BET $5,000');
     A('PLAY THE SLOTS \u00B7 $20','12% jackpot: pays 8x',
       ()=>{ST.cash-=20;advanceMinutes(10);
-        if(Math.random()<0.12){ST.cash+=160;ST.happy=clamp(ST.happy+9,0,100);toast('\uD83C\uDFB0 JACKPOT! +$140');}
-        else {ST.stress=clamp(ST.stress+2,0,100);toast('The reels stop on nothing.');}},
+        if(Math.random()<0.12){ST.cash+=160;ST.happy=clamp(ST.happy+9,0,100);flash('\uD83C\uDFB0 JACKPOT! +$140');}
+        else {ST.stress=clamp(ST.stress+2,0,100);flash('The reels stop on nothing.');}},
       {dis:()=>ST.cash<20});
     A('ALL IN \u00B7 everything you carry','40% chance to walk out with 2.5x',
       ()=>{
@@ -6217,10 +6223,10 @@ function openAction(b){
         if(Math.random()<0.40){
           const win=Math.round(stake*2.5); ST.cash+=win;
           ST.happy=clamp(ST.happy+12,0,100); ST.stress=clamp(ST.stress+12,0,100);
-          toast('\uD83D\uDD25 ALL IN AND WIN! +'+fmt$(win-stake));
+          flash('\uD83D\uDD25 ALL IN AND WIN! +'+fmt$(win-stake));
         } else {
           ST.happy=clamp(ST.happy-10,0,100); ST.stress=clamp(ST.stress+15,0,100);
-          toast('\uD83D\uDCB8 You lost it all. '+fmt$(stake)+' gone.');
+          flash('\uD83D\uDCB8 You lost it all. '+fmt$(stake)+' gone.');
         }
       },
       {dis:()=>ST.cash<50, cls:'danger'});
@@ -6229,7 +6235,7 @@ function openAction(b){
     A('CATCH A TRAIN \u00B7 $15','teleport to a random place in the city',
       ()=>{ST.cash-=15;teleport();},{dis:()=>ST.cash<15});
     A('TAKE A CAB \u00B7 $60','jump across town and save the walking time',
-      ()=>{ST.cash-=60;teleport();toast('The cabbie knows every shortcut.');},{dis:()=>ST.cash<60});
+      ()=>{ST.cash-=60;teleport();flash('The cabbie knows every shortcut.');},{dis:()=>ST.cash<60});
   } else if(kind==='home'){
     descEl.textContent='Your own bed. The city can wait until morning.';
     A('SLEEP UNTIL MORNING','health +15 \u00B7 stress -30 \u00B7 next day 8AM',()=>sleepUntilMorning());
@@ -6344,7 +6350,7 @@ function showCraftCard(ic, label, head, body, fx){
 function makeWork(id){
   const w=workOf(id); if(!w) return;
   const lv=lvlOf((ST.skills||{})[id]||0);
-  if(lv<WORK_LV){ toast('LV'+WORK_LV+' in '+skillName(id)+' first \u2014 a work is what mastery buys.'); return; }
+  if(lv<WORK_LV){ flash('LV'+WORK_LV+' in '+skillName(id)+' first \u2014 a work is what mastery buys.'); return; }
   if(ST.works&&ST.works[id]) return;
   ST.works=ST.works||{};
   ST.works[id]=ST.day||0;
@@ -6836,8 +6842,8 @@ function marketDayShift(){
     ST.sick.days--;
     ST.health=clamp(ST.health-4,0,100);
     ST.happy=clamp(ST.happy-3,0,100);
-    if(ST.sick.days<=0){ ST.sick=null; toast('\uD83D\uDC9A You finally feel like yourself again.'); }
-    else toast('\uD83E\uDD12 Still down with '+ST.sick.name.toLowerCase()+' \u2014 '+ST.sick.days+' day'+(ST.sick.days>1?'s':'')+' to go.');
+    if(ST.sick.days<=0){ ST.sick=null; flash('\uD83D\uDC9A You finally feel like yourself again.'); }
+    else flash('\uD83E\uDD12 Still down with '+ST.sick.name.toLowerCase()+' \u2014 '+ST.sick.days+' day'+(ST.sick.days>1?'s':'')+' to go.');
   }
   STOCKS.forEach(s=>{
     const lastClose=s.hist[s.hist.length-1].c;             /* yesterday's close becomes the new open */
@@ -7067,29 +7073,29 @@ document.getElementById('kModal').addEventListener('click',e=>{
   if(b.dataset.kbuy){
     if(isStock){
       const s=KITEM, q=Math.min(kQtyVal('buy'), Math.floor(ST.cash/s.v));
-      if(q<1){ toast('Not enough cash for one share.'); return; }
+      if(q<1){ flash('Not enough cash for one share.'); return; }
       ST.cash-=s.v*q;
       const h=ST.stocks[s.n]||(ST.stocks[s.n]={qty:0,cost:0});
       h.cost=(h.cost*h.qty+s.v*q)/(h.qty+q); h.qty+=q;
-      toast(`Bought ${q} ${s.n} @ $${s.v.toFixed(2)} \u2014 $${(s.v*q).toFixed(2)}`);
+      flash(`Bought ${q} ${s.n} @ $${s.v.toFixed(2)} \u2014 $${(s.v*q).toFixed(2)}`);
     }else{
       const r=KITEM;
       if(ST.realty[r.n]||ST.cash<r.v) return;
       ST.cash-=r.v; ST.realty[r.n]={cost:r.v};
-      toast(`Bought ${r.n} @ ${fmt$(Math.round(r.v))}`);
+      flash(`Bought ${r.n} @ ${fmt$(Math.round(r.v))}`);
     }
   } else if(b.dataset.ksell){
     if(isStock){
       const s=KITEM, h=ST.stocks[s.n]; if(!h) return;
       const q=Math.min(kQtyVal('sell'), h.qty);
       h.qty-=q; ST.cash+=s.v*q;
-      toast(`Sold ${q} ${s.n} @ $${s.v.toFixed(2)} \u2014 $${(s.v*q).toFixed(2)}`);
+      flash(`Sold ${q} ${s.n} @ $${s.v.toFixed(2)} \u2014 $${(s.v*q).toFixed(2)}`);
       if(!h.qty) delete ST.stocks[s.n];
     }else{
       const r=KITEM;
       if(!ST.realty[r.n]) return;
       ST.cash+=r.v; delete ST.realty[r.n];
-      toast(`Sold ${r.n} @ ${fmt$(Math.round(r.v))}`);
+      flash(`Sold ${r.n} @ ${fmt$(Math.round(r.v))}`);
     }
   } else return;
   updatePanel(); renderMkt(); renderRealty();
@@ -7181,7 +7187,7 @@ function showPaper(head,body){
   document.getElementById('npHead').textContent=head;
   document.getElementById('npBody').textContent=body;
   const np=document.getElementById('newsPanel');
-  clearToasts();                 /* the paper owns the top of the screen while it is up */
+  clearToasts('quick');          /* the paper owns the stage, but never eats a summary */
   np.classList.add('show');
   clearTimeout(newsT); newsT=setTimeout(()=>np.classList.remove('show'), 5000);
 }
@@ -7330,6 +7336,7 @@ function startGame(opts){
     return;
   }
   startGame.confirmFresh=false;
+  clearToasts();                        /* a new life inherits nothing from the last one */
   const inp=document.getElementById('nameInput');
   const typed=(opts? opts.name : inp.value).trim();
   if(!typed){
@@ -7374,15 +7381,15 @@ function startGame(opts){
   updatePanel();
   setMusic(musicOn);                          /* keep whatever the player chose in settings */
   syncJobBeacon();                     /* minute one has a destination, not just a hint card */
-  toast(`Welcome to New York, ${typed}. Spin the disc to walk.`);
+  flash(`Welcome to New York, ${typed}. Spin the disc to walk.`);
   /* first visit? the tutorial card explains the loop in three beats */
   let tutSeen=null; try{ tutSeen=STORE.getItem(TUT_KEY); }catch(e){}
   if(!tutSeen) setTimeout(showTutorial, 1100);
   /* a brand-new walker gets three gentle hints; returning lives skip the speech */
   if(!opts){
-    setTimeout(()=>toast('\uD83C\uDFB2 Tap the wheel (or SPACE) to walk the city.'),4200);
-    setTimeout(()=>toast('\uD83D\uDCBC Walk into offices to find work \u2014 cash buys everything else.'),9000);
-    setTimeout(()=>toast('\uD83C\uDFC6 Your LIFE GOALS live in the panel, top right. First stop: a job.'),14500);
+    setTimeout(()=>flash('\uD83C\uDFB2 Tap the wheel (or SPACE) to walk the city.'),4200);
+    setTimeout(()=>flash('\uD83D\uDCBC Walk into offices to find work \u2014 cash buys everything else.'),9000);
+    setTimeout(()=>flash('\uD83C\uDFC6 Your LIFE GOALS live in the panel, top right. First stop: a job.'),14500);
   }
 }
 
@@ -7605,24 +7612,58 @@ function spinWheelFor(svgId){
   });
 }
 function spinWheel(){ return spinWheelFor('wheelSvg'); }
-/* messages stack down from the top of the screen: a new one never lands on top of an old one */
-function toast(msg){
+/* ===================== messages: two kinds, two lifetimes =====================
+   A toast used to live 2.6 seconds flat. That is right for "Caffeine acquired."
+   and wrong for anything a player may need to read twice: a month settlement, a
+   written warning, a royalty cheque, a goal landing, a raise. Those were being
+   stolen before the eye reached the second number.
+     sticky (default, toast)  - stays on screen until the player taps it.
+     quick  (flash)           - ambience and one-word acknowledgements, fades itself.
+   The newspaper and the luck cards keep their own timers: news is weather, and a
+   message you did not ask for should not demand a click. */
+const TOAST_STICK_MAX = 4;              /* a wall of messages is worse than a lost one */
+const TOAST_QUICK_MAX = 2;
+function dropToast(el){
+  if(!el || el.dataset.out) return;
+  el.dataset.out='1';
+  el.classList.remove('in');
+  setTimeout(()=>{ if(el.parentNode) el.remove(); }, 220);
+}
+function toast(msg, opt){
+  const wrap=document.getElementById('toastWrap');
+  if(!wrap) return null;
+  const quick=!!(opt&&opt.auto);
+  const el=document.createElement('div');
+  el.className='tmsg '+(quick?'quick':'stick');
+  if(quick){
+    el.textContent=msg;
+  }else{
+    const t=document.createElement('span'); t.className='tm-t'; t.textContent=msg;
+    const x=document.createElement('span'); x.className='tm-x'; x.textContent='\u2715';
+    el.appendChild(t); el.appendChild(x);
+    el.title='tap to dismiss';
+    el.addEventListener('click', e=>{ e.stopPropagation(); dropToast(el); });
+  }
+  wrap.appendChild(el);
+  /* newest first-class, oldest makes way - quick notes go before sticky ones */
+  const kids=[...wrap.children];
+  const quicks=kids.filter(k=>k.classList.contains('quick'));
+  if(quicks.length>TOAST_QUICK_MAX) quicks.slice(0, quicks.length-TOAST_QUICK_MAX).forEach(dropToast);
+  const sticks=kids.filter(k=>k.classList.contains('stick'));
+  if(sticks.length>TOAST_STICK_MAX) sticks.slice(0, sticks.length-TOAST_STICK_MAX).forEach(dropToast);
+  requestAnimationFrame(()=>el.classList.add('in'));
+  if(quick) setTimeout(()=>dropToast(el), 2600);
+  return el;
+}
+/* a one-line acknowledgement: fades on its own, never asks for a click */
+function flash(msg){ return toast(msg, {auto:1}); }
+/* the paper used to wipe every message on screen, summaries included: it now
+   only clears the quick ones, so a month settlement survives the news */
+function clearToasts(kind){
   const wrap=document.getElementById('toastWrap');
   if(!wrap) return;
-  const el=document.createElement('div');
-  el.className='tmsg';
-  el.textContent=msg;
-  wrap.appendChild(el);
-  while(wrap.children.length>3) wrap.removeChild(wrap.firstChild);   /* keep the stack short */
-  requestAnimationFrame(()=>el.classList.add('in'));
-  setTimeout(()=>{
-    el.classList.remove('in');
-    setTimeout(()=>{ if(el.parentNode) el.remove(); },340);
-  },2600);
-}
-function clearToasts(){
-  const wrap=document.getElementById('toastWrap');
-  if(wrap) wrap.innerHTML='';
+  if(kind==='quick'){ [...wrap.querySelectorAll('.tmsg.quick')].forEach(e=>e.remove()); return; }
+  wrap.innerHTML='';
 }
 /* walk one block: axis-aligned only - first horizontally, then vertically, never diagonally */
 /* one cell at a time. every cell is the same size, so every step lands on the same beat */
@@ -7782,13 +7823,13 @@ rgSfx.addEventListener('input',()=>{ STG.sfxVol=+rgSfx.value; sfxVol=STG.sfxVol;
 segSpeed.addEventListener('click',e=>{
   const b=e.target.closest('button[data-sp]'); if(!b) return;
   STG.speed=+b.dataset.sp; saveSettings(); applySettings(); syncSetUI();
-  toast('Time speed '+SPEEDS[STG.speed]+'\u00D7');
+  flash('Time speed '+SPEEDS[STG.speed]+'\u00D7');
 });
 
 /* ---- view ---- */
 tgFollow.addEventListener('click',()=>{
   STG.follow=!STG.follow; saveSettings(); applySettings(); syncSetUI();
-  toast(STG.follow?'Camera follows you':'Camera stays where you drag it');
+  flash(STG.follow?'Camera follows you':'Camera stays where you drag it');
   if(STG.follow) centerOn(mePos.x, mePos.y-40);
 });
 tgLabels.addEventListener('click',()=>{ STG.labels=!STG.labels; saveSettings(); applySettings(); syncSetUI(); });
@@ -7797,18 +7838,17 @@ tgNight.addEventListener('click',()=>{ STG.night=!STG.night; saveSettings(); app
 /* manual save button (dock icon): the one way a life gets banked */
 const btnSaveNow=document.getElementById('btnSaveNow');
 btnSaveNow.addEventListener('click',()=>{
-  if(!started){ toast('No life in progress yet \u2014 start one first.'); return; }
+  if(!started){ flash('No life in progress yet \u2014 start one first.'); return; }
   const ok=saveGame(true);
-  toast(ok
-    ? '\uD83D\uDCBE Saved. \u25B6 right here reloads it.'
-    : '\u26A0\uFE0F Save FAILED \u2014 this view blocks browser storage. Open the file directly in Edge.');
+  if(ok) flash('\uD83D\uDCBE Saved. \u25B6 right here reloads it.');
+  else   toast('\u26A0\uFE0F Save FAILED \u2014 this view blocks browser storage. Open the file directly in Edge.');
 });
 
 /* manual load (dock icon): restore the last save right here, no need to leave the page */
 document.getElementById('btnLoad').addEventListener('click',()=>{
   let s=null;
   try{ s=JSON.parse(STORE.getItem(SAVE_KEY)||'null'); }catch(e){}
-  if(!s || !s.ST){ toast('No save found yet \u2014 press \uD83D\uDCBE on the dock first.'); return; }
+  if(!s || !s.ST){ flash('No save found yet \u2014 press \uD83D\uDCBE on the dock first.'); return; }
   closeSet();
   resumeGame();
 });
@@ -7925,7 +7965,7 @@ function drawShareCard(){
 }
 
 function openShare(){
-  if(!started || !ST.day){ toast('Walk a little first \u2014 then your card is worth sharing.'); return; }
+  if(!started || !ST.day){ flash('Walk a little first \u2014 then your card is worth sharing.'); return; }
   drawShareCard();
   shareBlob=null;
   shareModal.classList.add('show');
@@ -7943,19 +7983,19 @@ document.getElementById('scShare').addEventListener('click',async()=>{
       await navigator.share({ files:[file], title:'MY LIFE', text:'My life so far \u2014 play yours at '+SC_URL });
       return;
     }
-    toast('This browser can\u2019t share files \u2014 long-press the card to save it, then post it.');
+    flash('This browser can\u2019t share files \u2014 long-press the card to save it, then post it.');
   }catch(e){ /* user cancelled the share sheet: nothing to do */ }
 });
 
 document.getElementById('scDownload').addEventListener('click',async()=>{
   if(!shareBlob) shareBlob=await new Promise(r=>shareCanvas.toBlob(r,'image/png'));
-  if(!shareBlob){ toast('Could not render the card \u2014 try another browser.'); return; }
+  if(!shareBlob){ flash('Could not render the card \u2014 try another browser.'); return; }
   const a=document.createElement('a');
   a.href=URL.createObjectURL(shareBlob);
   a.download='my-life-'+(lastLife&&lastLife.name?lastLife.name.toLowerCase():'card')+'-day'+(ST.day||0)+'.png';
   a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href),1500);
-  toast('Card saved \u2014 post it anywhere.');
+  flash('Card saved \u2014 post it anywhere.');
 });
 
 document.getElementById('scCopy').addEventListener('click',async()=>{
@@ -7969,11 +8009,11 @@ document.getElementById('scCopy').addEventListener('click',async()=>{
       +'14/14 life goals \u00B7 free life simulator, no install: '+SC_URL
     : 'Day '+(ST.day||0)+' of my New York life in MY LIFE \u2014 net worth '+fmt$(myWorth())+', passive income covers '+freedomPct()+'% of the bills\n'
       +'14 life goals, 4 fortune rungs, one city — free in your browser, no install: '+SC_URL;
-  try{ await navigator.clipboard.writeText(shareText); toast('Story + link copied \u2014 paste it anywhere.'); }
+  try{ await navigator.clipboard.writeText(shareText); flash('Story + link copied \u2014 paste it anywhere.'); }
   catch(e){
     const ta=document.createElement('textarea'); ta.value=shareText; document.body.appendChild(ta);
-    ta.select(); try{ document.execCommand('copy'); toast('Story + link copied \u2014 paste it anywhere.'); }
-    catch(e2){ toast(SC_URL); }
+    ta.select(); try{ document.execCommand('copy'); flash('Story + link copied \u2014 paste it anywhere.'); }
+    catch(e2){ flash(SC_URL); }
     ta.remove();
   }
 });
@@ -8069,6 +8109,7 @@ function resumeGame(){
   let s=null;
   try{ s=JSON.parse(STORE.getItem(SAVE_KEY)||'null'); }catch(e){}
   if(!s || !s.ST) return;
+  clearToasts();                        /* yesterday's receipts do not follow you in */
   const typed=(typeof s.name==='string'&&s.name.trim())?s.name:'Walker';
   const myIdx=Math.max(0,Math.min(ROSTER.length-1,s.selIdx|0));
   const o=ROSTER[myIdx];
