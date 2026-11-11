@@ -4376,10 +4376,31 @@ function buyGame(g){
   advanceMinutes(30);
   toast('\uD83C\uDFAE Bought a fictional copy of '+g.n+' for '+fmt$(g.v)+'. HAPPY +6. No money left this game.');
 }
+/* ---- comfort has a tail, and comfort wears off ----
+   A single -35 from an hour of meditation made the whole STRESS system optional:
+   sit still every morning and the portfolio never touched you (measured: STRESS
+   pinned at 16 for a player who was broke AND all-in). So comfort now does two
+   things instead of one - it softens the next two days (calmDays), and it fades
+   when you repeat the same comfort inside three days. Both are how it actually
+   works: one good night carries you a little, the third night at the same cinema
+   carries you nowhere. */
+function relax(kind, amount){
+  const s=ST;
+  const last=s.lastRelax;
+  const gap=last ? (s.day-last.day) : 99;
+  const faded = !!last && last.kind===kind && gap>=0 && gap<=2;
+  const amt=Math.max(1, Math.round(faded ? amount*0.45 : amount));
+  s.stress=clamp(s.stress-amt,0,100);
+  s.lastRelax={kind, day:s.day||0};
+  s.calmDays=2;
+  /* returned so the caller can append it to its own toast - the player must be
+     told why the second visit to the same place did so little */
+  return faded ? ' \u00B7 same comfort again so soon \u2014 half the effect' : '';
+}
 function playGame(){
   if(playHere) return;
   ST.happy=clamp(ST.happy+5,0,100);
-  ST.stress=clamp(ST.stress-2,0,100);
+  relax('arcade',2);
   playHere=true;
   advanceMinutes(120);
   toast('\uD83D\uDD79 Two hours well spent. HAPPY +5, STRESS -2. One session per visit.');
@@ -4789,7 +4810,14 @@ function moodTick(){
   const s=ST;
   const d={health:0, happy:0, stress:0};
   const why={health:[], happy:[], stress:[]};
-  const push=(k,label,val)=>{ if(!val) return; d[k]+=val; why[k].push({label, val}); };
+  const push=(k,label,val)=>{
+    if(!val) return;
+    /* The two days after a real break: whatever sits on your chest still sits
+       there, it just weighs less. Without this the money spent on an evening out
+       was eaten by the next morning's arithmetic and relaxing became a bad buy. */
+    if(k==='stress' && val>0 && (s.calmDays||0)>0) val=val*0.55;
+    d[k]+=val; why[k].push({label, val});
+  };
 
   const before={health:s.health, happy:s.happy, stress:s.stress};
 
@@ -4955,6 +4983,7 @@ function moodTick(){
       s.stress=Math.min(fl, s.stress+add);
     }
   }
+  if((s.calmDays||0)>0) s.calmDays--;   /* the tail shortens, it does not stack */
   /* a heavy head eats the good days, on top of everything else */
   if(s.stress>=70){
     const bite=Math.round((s.stress-65)/7);
@@ -5627,6 +5656,7 @@ function sleepUntilMorning(){
   ST.health=clamp(ST.health+(rough?2:5),0,100);
   ST.happy=clamp(ST.happy+(rough?1:4),0,100);
   ST.stress=clamp(ST.stress-(rough?14:26),0,100);
+  ST.calmDays=2;                                  /* a real night carries into tomorrow */
   ST.workStreak=0;                                /* the streak breaks, the body forgives */
   toast(rough ? 'You lay awake most of the night — STRESS is too high to sleep it off.'
               : 'A proper night. A new day begins.');
@@ -5752,10 +5782,13 @@ function openAction(b){
   } else if(kind==='church'){
     descEl.textContent='Quiet candlelight. Lay your worries down.';
     A(ST.daily.pray?'\u2713 PRAYED TODAY':'PRAY','stress -20 \u00B7 happy +8 \u00B7 once a day',
-      ()=>{ST.daily.pray=true;ST.stress=clamp(ST.stress-20,0,100);ST.happy=clamp(ST.happy+8,0,100);advanceMinutes(30);toast('You feel lighter.');},
+      ()=>{ST.daily.pray=true;const sfx=relax('pray',20);ST.happy=clamp(ST.happy+8,0,100);advanceMinutes(30);toast('You feel lighter.'+sfx);},
       {dis:()=>!!ST.daily.pray});
-    A(ST.daily.med?'\u2713 MEDITATED TODAY':'MEDITATE 1 HOUR','stress -35 \u00B7 happy +4 \u00B7 once a day',
-      ()=>{ST.daily.med=true;ST.stress=clamp(ST.stress-35,0,100);ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(60);toast('Deep calm washes over you.');},
+    /* An hour of stillness is the strongest relief in the game, which is exactly
+       why it cannot be -35: that number made STRESS optional (meditate daily and
+       it never left 16 even for a broke, fully-invested player). */
+    A(ST.daily.med?'\u2713 MEDITATED TODAY':'MEDITATE 1 HOUR','stress -22 \u00B7 happy +4 \u00B7 once a day',
+      ()=>{ST.daily.med=true;const sfx=relax('med',22);ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(60);toast('Deep calm washes over you.'+sfx);},
       {dis:()=>!!ST.daily.med});
     A(ST.daily.donate?'\u2713 DONATED TODAY':'DONATE TO THE PLATE \u00B7 $100','happy +10 \u00B7 charm +4',
       ()=>{ST.cash-=100;ST.daily.donate=true;ST.happy=clamp(ST.happy+10,0,100);ST.charm=clamp(ST.charm+4,0,100);advanceMinutes(20);toast('Giving feels good.');},
@@ -5786,9 +5819,9 @@ function openAction(b){
       ? 'You have had your treat here. Walk to another block for a second helping.'
       : 'Lights, camera, popcorn. One show and one snack per visit.';
     SHOW('WATCH A SHOW \u00B7 $30','happy +14 \u00B7 one show per visit',
-      ()=>{ST.cash-=30;ST.happy=clamp(ST.happy+14,0,100);ST.stress=clamp(ST.stress-8,0,100);advanceMinutes(120);toast('That was fun!');},{dis:()=>ST.cash<30});
+      ()=>{ST.cash-=30;ST.happy=clamp(ST.happy+14,0,100);const sfx=relax('cinema',8);advanceMinutes(120);toast('That was fun!'+sfx);},{dis:()=>ST.cash<30});
     SHOW('VIP SEATS \u00B7 $75','happy +18 \u00B7 stress -14',
-      ()=>{ST.cash-=75;ST.happy=clamp(ST.happy+18,0,100);ST.stress=clamp(ST.stress-14,0,100);advanceMinutes(130);toast('Front row. Worth it.');},{dis:()=>ST.cash<75});
+      ()=>{ST.cash-=75;ST.happy=clamp(ST.happy+18,0,100);const sfx=relax('cinema',14);advanceMinutes(130);toast('Front row. Worth it.'+sfx);},{dis:()=>ST.cash<75});
     EAT('POPCORN COMBO \u00B7 $14','happy +4 \u00B7 one snack per visit',
       ()=>{ST.cash-=14;ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(15);toast('Extra butter.');},{dis:()=>ST.cash<14});
   } else if(kind==='food'){
@@ -5803,7 +5836,7 @@ function openAction(b){
     EAT('COFFEE TO GO \u00B7 $6','happy +2 \u00B7 stress -3',
       ()=>{ST.cash-=6;ST.happy=clamp(ST.happy+2,0,100);ST.stress=clamp(ST.stress-3,0,100);advanceMinutes(10);toast('Caffeine acquired.');},{dis:()=>ST.cash<6});
     EAT('TAKE A FRIEND TO DINNER \u00B7 $95','happy +9 \u00B7 charm +7 \u00B7 stress -8',
-      ()=>{ST.cash-=95;ST.happy=clamp(ST.happy+9,0,100);ST.charm=clamp(ST.charm+7,0,100);ST.stress=clamp(ST.stress-8,0,100);advanceMinutes(120);toast('Good food, good company.');},{dis:()=>ST.cash<95});
+      ()=>{ST.cash-=95;ST.happy=clamp(ST.happy+9,0,100);ST.charm=clamp(ST.charm+7,0,100);const sfx=relax('dinner',8);advanceMinutes(120);toast('Good food, good company.'+sfx);},{dis:()=>ST.cash<95});
   } else if(kind==='art'){
     descEl.textContent='Canvas and calm. Create something tonight.';
     A(ST.daily.art?'\u2713 SKETCHED TODAY':'SKETCH THE HALLS \u00B7 $20','+10 ART XP \u00B7 happy +5',
@@ -5883,7 +5916,7 @@ function openAction(b){
     A('TAKE A ROOM \u00B7 $60','health +8 \u00B7 happy +5 \u00B7 6 hours',
       ()=>{ST.cash-=60;ST.health=clamp(ST.health+8,0,100);ST.happy=clamp(ST.happy+5,0,100);advanceMinutes(360);toast('Well rested.');},{dis:()=>ST.cash<60});
     A('BOOK THE SUITE \u00B7 $180','health +15 \u00B7 happy +10 \u00B7 stress -15 \u00B7 8 hours',
-      ()=>{ST.cash-=180;ST.health=clamp(ST.health+15,0,100);ST.happy=clamp(ST.happy+10,0,100);ST.stress=clamp(ST.stress-15,0,100);advanceMinutes(480);toast('Room service and silence.');},{dis:()=>ST.cash<180});
+      ()=>{ST.cash-=180;ST.health=clamp(ST.health+15,0,100);ST.happy=clamp(ST.happy+10,0,100);const sfx=relax('suite',15);advanceMinutes(480);toast('Room service and silence.'+sfx);},{dis:()=>ST.cash<180});
   } else if(kind==='social'){
     descEl.textContent=ateHere
       ? 'You have already had a drink here. Walk on before you order another round.'
@@ -5892,7 +5925,7 @@ function openAction(b){
       ()=>{ST.daily.mingle=true;ST.happy=clamp(ST.happy+7,0,100);ST.charm=clamp(ST.charm+2,0,100);advanceMinutes(30);toast('You made a friend.');},
       {dis:()=>!!ST.daily.mingle});
     EAT('BUY A ROUND OF DRINKS \u00B7 $120','charm +9 \u00B7 happy +8 \u00B7 stress -6',
-      ()=>{ST.cash-=120;ST.charm=clamp(ST.charm+9,0,100);ST.happy=clamp(ST.happy+8,0,100);ST.stress=clamp(ST.stress-6,0,100);advanceMinutes(120);toast('Everybody loves you tonight.');},{dis:()=>ST.cash<120});
+      ()=>{ST.cash-=120;ST.charm=clamp(ST.charm+9,0,100);ST.happy=clamp(ST.happy+8,0,100);const sfx=relax('drinks',6);advanceMinutes(120);toast('Everybody loves you tonight.'+sfx);},{dis:()=>ST.cash<120});
   } else if(kind==='museum'){
     descEl.textContent='History under glass.';
     A(ST.daily.museum?'\u2713 VISITED TODAY':'ADMIT ONE \u00B7 $20','happy +6 \u00B7 +5 ART XP',
