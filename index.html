@@ -871,6 +871,7 @@
   /* ---------- goals popover ---------- */
   #goalsPanel{
     position:fixed;right:16px;top:320px;width:250px;z-index:34;display:none;
+    max-height:calc(100vh - 344px);overflow-y:auto;      /* 18 rungs now: never taller than the screen */
     background:linear-gradient(180deg,rgba(26,23,20,.94),rgba(16,13,10,.97));
     border:1.5px solid rgba(216,180,112,.42);border-radius:18px;padding:12px 14px 10px;
     box-shadow:0 14px 34px rgba(0,0,0,.5);backdrop-filter:blur(14px);
@@ -885,7 +886,12 @@
     font-family:Georgia,serif;color:#d8cba8}
   #goalsList .gl.done{color:#ffe9b0}
   #goalsList .gl.off{color:#7d7563}
-  #goalsList .gl .gp{margin-left:auto;color:#a8854a;font-size:11px}
+  #goalsList .gl .gp{margin-left:auto;color:#a8854a;font-size:11px;white-space:nowrap}
+  /* the fortune ladder sits under the life ladder: same list, a harder mountain range */
+  #goalsList .gl-h{display:flex;align-items:center;gap:6px;margin:11px 0 3px;padding-top:9px;
+    border-top:1px solid rgba(216,180,112,.28);font-family:Georgia,serif;font-size:10.5px;
+    letter-spacing:1.6px;color:#c9a05c}
+  #goalsList .gl-h b{flex:1;font-weight:400;color:#a8854a}
 
   /* ---------- the city board ---------- */
   #rankPanel{
@@ -1273,7 +1279,7 @@
   <div class="row" id="rowPerf" title="Your standing at work" style="display:none"><span class="ic">&#128202;</span><span class="lab">WORK</span><span class="val" id="vPerf">&mdash;</span></div>
   <div class="row" id="rowSkills"><span class="ic">&#129504;</span><span class="lab">SKILLS</span><span class="val" id="vSkills">LV 1</span></div>
   <div class="row" id="rowFree" title="Passive income vs monthly bills"><span class="ic">&#127793;</span><span class="lab">FREE</span><span class="val" id="vFree">0%</span></div>
-  <div class="row" id="rowGoals" title="Your life goals" style="cursor:pointer"><span class="ic">&#127942;</span><span class="lab">GOALS</span><span class="val" id="vGoals">0 / 14</span></div>
+  <div class="row" id="rowGoals" title="Your life goals" style="cursor:pointer"><span class="ic">&#127942;</span><span class="lab">GOALS</span><span class="val" id="vGoals">0 / 18</span></div>
   <div class="row" id="rowRank" title="City rankings &mdash; net worth of everyone on this map" style="cursor:pointer;display:none"><span class="ic">&#128202;</span><span class="lab">RANK</span><span class="val" id="vRank">&mdash;</span></div>
   <div class="sub" id="moodRow" title="Tap to see why the numbers moved">
     <div class="chip">AGE<b id="cAge">18</b></div>
@@ -1435,10 +1441,11 @@
     <div id="gpNote">FAN-MADE PARODY &#183; ORIGINAL PROGRAMMATIC ART &#183; NO OFFICIAL LOGOS, SCREENS OR CHARACTERS<br>
     NOT AFFILIATED WITH OR ENDORSED BY ANY PUBLISHER &#183; NO REAL PURCHASE TAKES PLACE IN THIS GAME</div></div>
 </div>
-<!-- the finish line: all 14 goals banked. A life needs a closing card, not just a slot in a list. -->
+<!-- the finish line: the 14 LIFE goals banked (the fortune rungs above them stay open).
+     A life needs a closing card, not just a slot in a list. -->
 <div id="lifeEnd" role="dialog" aria-modal="true" aria-labelledby="leTitle">
   <div class="le-card">
-    <div class="le-kicker">LIFE GOALS &middot; 14 / 14</div>
+    <div class="le-kicker" id="leKicker">LIFE GOALS &middot; 14 / 14</div>
     <h2 id="leTitle">A LIFE, LIVED</h2>
     <div class="le-name" id="leName">JOHN &middot; AGE 24</div>
     <div class="le-line" id="leLine"></div>
@@ -1503,7 +1510,7 @@
     <a href="/how-to-play/">HOW TO PLAY</a>
     <a href="/rich-dad-rules/">RICH DAD RULES</a>
     <a href="/new-york-map/">NEW YORK MAP</a>
-    <a href="/goals/">14 LIFE GOALS</a>
+    <a href="/goals/">18 LIFE GOALS</a>
   </div>
   <div class="cover-legal">
     A non-commercial game with original art. Not affiliated with, endorsed or sponsored by any brand, publisher or rights holder.
@@ -5177,6 +5184,25 @@ const ST={age:AGE_START, cash:CASH_START, bank:0, happy:50, charm:20, health:100
 /* ===================== life goals ===================== */
 const CHAMP_MONTHS = 3;              /* months at #1 before the crown is called a dynasty */
 const RANK_EVERY   = 7;              /* the board is printed once a week */
+/* ---- the fortune ladder ----
+   Four money mountains on top of the life ladder: $1M, $10M, $100M, $1B net worth.
+   They are a SECOND ACT on purpose. The closing card ("A LIFE, LIVED") still fires on
+   the 14 life goals, because freedom is a life you can live, not a number you can print.
+   The fortune rungs are what the player climbs after the city has already said well done. */
+const fmtM = v => v>=1e9 ? '$'+(v/1e9).toFixed(0)+'B'
+              : v>=1e6 ? '$'+(v/1e6).toFixed(0)+'M'
+              : fmt$(v);
+const FORTUNE=[
+  {id:'worth1m',   t:1e6, label:'Become a MILLIONAIRE'},
+  {id:'worth10m',  t:1e7, label:'Become a TEN-MILLIONAIRE'},
+  {id:'worth100m', t:1e8, label:'Become a HUNDRED-MILLIONAIRE'},
+  {id:'worth1b',   t:1e9, label:'Become a BILLIONAIRE'}
+].map(g=>Object.assign({}, g, {
+  tier:'fortune',
+  check:s=>myWorth()>=g.t,
+  /* the progress cell carries the target, so the label stays short and never wraps ugly */
+  prog:s=>{ const w=myWorth(); return (w<0?'-':'')+fmtM(Math.abs(w))+' / '+fmtM(g.t); }
+}));
 /* a ladder of milestones: the HUD shows the count, the popover shows the climb */
 const GOALS=[
   {id:'job',       label:'Land your first job (E quadrant)',            check:s=>!!s.employed},
@@ -5197,10 +5223,15 @@ const GOALS=[
   {id:'rep',       label:'Earn a reputation pay rise',                   check:s=>(s.rep||0)>0},
   {id:'review',    label:'Post a perfect month at work (85+)',            check:s=>!!(s.flags&&s.flags.topReview)},
   {id:'freedom',   label:'FINANCIAL FREEDOM \u00B7 passive income covers every bill',
-                   check:s=>freedomPct()>=100, prog:s=>freedomPct()+'% / 100%'}
+                   check:s=>freedomPct()>=100, prog:s=>freedomPct()+'% / 100%'},
+  /* ---- the fortune ladder: same list, a harder mountain range (see FORTUNE above) ---- */
+  ...FORTUNE
 ];
+const LIFE_GOALS    = GOALS.filter(g=>g.tier!=='fortune');
+const FORTUNE_GOALS = GOALS.filter(g=>g.tier==='fortune');
 let goalsOpen=false;
 function goalsDoneCount(){ return GOALS.reduce((n,g)=>n+(ST.goals&&ST.goals[g.id]?1:0),0); }
+function lifeDoneCount(){ return LIFE_GOALS.reduce((n,g)=>n+(ST.goals&&ST.goals[g.id]?1:0),0); }
 function checkGoals(){
   let dirty=false;
   for(const g of GOALS){
@@ -5211,11 +5242,19 @@ function checkGoals(){
     }
   }
   /* the last rung has to feel like a summit: one closing card, once per life.
-     Without it the ladder simply ran out and the city kept ticking with no answer. */
-  if(goalsDoneCount()>=GOALS.length && !ST.ended){
+     Without it the ladder simply ran out and the city kept ticking with no answer.
+     It is anchored to the LIFE goals — the fortune rungs are climbed after the card,
+     so a player who never prints a billion still gets an ending. */
+  if(lifeDoneCount()>=LIFE_GOALS.length && !ST.ended){
     ST.ended=ST.day||1;
     try{ saveGame(true); }catch(e){}          /* bank the ending: a reload must not replay it */
     setTimeout(showLifeEnd, 1600);            /* let the final GOAL COMPLETE toast land first */
+  }
+  /* and the mountain above the summit gets one line, once */
+  if(FORTUNE_GOALS.length && !ST.topRung
+     && FORTUNE_GOALS.every(g=>ST.goals&&ST.goals[g.id])){
+    ST.topRung=true; dirty=true;
+    toast('\uD83D\uDCB5 ONE BILLION. There is no rung above this one.');
   }
   return goalsDoneCount();
 }
@@ -5227,6 +5266,8 @@ function showLifeEnd(){
   const el=document.getElementById('lifeEnd');
   if(!el) return;
   const name=(lastLife&&lastLife.name)||'WALKER';
+  const kick=document.getElementById('leKicker');
+  if(kick) kick.textContent='LIFE GOALS \u00B7 '+lifeDoneCount()+' / '+LIFE_GOALS.length;
   const skills=SKILLS.map(k=>lvlOf(ST.skills[k.id]||0));
   const best=Math.max(...skills);
   const skillSum=skills.reduce((a,b)=>a+b,0);
@@ -5260,7 +5301,8 @@ function showLifeEnd(){
 }
 document.getElementById('leKeep').addEventListener('click',()=>{
   document.getElementById('lifeEnd').classList.remove('show');
-  toast('\uD83C\uDFC6 14 / 14 \u2014 the ladder is yours. Keep walking anyway.');
+  toast('\uD83C\uDFC6 '+lifeDoneCount()+' / '+LIFE_GOALS.length
+    +' \u2014 the ladder is yours. Keep walking anyway: there are mountains left.');
 });
 document.getElementById('leNew').addEventListener('click',()=>{
   try{ STORE.removeItem(SAVE_KEY); }catch(e){}
@@ -6973,11 +7015,16 @@ document.getElementById('rowGoals').addEventListener('click',()=>{
   const p=document.getElementById('goalsPanel');
   goalsOpen=!goalsOpen;
   if(goalsOpen){
-    document.getElementById('goalsList').innerHTML=GOALS.map(g=>{
+    const row=g=>{
       const done=ST.goals&&ST.goals[g.id];
       const pr=(!done && g.prog) ? '<span class="gp">'+g.prog(ST)+'</span>' : '';
       return `<div class="gl ${done?'done':'off'}">${done?'\u2705':'\u2B1C'} ${g.label}${pr}</div>`;
-    }).join('');
+    };
+    const fDone=FORTUNE_GOALS.filter(g=>ST.goals&&ST.goals[g.id]).length;
+    document.getElementById('goalsList').innerHTML =
+      LIFE_GOALS.map(row).join('')
+      + '<div class="gl-h">\uD83D\uDCB0 FORTUNE LADDER<b>'+fDone+' / '+FORTUNE_GOALS.length+'</b></div>'
+      + FORTUNE_GOALS.map(row).join('');
     p.classList.add('show');
   } else p.classList.remove('show');
 });
@@ -7542,7 +7589,7 @@ document.getElementById('scCopy').addEventListener('click',async()=>{
       +(ST.day||0)+' days \u00B7 net worth '+fmt$(myWorth())+' \u00B7 bills covered by passive income: '+freedomPct()+'%\n'
       +'14/14 life goals \u00B7 free life simulator, no install: '+SC_URL
     : 'Day '+(ST.day||0)+' of my New York life in MY LIFE \u2014 net worth '+fmt$(myWorth())+', passive income covers '+freedomPct()+'% of the bills\n'
-      +'14 goals, one city, free in your browser, no install: '+SC_URL;
+      +'14 life goals, 4 fortune rungs, one city — free in your browser, no install: '+SC_URL;
   try{ await navigator.clipboard.writeText(shareText); toast('Story + link copied \u2014 paste it anywhere.'); }
   catch(e){
     const ta=document.createElement('textarea'); ta.value=shareText; document.body.appendChild(ta);
