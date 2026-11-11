@@ -7447,11 +7447,12 @@ if(IS_LITE){
 (function(){
   const icon=document.getElementById('hudIcon');
   const btn=document.getElementById('hudMin');
-  const OFF_KEY='mylife.hudoff.v1';
+  /* folding is a session-only choice: the panel ALWAYS boots open when the
+     game (re)loads — the old localStorage persistence kept it hidden across
+     sessions, which read as the game losing its dashboard. */
   const apply=off=>{
     document.body.classList.toggle('hud-off', off);
     icon.title=off?'Bring the panel back':'Show the panel';
-    try{ STORE.setItem(OFF_KEY, off?'1':'0'); }catch(e){}
   };
   window.syncHudFace=()=>{
     const face=document.getElementById('pAvatar');
@@ -7460,7 +7461,9 @@ if(IS_LITE){
   };
   btn.addEventListener('click',()=>{ syncHudFace(); apply(true); });
   icon.addEventListener('click',()=>apply(false));
-  try{ if(STORE.getItem(OFF_KEY)==='1') apply(true); }catch(e){}
+  /* clear the legacy persisted fold so old saves boot open again */
+  try{ STORE.removeItem('mylife.hudoff.v1'); }catch(e){}
+  apply(false);
 })();
 applySettings();
 syncSetUI();
