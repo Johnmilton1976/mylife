@@ -2100,6 +2100,20 @@ function trafficLight(x,y){
 function car(x,y,rot,color){
   put(`<use href="#carShape" transform="translate(${x},${y}) rotate(${rot})" color="${color}"/>`);
 }
+/* shared kerb-parking ledger: parked cars register here, and the route taxis
+   (and any cab that pulls over later) check it before they sit down. Without
+   it the two placement loops knew nothing of each other and stamped cars on
+   top of taxis — both systems park ~134-156 off the centreline, i.e. the
+   SAME kerb lane, only 22px apart. */
+const PARK_SPOTS=[];
+function parkCar(x,y,rot,color){
+  if(PARK_SPOTS.some(s=>(s[0]-x)*(s[0]-x)+(s[1]-y)*(s[1]-y)<230*230)) return;
+  PARK_SPOTS.push([x,y]);
+  car(x,y,rot,color);
+}
+function nearVehicleSpot(x,y,r){
+  return PARK_SPOTS.some(s=>(s[0]-x)*(s[0]-x)+(s[1]-y)*(s[1]-y)<r*r);
+}
 function bench(x,y){
   put(`<g transform="translate(${x},${y})">
     <ellipse cx="0" cy="4" rx="42" ry="10" fill="#000" opacity=".22"/>
@@ -2123,11 +2137,11 @@ SEGS.forEach(sg=>{
     const t=k/steps;
     const x=sg.x1+(sg.x2-sg.x1)*t, y=sg.y1+(sg.y2-sg.y1)*t;
     if(horiz){
-      if(rc()>.42) car(x, y-WALK_HALF+34, 0, rc()>.6?'#e8c33a':(rc()>.5?'#3a5a8a':'#8a3a3a'));
-      if(rc()>.5)  car(x+140, y+WALK_HALF-34, 180, rc()>.6?'#e8c33a':(rc()>.5?'#2f4a3a':'#6a6a72'));
+      if(rc()>.42) parkCar(x, y-WALK_HALF+34, 0, rc()>.6?'#e8c33a':(rc()>.5?'#3a5a8a':'#8a3a3a'));
+      if(rc()>.5)  parkCar(x+140, y+WALK_HALF-34, 180, rc()>.6?'#e8c33a':(rc()>.5?'#2f4a3a':'#6a6a72'));
     } else {
-      if(rc()>.45) car(x-WALK_HALF+34, y, 90, rc()>.6?'#e8c33a':(rc()>.5?'#8a3a3a':'#6a6a72'));
-      if(rc()>.55) car(x+WALK_HALF-34, y+140, 270, rc()>.6?'#e8c33a':(rc()>.5?'#3a5a8a':'#2f4a3a'));
+      if(rc()>.45) parkCar(x-WALK_HALF+34, y, 90, rc()>.6?'#e8c33a':(rc()>.5?'#8a3a3a':'#6a6a72'));
+      if(rc()>.55) parkCar(x+WALK_HALF-34, y+140, 270, rc()>.6?'#e8c33a':(rc()>.5?'#3a5a8a':'#2f4a3a'));
     }
   }
   /* lamps down both kerbs, one every ~430px — a New York block is never dark */
@@ -2902,6 +2916,7 @@ function ensureCabNearby(){
       const x=vert ? p.x+lane : p.x+along;
       const y=vert ? p.y+along : p.y+lane;
       if(spots.some(s=>(s.x-x)*(s.x-x)+(s.y-y)*(s.y-y)<420*420)) continue;  /* no double-parking */
+      if(nearVehicleSpot(x,y,230)) continue;            /* kerb stretch already has a parked car */
       if(IS_LITE){
         const s=cam.scale, hx=(vert?34:78)*s, hy=(vert?78:34)*s;
         const L=(x-cam.x)*s-hx, R=(x-cam.x)*s+hx, T=(y-cam.y)*s-hy, B=(y-cam.y)*s+hy;
@@ -3078,6 +3093,7 @@ PATH.forEach((p,i)=>{
   const ahead=k===2, along=ahead?60:-60, lane=ahead?-134:134;
   const x=vert?p.x+lane:p.x+along, y=vert?p.y+along:p.y+lane;
   if(cabTaken.some(s=>(s[0]-x)*(s[0]-x)+(s[1]-y)*(s[1]-y)<175*175)) return;
+  if(nearVehicleSpot(x,y,230)) return;             /* a parked car owns this kerb stretch */
   cabTaken.push([x,y]);
   taxi(x, y, vert?(ahead?270:90):(ahead?0:180));
 });
