@@ -892,6 +892,12 @@
     border-top:1px solid rgba(216,180,112,.28);font-family:Georgia,serif;font-size:10.5px;
     letter-spacing:1.6px;color:#c9a05c}
   #goalsList .gl-h b{flex:1;font-weight:400;color:#a8854a}
+  /* ---------- skills panel: the work you can own ---------- */
+  #actBody .sk-info{font-size:11px;line-height:1.55;color:#8fae9c;margin:-1px 0 7px 23px}
+  #actBody .sk-work{margin:-2px 0 9px 23px;font-size:11px;line-height:1.5;font-weight:bold;letter-spacing:.3px}
+  #actBody .sk-work.own{color:#e8c88a}
+  #actBody .sk-work.lock{color:#8a7f6c;font-weight:normal}
+  #actBody .sk-make{margin:-2px 0 9px 23px;width:calc(100% - 23px);text-align:left}
 
   /* ---------- the city board ---------- */
   #rankPanel{
@@ -4757,6 +4763,13 @@ function monthlyBill(){
   } else {
     toast(`\uD83D\uDCC5 Month ${Math.floor(ST.day/30)} settled: +${fmt$(inc)} income, ${fmt$(exp)} bills${ds?', '+fmt$(-ds)+' debt repaid':''}.${selfNote}${loanNote}${bizNote?' '+bizNote:''}${reviewNote}`);
   }
+  /* --- royalties land with the income above (fixed, every month).
+         Once in a while a statement carries a bonus on top of the cheque. --- */
+  if(worksCount() && Math.random()<0.08){
+    const bonus=Math.round(worksIncome()*0.5);
+    ST.cash+=bonus;
+    toast('\uD83D\uDCF0 Royalty statement: an unexpected bonus of '+fmt$(bonus)+' on top of the monthly cheque.');
+  }
   /* --- the instalment was already collected as two monthly bill lines above.
          Here we only age the loan: one payment gone, the balance shrinks with it. --- */
   if(ST.loan){
@@ -5141,7 +5154,8 @@ document.getElementById('finClose').addEventListener('click',e=>{e.stopPropagati
 
 /* ===================== life system: stats, skills, jobs, building actions ===================== */
 const SKILLS=[
-  {id:'it',   ic:'\uD83D\uDCBB', name:'IT SKILL'},
+  {id:'prog', ic:'\uD83D\uDCBB', name:'PROGRAMMING', abbr:'CODE'},
+  {id:'write',ic:'\u270D\uFE0F', name:'WRITING'},
   {id:'proj', ic:'\uD83D\uDCCB', name:'PROJECT MGMT'},
   {id:'drive',ic:'\uD83D\uDE97', name:'DRIVING'},
   {id:'cook', ic:'\uD83C\uDF73', name:'COOKING'},
@@ -5154,12 +5168,57 @@ const skillName=id=>SKILLS.find(s=>s.id===id).name;
 const lvlOf=xp=>Math.floor(xp/100)+1;
 const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 
+/* ===================== a body of work: LV5 turns a skill into an asset =====================
+   A job trades hours for money. A WORK is the thing you make once and sell forever:
+   fetch a small advance on delivery, then a fixed cheque every month for the rest of the life.
+   Gated at LV5 because that is what mastery should buy, and priced low enough that a
+   salary still pays the rent — a work is freedom money, not a lottery win.
+   The royalty is recalculated from your CURRENT level, so the work grows with you. */
+const WORK_LV = 5;
+const WORKS=[
+  {skill:'write', ic:'\uD83D\uDCD6', what:'NOVEL',            verb:'WRITE',  hours:6, base:190, per:38, adv:600,
+   unlock:'A small press read the pages you left on a park bench. They want the rest of it.',
+   made:'Your novel is on the shelf at the Strand \u2014 and on a royalty statement every month.'},
+  {skill:'prog',  ic:'\uD83D\uDCBB', what:'APP',              verb:'BUILD',  hours:8, base:230, per:46, adv:900,
+   unlock:'The tool you wrote for your own desk actually works. Three strangers asked to pay for it.',
+   made:'Your app is live. Server bills, support tickets \u2014 and revenue that arrives while you sleep.'},
+  {skill:'art',   ic:'\uD83D\uDDBC\uFE0F', what:'PRINT SERIES',      verb:'MAKE',   hours:5, base:160, per:32, adv:450,
+   unlock:'A gallery in Chelsea hung one of your pieces as filler. It sold before the wine ran out.',
+   made:'An editioned print series, consigned to the gallery. A cheque arrives every month.'},
+  {skill:'cook',  ic:'\uD83E\uDDF4', what:'SAUCE LINE',       verb:'BOTTLE', hours:5, base:150, per:30, adv:400,
+   unlock:'The sauce you bring to every dinner party had three people asking where to buy it.',
+   made:'Your sauce is bottled, labelled, and on eight shelves in Brooklyn.'},
+  {skill:'eng',   ic:'\uD83D\uDCDD', what:'LANGUAGE COURSE',  verb:'RECORD', hours:6, base:170, per:34, adv:500,
+   unlock:'You explained a grammar point so clearly that a stranger asked you to record it.',
+   made:'Your course sells while you sleep. Every enrolment is a small monthly cheque.'},
+  {skill:'fin',   ic:'\uD83D\uDCCA', what:'ADVISORY PRACTICE',verb:'BUILD',  hours:6, base:200, per:40, adv:700,
+   unlock:'Two friends started asking you the same question about money. Then their friends did.',
+   made:'A small book of retainer clients. They pay monthly; you answer emails.'},
+  {skill:'proj',  ic:'\uD83D\uDCCB', what:'PLAYBOOK',         verb:'WRITE',  hours:6, base:210, per:42, adv:750,
+   unlock:'You ran a launch that nearly died, and wrote down exactly why. The write-up is circulating.',
+   made:'Your playbook is licensed to three firms. Project management, productised.'},
+  {skill:'fit',   ic:'\uD83D\uDCAA', what:'TRAINING PLAN',    verb:'FILM',   hours:5, base:140, per:28, adv:350,
+   unlock:'The plan you wrote for yourself fixed a stranger\u2019s back in six weeks.',
+   made:'Your training plan sells by subscription \u2014 a hundred people, a few dollars each.'},
+  {skill:'drive', ic:'\uD83D\uDE95', what:'ROUTE CONTRACT',   verb:'SET UP', hours:6, base:130, per:26, adv:300,
+   unlock:'A courier firm offered you their worst route. You know how to make it the best one.',
+   made:'You own the route; a driver runs it. The contract pays whether you show up or not.'}
+];
+const workOf      = id => WORKS.find(w=>w.skill===id);
+const workRoyalty = (w,lv) => Math.round(w.base + Math.max(0, lv-WORK_LV)*w.per);
+const worksCount  = () => Object.keys(ST.works||{}).length;
+const worksIncome = () => Object.keys(ST.works||{}).reduce((a,id)=>{
+  const w=workOf(id); return w ? a + workRoyalty(w, lvlOf((ST.skills||{})[id]||0)) : a;
+},0);
+
 /* ---- a fresh start: 18 years old, $1,000 in the pocket, nothing else ---- */
 const AGE_START = 18;
 const CASH_START = 1000;
 const ST={age:AGE_START, cash:CASH_START, bank:0, happy:50, charm:20, health:100, stress:20, employed:null, biz:null, loan:null, freshStart:false,
   fund:0, paySelf:0.10, paySelfMonths:0,                    /* pay yourself first: the asset fund */
-  skills:{it:0, proj:0, drive:0, cook:0, art:0, fin:0, fit:0, eng:0},
+  skills:{prog:0, write:0, proj:0, drive:0, cook:0, art:0, fin:0, fit:0, eng:0},
+  works:{},                                                /* skill id -> day the work went on sale */
+  craftSeen:{},                                            /* skill id -> the LV5 "you could sell this" card was shown */
   stocks:{}, realty:{}, games:{},                          /* holdings: sym -> {qty,cost} / name -> {cost} / game -> {qty,cost} */
   course:null,                                             /* the ONE skill you are currently studying */
   sick:null,                                               /* {name, days} while ill */
@@ -5309,13 +5368,13 @@ document.getElementById('leNew').addEventListener('click',()=>{
   location.reload();
 });
 
-/* EVERY skill has a career ladder: 8 skills, 26 jobs. The figure on the door is only the
+/* EVERY skill has a career ladder: 9 skills, 29 jobs. The figure on the door is only the
    starting pay \u2014 what you actually take home is recalculated from your skill level. */
 const JOBS=[
-  {id:'itsup', title:'IT SUPPORT',          company:'TECH FLOOR \u00B7 5TH AVE', skill:'it',   lvl:1, pay:4200},
-  {id:'it',    title:'IT SPECIALIST',       company:'TECH FLOOR \u00B7 5TH AVE', skill:'it',   lvl:2, pay:6800},
-  {id:'data',  title:'DATA ENGINEER',       company:'TECH FLOOR \u00B7 5TH AVE', skill:'it',   lvl:3, pay:9800},
-  {id:'cto',   title:'HEAD OF ENGINEERING', company:'TECH FLOOR \u00B7 5TH AVE', skill:'it',   lvl:4, pay:16500},
+  {id:'itsup', title:'IT SUPPORT',          company:'TECH FLOOR \u00B7 5TH AVE', skill:'prog',   lvl:1, pay:4200},
+  {id:'it',    title:'IT SPECIALIST',       company:'TECH FLOOR \u00B7 5TH AVE', skill:'prog',   lvl:2, pay:6800},
+  {id:'data',  title:'DATA ENGINEER',       company:'TECH FLOOR \u00B7 5TH AVE', skill:'prog',   lvl:3, pay:9800},
+  {id:'cto',   title:'HEAD OF ENGINEERING', company:'TECH FLOOR \u00B7 5TH AVE', skill:'prog',   lvl:4, pay:16500},
   {id:'tl',    title:'TEAM LEAD',           company:'METLIFE BLDG',              skill:'proj', lvl:1, pay:4800},
   {id:'pm',    title:'PROJECT MANAGER',     company:'METLIFE BLDG',              skill:'proj', lvl:2, pay:7400},
   {id:'prog',  title:'PROGRAM DIRECTOR',    company:'METLIFE BLDG',              skill:'proj', lvl:3, pay:11000},
@@ -5337,7 +5396,10 @@ const JOBS=[
   {id:'fd',    title:'FITNESS DIRECTOR',    company:'IRON GYM',                  skill:'fit',  lvl:3, pay:6900, where:'gym'},
   {id:'guide', title:'MUSEUM GUIDE',        company:'COLUMBIA HALL',             skill:'eng',  lvl:1, pay:4000, where:'study'},
   {id:'trans', title:'TRANSLATOR',          company:'COLUMBIA HALL',             skill:'eng',  lvl:2, pay:5800, where:'study'},
-  {id:'pr',    title:'PRESS SPOKESPERSON',  company:'METLIFE BLDG',              skill:'eng',  lvl:3, pay:8800}
+  {id:'pr',    title:'PRESS SPOKESPERSON',  company:'METLIFE BLDG',              skill:'eng',  lvl:3, pay:8800},
+  {id:'copy',  title:'COPYWRITER',          company:'METLIFE BLDG',              skill:'write',lvl:1, pay:4300},
+  {id:'edit',  title:'EDITOR',              company:'COLUMBIA HALL',             skill:'write',lvl:2, pay:6600, where:'books'},
+  {id:'eic',   title:'EDITOR-IN-CHIEF',     company:'METLIFE BLDG',              skill:'write',lvl:3, pay:10400}
 ];
 function jobsHere(kind){
   return JOBS.filter(j=>{
@@ -5446,7 +5508,7 @@ const BIZ=[
   {id:'cart',  name:'COFFEE CART',  cost:1500,  skill:null,  lvl:0, inc:350,  vr:150,  risk:0,    note:'a corner hustle'},
   {id:'store', name:'ONLINE STORE', cost:5000,  skill:'eng', lvl:1, inc:800,  vr:400,  risk:0.01, note:'e-commerce from your room'},
   {id:'truck', name:'FOOD TRUCK',   cost:12000, skill:'cook',lvl:2, inc:1900, vr:800,  risk:0.02, note:'wheels, grease, profit'},
-  {id:'app',   name:'APP STARTUP',  cost:30000, skill:'it',  lvl:3, inc:5200, vr:2600, risk:0.05, note:'high risk, high ceiling'},
+  {id:'app',   name:'APP STARTUP',  cost:30000, skill:'prog',lvl:3, inc:5200, vr:2600, risk:0.05, note:'high risk, high ceiling'},
   {id:'franch',name:'FRANCHISE',    cost:60000, skill:'fin', lvl:2, inc:9000, vr:1500, risk:0.005,note:'a proven playbook'}
 ];
 function bizSellPrice(){
@@ -5497,7 +5559,7 @@ const carUpkeep  = () => ST.car ? Math.round(ST.car.price*CAR_UPKEEP) : 0;
    so the sheet never promises a value the game will not honour */
 const carValue   = () => ST.car ? Math.round(ST.car.price*0.55) : 0;
 const activeIncome  = () => ST.employed ? salaryOf(ST.employed) : 0;
-const passiveIncome = () => netRent()+divIncome()+fundIncome()+bankIncome()+bizIncome();
+const passiveIncome = () => netRent()+divIncome()+fundIncome()+bankIncome()+bizIncome()+worksIncome();
 /* the rat race: a bigger paycheck quietly grows the bills too */
 const livingCost   = () => 520 + Math.round(Math.max(0, activeIncome()-5000)*0.06);
 const trueExpenses = () => -FIN.expenses.reduce((a,e)=>a+e.v,0);
@@ -5587,6 +5649,8 @@ function syncFin(){
   if(divIncome())  FIN.income.push({n:'Stock dividends', v:divIncome(), per:'/mo', kind:'passive'});
   if(fundIncome()) FIN.income.push({n:'Asset fund distributions', v:fundIncome(), per:'/mo', kind:'passive'});
   if(bankIncome()) FIN.income.push({n:'Interest on savings', v:bankIncome(), per:'/mo', kind:'passive'});
+  if(worksIncome()) FIN.income.push({n:'Royalties \u00B7 '+worksCount()+' work'+(worksCount()>1?'s':'')+' on sale',
+                                     v:worksIncome(), per:'/mo', kind:'passive'});
 }
 /* estate = every property you hold (the panel row called ESTATE) */
 const estateValue = () => Object.keys(ST.realty).reduce((s,n)=>{const r=REALTY.find(x=>x.n===n); return s+(r?r.v:0);},0);
@@ -5621,7 +5685,7 @@ function updatePanel(){
     rf.title='An asset puts money IN your pocket. Passive '+fmt$(pas)+'/mo vs bills '+fmt$(out)+'/mo. Cover 100% and the job becomes optional.';
   }
   const best=SKILLS.reduce((a,s)=>lvlOf(ST.skills[s.id])>lvlOf(ST.skills[a.id])?s:a,SKILLS[0]);
-  document.getElementById('vSkills').textContent=skillName(best.id).split(' ')[0]+' LV'+lvlOf(ST.skills[best.id]);
+  document.getElementById('vSkills').textContent=(best.abbr||skillName(best.id).split(' ')[0])+' LV'+lvlOf(ST.skills[best.id]);
   document.getElementById('vJob').textContent=ST.biz?('\uD83D\uDE80 '+BIZ.find(x=>x.id===ST.biz.id).name):(ST.employed?ST.employed.title:'UNEMPLOYED');
   const rp=document.getElementById('rowPerf');
   if(rp){
@@ -5673,6 +5737,16 @@ function updatePanel(){
     toast('\uD83C\uDF93 '+k.name+' LV'+lv+(opened?' \u2014 '+opened.title+' is hiring':''));
     if(ST.employed && ST.employed.skill===k.id)
       toast('\uD83D\uDCB0 Pay rise: '+fmt$(salaryOf(ST.employed))+'/mo at '+ST.employed.title);
+    /* LV5: the skill can now be sold as a work. Announce it once, when no card is up. */
+    const w=workOf(k.id);
+    if(w && lv>=WORK_LV && evReady
+       && !(ST.works&&ST.works[k.id]) && !(ST.craftSeen&&ST.craftSeen[k.id])
+       && !evCard.classList.contains('show')){
+      ST.craftSeen=ST.craftSeen||{};
+      ST.craftSeen[k.id]=1;
+      showCraftCard(w.ic,'A SKILL YOU CAN SELL','OPEN A NEW DOOR', w.unlock,
+        [[w.what+' UNLOCKED \u00B7 MY SKILLS','plus']]);
+    }
   });
   /* life goals: check, celebrate, and keep the HUD count fresh */
   const nDone=checkGoals();
@@ -5809,13 +5883,13 @@ function openAction(b){
   } else if(kind==='books'){
     descEl.textContent='A cozy bookshop. Reading grows the mind.';
     A(ST.owned.book?'\u2713 BOOK OWNED':'BUY A BOOK \u00B7 $15','+8 XP to a random skill',
-      ()=>{ST.cash-=15;ST.owned.book=true;const sk=SKILLS[Math.floor(Math.random()*SKILLS.length)];ST.skills[sk.id]+=8;advanceMinutes(45);toast('+8 '+sk.name+' XP');},
+      ()=>{ST.cash-=15;ST.owned.book=true;const sk=SKILLS[Math.floor(Math.random()*SKILLS.length)];const g=grantXp(sk.id,8);advanceMinutes(45);toast('+'+g+' '+sk.name+' XP'+(g?'':' \u00B7 already LV10'));},
       {dis:()=>ST.owned.book||ST.cash<15});
     A(ST.daily.browse?'\u2713 BROWSED TODAY':'BROWSE FOR FREE','+3 XP to a random skill \u00B7 happy +2',
-      ()=>{ST.daily.browse=true;const sk=SKILLS[Math.floor(Math.random()*SKILLS.length)];ST.skills[sk.id]+=3;ST.happy=clamp(ST.happy+2,0,100);advanceMinutes(30);toast('+3 '+sk.name+' XP');},
+      ()=>{ST.daily.browse=true;const sk=SKILLS[Math.floor(Math.random()*SKILLS.length)];const g=grantXp(sk.id,3);ST.happy=clamp(ST.happy+2,0,100);advanceMinutes(30);toast('+'+g+' '+sk.name+' XP'+(g?'':' \u00B7 already LV10'));},
       {dis:()=>!!ST.daily.browse});
     A(ST.owned.firstEdition?'\u2713 FIRST EDITION OWNED':'BUY A FIRST EDITION \u00B7 $400','+20 ENGLISH XP \u00B7 happy +6 \u00B7 yours forever',
-      ()=>{ST.cash-=400;ST.owned.firstEdition=true;ST.skills.eng+=20;ST.happy=clamp(ST.happy+6,0,100);advanceMinutes(60);toast('A collector piece. +20 ENGLISH XP');},
+      ()=>{ST.cash-=400;ST.owned.firstEdition=true;const g=grantXp('eng',20);ST.happy=clamp(ST.happy+6,0,100);advanceMinutes(60);toast('A collector piece. +'+g+' ENGLISH XP');},
       {dis:()=>ST.owned.firstEdition||ST.cash<400});
   } else if(kind==='office'||kind==='fire'||kind==='police'){
     descEl.textContent=ST.biz?('You run '+BIZ.find(x=>x.id===ST.biz.id).name+' from this floor.')
@@ -5848,13 +5922,13 @@ function openAction(b){
   } else if(kind==='gym'){
     descEl.textContent='Iron paradise. Sweat now, shine later.';
     A(ST.daily.gym?'\u2713 TRAINED TODAY':'TRAIN \u00B7 $25','+10 FITNESS XP \u00B7 health +4 \u00B7 happy +6',
-      ()=>{ST.cash-=25;ST.daily.gym=true;ST.skills.fit+=10;ST.health=clamp(ST.health+4,0,100);ST.happy=clamp(ST.happy+6,0,100);advanceMinutes(60);toast('+10 FITNESS XP');},
+      ()=>{ST.cash-=25;ST.daily.gym=true;const g=grantXp('fit',10);ST.health=clamp(ST.health+4,0,100);ST.happy=clamp(ST.happy+6,0,100);advanceMinutes(60);toast('+'+g+' FITNESS XP');},
       {dis:()=>!!ST.daily.gym||ST.cash<25});
     A(ST.daily.hoops?'\u2713 HOOPS PLAYED TODAY':'SHOOT HOOPS','free \u00B7 happy +5 \u00B7 health +2 \u00B7 once a day',
       ()=>{ST.daily.hoops=true;ST.happy=clamp(ST.happy+5,0,100);ST.health=clamp(ST.health+2,0,100);advanceMinutes(45);toast('Good game!');},
       {dis:()=>!!ST.daily.hoops});
     A(ST.daily.trainer?'\u2713 TRAINER TODAY':'PERSONAL TRAINER \u00B7 $120','+20 FITNESS XP \u00B7 health +5 \u00B7 happy +4',
-      ()=>{ST.cash-=120;ST.daily.trainer=true;ST.skills.fit+=20;ST.health=clamp(ST.health+5,0,100);ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(90);toast('+20 FITNESS XP');},
+      ()=>{ST.cash-=120;ST.daily.trainer=true;const g=grantXp('fit',20);ST.health=clamp(ST.health+5,0,100);ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(90);toast('+'+g+' FITNESS XP');},
       {dis:()=>!!ST.daily.trainer||ST.cash<120});
   } else if(kind==='fun'){
     descEl.textContent=(ateHere||showHere)
@@ -5882,10 +5956,10 @@ function openAction(b){
   } else if(kind==='art'){
     descEl.textContent='Canvas and calm. Create something tonight.';
     A(ST.daily.art?'\u2713 SKETCHED TODAY':'SKETCH THE HALLS \u00B7 $20','+10 ART XP \u00B7 happy +5',
-      ()=>{ST.cash-=20;ST.daily.art=true;ST.skills.art+=10;ST.happy=clamp(ST.happy+5,0,100);advanceMinutes(60);toast('+10 ART XP');},
+      ()=>{ST.cash-=20;ST.daily.art=true;const g=grantXp('art',10);ST.happy=clamp(ST.happy+5,0,100);advanceMinutes(60);toast('+'+g+' ART XP');},
       {dis:()=>!!ST.daily.art||ST.cash<20});
     A(ST.owned.print?'\u2713 PRINT OWNED':'BUY A LIMITED PRINT \u00B7 $220','+8 ART XP \u00B7 happy +8 \u00B7 yours forever',
-      ()=>{ST.cash-=220;ST.owned.print=true;ST.skills.art+=8;ST.happy=clamp(ST.happy+8,0,100);advanceMinutes(45);toast('Signed and numbered.');},
+      ()=>{ST.cash-=220;ST.owned.print=true;const g=grantXp('art',8);ST.happy=clamp(ST.happy+8,0,100);advanceMinutes(45);toast('Signed and numbered. +'+g+' ART XP');},
       {dis:()=>ST.owned.print||ST.cash<220});
   } else if(kind==='shop'){
     descEl.textContent='Retail therapy. Try to resist \u2014 or pick up a shift out back: cash today, no interview.';
@@ -5897,10 +5971,10 @@ function openAction(b){
       ()=>{ST.cash-=140;ST.owned.painting=true;ST.happy=clamp(ST.happy+9,0,100);advanceMinutes(30);toast('It will look great at home.');},
       {dis:()=>ST.owned.painting||ST.cash<140});
     A(ST.owned.laptop?'\u2713 LAPTOP OWNED':'BUY A LAPTOP \u00B7 $1,200','+15 IT XP \u00B7 happy +4 \u00B7 yours forever',
-      ()=>{ST.cash-=1200;ST.owned.laptop=true;ST.skills.it+=15;ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(60);toast('New laptop. +15 IT XP');},
+      ()=>{ST.cash-=1200;ST.owned.laptop=true;const g=grantXp('prog',15);ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(60);toast('New laptop. +'+g+' PROGRAMMING XP');},
       {dis:()=>ST.owned.laptop||ST.cash<1200});
     A(ST.owned.sneakers?'\u2713 SNEAKERS OWNED':'BUY SNEAKERS \u00B7 $150','fitness +5 \u00B7 charm +3 \u00B7 happy +4',
-      ()=>{ST.cash-=150;ST.owned.sneakers=true;ST.skills.fit+=5;ST.charm=clamp(ST.charm+3,0,100);ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(45);toast('Fresh kicks.');},
+      ()=>{ST.cash-=150;ST.owned.sneakers=true;const g=grantXp('fit',5);ST.charm=clamp(ST.charm+3,0,100);ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(45);toast('Fresh kicks. +'+g+' FITNESS XP');},
       {dis:()=>ST.owned.sneakers||ST.cash<150});
   } else if(kind==='game'){
     descEl.textContent='Fictional titles, fictional prices \u2014 no real purchase ever takes place. Prices drift like stocks; hover a title for original box art.';
@@ -5971,10 +6045,10 @@ function openAction(b){
   } else if(kind==='museum'){
     descEl.textContent='History under glass.';
     A(ST.daily.museum?'\u2713 VISITED TODAY':'ADMIT ONE \u00B7 $20','happy +6 \u00B7 +5 ART XP',
-      ()=>{ST.cash-=20;ST.daily.museum=true;ST.happy=clamp(ST.happy+6,0,100);ST.skills.art+=5;advanceMinutes(90);toast('Inspiring.');},
+      ()=>{ST.cash-=20;ST.daily.museum=true;ST.happy=clamp(ST.happy+6,0,100);const g=grantXp('art',5);advanceMinutes(90);toast('Inspiring. +'+g+' ART XP');},
       {dis:()=>!!ST.daily.museum||ST.cash<20});
     A(ST.daily.museumShop?'\u2713 SHOPPED TODAY':'MUSEUM SHOP \u00B7 $45','art +4 \u00B7 happy +3',
-      ()=>{ST.cash-=45;ST.daily.museumShop=true;ST.skills.art+=4;ST.happy=clamp(ST.happy+3,0,100);advanceMinutes(25);toast('Postcards and prints.');},
+      ()=>{ST.cash-=45;ST.daily.museumShop=true;const g=grantXp('art',4);ST.happy=clamp(ST.happy+3,0,100);advanceMinutes(25);toast('Postcards and prints. +'+g+' ART XP');},
       {dis:()=>!!ST.daily.museumShop||ST.cash<45});
   } else if(kind==='casino'){
     descEl.textContent='The house always whispers your name. Honest odds, rigged house edge.';
@@ -6061,7 +6135,7 @@ function openAction(b){
       A('\u{1F680} START A BUSINESS','be your own boss \u00B7 pick a venture below',()=>{},{dis:()=>true});
       BIZ.forEach(b=>{
         const need=b.skill?(skillName(b.skill)+' LV'+b.lvl):'no experience';
-        const can=lvlOf(ST.skills[b.skill||'it'])>=(b.skill?b.lvl:0);
+        const can=lvlOf(ST.skills[b.skill||'prog'])>=(b.skill?b.lvl:0);
         A('LAUNCH '+b.name+' \u00B7 '+fmt$(b.cost), b.note+' \u00B7 ~'+fmt$(b.inc)+'/mo \u00B7 needs '+need,
           ()=>startBiz(b),
           {dis:()=>ST.cash<b.cost||!can});
@@ -6116,23 +6190,70 @@ function openActionFor(b){
 }
 
 /* my skills panel */
+var evReady=false;                       /* the event card exists: hoisted so updatePanel can test it early */
+function showCraftCard(ic, label, head, body, fx){
+  document.getElementById('evIc').textContent=ic||'\u2728';
+  const k=document.getElementById('evKind');
+  k.textContent=label;
+  k.className='ev-kind good';
+  document.getElementById('evH').textContent=head;
+  document.getElementById('evD').textContent=body;
+  document.getElementById('evFx').innerHTML=(fx||[]).map(f=>'<span class="'+(f[1]||'')+'">'+f[0]+'</span>').join('');
+  evCard.classList.add('show');
+  return new Promise(r=>{ evResolve=r; });
+}
+/* the moment a skill stops being a wage and becomes something you can own */
+function makeWork(id){
+  const w=workOf(id); if(!w) return;
+  const lv=lvlOf((ST.skills||{})[id]||0);
+  if(lv<WORK_LV){ toast('LV'+WORK_LV+' in '+skillName(id)+' first \u2014 a work is what mastery buys.'); return; }
+  if(ST.works&&ST.works[id]) return;
+  ST.works=ST.works||{};
+  ST.works[id]=ST.day||0;
+  ST.cash+=w.adv;
+  ST.stress=clamp(ST.stress+10,0,100);
+  ST.happy=clamp(ST.happy+6,0,100);
+  advanceMinutes(w.hours*60);
+  updatePanel();
+  document.getElementById('rowSkills').click();       /* the panel behind the card now shows the cheque */
+  showCraftCard(w.ic,'YOUR WORK IS OUT',w.what+' \u00B7 ON SALE',w.made,
+    [['ADVANCE +'+fmt$(w.adv),'plus'],
+     ['ROYALTY +'+fmt$(workRoyalty(w,lv))+'/MO','plus'],
+     ['STRESS +10','minus']]);
+}
 document.getElementById('rowSkills').addEventListener('click',()=>{
   document.getElementById('actIc').textContent='\uD83E\uDDE0';
   document.getElementById('actTitle').textContent='MY SKILLS';
-  document.getElementById('actDesc').textContent='100 XP per level. Study at schools, libraries and bookshops; train at gyms.';
+  document.getElementById('actDesc').textContent='100 XP per level, LV10 is the ceiling. Study at schools, libraries and bookshops; train at gyms. At LV5 any skill can become a WORK \u2014 make it once, get paid every month.';
   document.getElementById('actBody').innerHTML=SKILLS.map(sk=>{
-    const xp=ST.skills[sk.id], pc=Math.min(100,xp%100), lv=lvlOf(xp);
+    const xp=(ST.skills||{})[sk.id]||0, pc=Math.min(100,xp%100), lv=lvlOf(xp);
     const here=JOBS.filter(j=>j.skill===sk.id&&j.lvl<=lv);
     const next=JOBS.filter(j=>j.skill===sk.id&&j.lvl>lv).sort((a,b)=>a.lvl-b.lvl)[0];
     const pay=here.length?here[here.length-1].pay:0;
+    const w=workOf(sk.id), made=ST.works&&ST.works[sk.id];
+    let work='';
+    if(w){
+      if(made){
+        work='<div class="sk-work own">'+w.ic+' '+w.what+' \u00B7 '+fmt$(workRoyalty(w,lv))+'/mo \u00B7 on sale</div>';
+      } else if(lv>=WORK_LV){
+        work='<button class="act-btn sk-make" data-make="'+sk.id+'"><b>'+w.ic+' '+w.verb+' YOUR '+w.what+'</b>'
+            +'<span>'+w.hours+' HOURS \u00B7 '+fmt$(w.adv)+' advance \u00B7 then '+fmt$(workRoyalty(w,lv))+'/mo for life</span></button>';
+      } else {
+        work='<div class="sk-work lock">'+w.ic+' '+w.what+' \u2014 unlocks at LV'+WORK_LV+' ('
+            +fmt$(w.base)+'/mo at LV'+WORK_LV+')</div>';
+      }
+    }
     return '<div class="sk-row"><span>'+sk.ic+'</span><span class="sklv">'+sk.name+'</span>'+
       '<div class="skbar"><div style="width:'+pc+'%"></div></div>'+
       '<span class="sklv">LV '+lv+'</span></div>'+
-      '<div style="font-size:11px;line-height:1.55;color:#8fae9c;margin:-1px 0 7px 23px">'+
+      '<div class="sk-info">'+
         (here.length ? ('\u2713 '+here[here.length-1].title+' \u00B7 '+fmt$(pay)+'/mo') : 'no job at this level yet')+
         (next ? (' &nbsp;\u2192 LV'+next.lvl+': '+next.title+' \u00B7 '+fmt$(next.pay)+'/mo') : '')+
-      '</div>';
+      '</div>'+work;
   }).join('');
+  document.querySelectorAll('#actBody [data-make]').forEach(b=>{
+    b.addEventListener('click',()=>makeWork(b.dataset.make));
+  });
   actPanel.classList.add('show');
 });
 document.getElementById('rowJob').addEventListener('click',()=>{
@@ -6182,8 +6303,8 @@ const EVENTS=[
    run:()=>{ST.happy=clamp(ST.happy+4,0,100);ST.charm=clamp(ST.charm+2,0,100);return [['HAPPY +4','plus'],['CHARM +2','plus']];}},
   {k:'good',ic:'\uD83D\uDCBC',h:'A SIDE GIG',
    d:'A shop owner needs a website by Friday. Cash on delivery.',
-   run:()=>{ST.cash+=260;ST.skills.it+=8;advanceMinutes(180);
-     return [['CASH +$260','plus'],['IT +8 XP','plus']];}},
+   run:()=>{ST.cash+=260;const g=grantXp('prog',8);advanceMinutes(180);
+     return [['CASH +$260','plus'],['PROGRAMMING +'+g+' XP','plus']];}},
   {k:'good',ic:'\uD83C\uDF40',h:'SCRATCH CARD WINNER',
    d:'You never buy these. Today you did, and today it paid.',
    run:()=>{ST.cash+=500;ST.happy=clamp(ST.happy+8,0,100);return [['CASH +$500','plus'],['HAPPY +8','plus']];}},
@@ -6192,8 +6313,8 @@ const EVENTS=[
    run:()=>{ST.cash+=1200;return [['CASH +$1,200','plus']];}},
   {k:'good',ic:'\uD83C\uDFA4',h:'A MENTOR APPEARS',
    d:'A retired banker talks to you for an hour on the subway. Free advice, worth a fortune.',
-   run:()=>{ST.charm=clamp(ST.charm+7,0,100);ST.skills.fin+=10;ST.happy=clamp(ST.happy+4,0,100);
-     return [['CHARM +7','plus'],['FINANCE +10 XP','plus']];}},
+   run:()=>{ST.charm=clamp(ST.charm+7,0,100);const g=grantXp('fin',10);ST.happy=clamp(ST.happy+4,0,100);
+     return [['CHARM +7','plus'],['FINANCE +'+g+' XP','plus']];}},
   {k:'good',ic:'\uD83D\uDECB\uFE0F',h:'SOLD THE OLD COUCH',
    d:'Someone paid full asking price. No haggling, no drama.',
    run:()=>{ST.cash+=95;return [['CASH +$95','plus']];}},
@@ -6300,6 +6421,7 @@ const EVENTS=[
 ];
 const evCard=document.getElementById('evCard');
 let evResolve=null;
+evReady=true;
 function closeEv(){ evCard.classList.remove('show'); if(evResolve){ const r=evResolve; evResolve=null; r(); } }
 document.getElementById('evOk').addEventListener('click',closeEv);
 addEventListener('keydown',e=>{ if(e.key==='Escape'&&evCard.classList.contains('show')) closeEv(); });
@@ -7700,6 +7822,11 @@ function resumeGame(){
   if(window.syncHudFace) syncHudFace();        /* the corner badge wears the same face */
   /* restore the life itself */
   Object.keys(ST).forEach(k=>{ if(k in s.ST) ST[k]=s.ST[k]; });
+  /* older saves: IT became PROGRAMMING, WRITING is new, and a work can now be owned */
+  if(!ST.skills) ST.skills={};
+  if(ST.skills.it!==undefined){ ST.skills.prog=Math.max(ST.skills.prog||0, ST.skills.it); delete ST.skills.it; }
+  SKILLS.forEach(k=>{ if(typeof ST.skills[k.id]!=='number') ST.skills[k.id]=0; });
+  ST.works=ST.works||{}; ST.craftSeen=ST.craftSeen||{};
   (s.stocks||[]).forEach((d,i)=>{ if(STOCKS[i]){ STOCKS[i].v=d.v; STOCKS[i].prev=d.prev; if(d.hist) STOCKS[i].hist=d.hist; } });
   (s.realty||[]).forEach((d,i)=>{ if(REALTY[i]){ REALTY[i].v=d.v; REALTY[i].prev=d.prev; if(d.hist) REALTY[i].hist=d.hist; } });
   (s.games||[]).forEach((d,i)=>{ if(GAMES[i]){ GAMES[i].v=d.v; GAMES[i].prev=d.prev; } });
