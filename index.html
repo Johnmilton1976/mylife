@@ -6272,9 +6272,10 @@ function showEventCard(ev){
   return new Promise(r=>{ evResolve=r; });
 }
 let lastEvIdx=-1;
+const EV_CHANCE=0.40;                                  /* luck, both kinds: ~two street stops in five (was 0.27) */
 async function maybeLifeEvent(){
   if(!started) return false;
-  if(Math.random()>0.27) return false;                 /* roughly one arrival in four */
+  if(Math.random()>EV_CHANCE) return false;
   let i=Math.floor(Math.random()*EVENTS.length);
   if(i===lastEvIdx) i=(i+1)%EVENTS.length;             /* never the same thing twice in a row */
   lastEvIdx=i;
@@ -6776,6 +6777,13 @@ document.getElementById('newsPanel').addEventListener('click',()=>document.getEl
 
 /* ===================== flow ===================== */
 let cur=0, curCell=PATH[0], busy=false, newsStreak=0;
+/* the city beat used to land every 2-3 stops; it now lands on the 4th at the latest,
+   with a coin-flip chance on the 3rd — the paper should feel like weather, not a feed */
+const NEWS_FORCE=4, NEWS_MAYBE=3, NEWS_MAYBE_P=0.6;
+function newsDue(){
+  if(newsStreak>=NEWS_FORCE) return true;
+  return newsStreak>=NEWS_MAYBE && Math.random()<NEWS_MAYBE_P;
+}
 
 /* ---- onboarding: name + sex, then the city deals you a face ----
    The old 24-card roster page is gone: picking a look was a slow, low-stakes
@@ -7224,8 +7232,8 @@ async function walkTo(from,to,chk,keep,first){
   /* ONLY the cell you actually stop on can pull you into a building */
   if(chk!==false){
     newsStreak++;                            /* every stop counts toward the next city beat */
-    /* city news lands every 2-3 moves: forced on the third, likely on the second */
-    const due = newsStreak>=3 || (newsStreak>=2 && Math.random()<0.65);
+    /* city news: see newsDue() — forced on the 4th stop, likely on the 3rd */
+    const due = newsDue();
     studyStop=false;                         /* a new stop: a fresh chance to learn one thing */
     ateHere=false; showHere=false; playHere=false;   /* fresh appetite, fresh ticket, fresh session */
     const zb=maybeZone();
