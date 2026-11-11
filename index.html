@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>MY LIFE — A Life Simulator on the Streets of New York</title>
+<title>Free Life Simulator Game in Your Browser — MY LIFE</title>
 
 <!-- what a shared link looks like -->
-<meta name="description" content="MY LIFE is a free, single-file life simulator set on a hand-built Manhattan grid. Spin the wheel, walk the city, take a job, buy cash-flowing assets and try to leave the rat race — Rich Dad rules, no installs, no accounts.">
+<meta name="description" content="A free life simulator game in your browser — no install, no account. Walk New York, work, buy assets that pay you and escape the rat race the Rich Dad way.">
 <meta name="author" content="Steven Jones (Zhu)">
 <meta name="theme-color" content="#0a1620">
 <meta name="msvalidate.01" content="16DEFC548C23F6441DC41F7083F4D8F0">
@@ -35,10 +35,10 @@
   "@context": "https://schema.org",
   "@type": "VideoGame",
   "name": "MY LIFE",
-  "alternateName": "MY LIFE — A Life Simulator on the Streets of New York",
+  "alternateName": "MY LIFE — Free Life Simulator Game in Your Browser",
   "url": "https://mylifesim.com/",
   "image": "https://mylifesim.com/og-cover.png",
-  "description": "A free browser life simulator set on a hand-built Manhattan grid. Spin the wheel to walk the city, take a job, learn skills, buy cash-flowing assets and try to leave the rat race. Single HTML file, no install, no account.",
+  "description": "A free life simulator game in your browser — no install, no account. Walk New York, work, buy assets that pay you and escape the rat race the Rich Dad way.",
   "genre": ["Life simulation", "Business simulation", "Casual"],
   "gamePlatform": ["Web browser", "Mobile web"],
   "playMode": "SinglePlayer",
@@ -451,7 +451,7 @@
   #coverSky{position:absolute;inset:0;z-index:1;pointer-events:none}
   #coverSky svg{position:absolute;inset:0;width:100%;height:100%}
   #coverSky .far{opacity:.5}#coverSky .mid{opacity:.78}
-  #picker h1,#create h1{font-size:78px;letter-spacing:22px;font-weight:bold;
+  #picker h1,#create h2{font-size:78px;letter-spacing:22px;font-weight:bold;
     background:linear-gradient(180deg,#fdf3c8 8%,#f2d98a 38%,#c9992e 62%,#f5e3a6 88%);
     -webkit-background-clip:text;background-clip:text;color:transparent;
     filter:drop-shadow(0 4px 16px rgba(0,0,0,.65)) drop-shadow(0 0 34px rgba(232,200,138,.30))}
@@ -481,10 +481,10 @@
   #create::after{content:'';position:absolute;inset:0;pointer-events:none;
     background:radial-gradient(ellipse at 50% 40%,transparent 52%,rgba(2,8,5,.55) 100%);
   }
-  #create h1{display:flex;align-items:center;gap:22px}
-  #create h1::before,#create h1::after{content:'';height:2px;width:78px;flex:none;
+  #create h2{display:flex;align-items:center;gap:22px}
+  #create h2::before,#create h2::after{content:'';height:2px;width:78px;flex:none;
     background:linear-gradient(90deg,transparent,#c9a35f);box-shadow:0 0 8px rgba(232,200,138,.4)}
-  #create h1::after{background:linear-gradient(90deg,#c9a35f,transparent)}
+  #create h2::after{background:linear-gradient(90deg,#c9a35f,transparent)}
   #create p{color:#cdbc86}
   #create.show{display:flex}
   /* ---- onboarding: name + sex, the face is dealt by the city ---- */
@@ -590,8 +590,8 @@
     #resumeBtn{padding:10px 34px;font-size:15px}
     /* onboarding on a phone: two thumb-sized sex buttons, a smaller standee */
     #create{padding-top:84px;gap:12px}
-    #create h1{font-size:clamp(22px,6.4vw,38px) !important;letter-spacing:clamp(3px,1.6vw,9px) !important}
-    #create h1::before,#create h1::after{width:26px}
+    #create h2{font-size:clamp(22px,6.4vw,38px) !important;letter-spacing:clamp(3px,1.6vw,9px) !important}
+    #create h2::before,#create h2::after{width:26px}
     #create p{font-size:10.5px;letter-spacing:2px;padding:0 12px}
     #nameInput{width:min(300px,calc(100vw - 44px))}
     .sexRow{width:calc(100vw - 44px);max-width:340px;gap:10px}
@@ -1366,15 +1366,13 @@
 
   <div class="set-sec">LEGAL / ABOUT</div>
   <div style="font-size:10px;color:#8a7a5c;line-height:1.5;margin:2px 2px 8px">
-    A fan-made, NON-COMMERCIAL parody. Not affiliated with, sponsored or endorsed by
-    Rockstar Games, Nintendo, Tesla, Ford, Toyota, Volkswagen, Macy&amp;s or any brand,
-    publisher or landmark referenced. Titles and brand names appear for identification
-    and parody only; all art in this game is original and programmatic. Every item is
-    fictional and has no real-world value &mdash; nothing can be bought, sold or won for
-    real money. Place names are used geographically, nothing more. All trademarks remain
-    the property of their respective owners; rights holders may request removal of any
-    reference and it will be honored. Your save and your name live only in your own
-    browser (localStorage) and are never uploaded to any server.
+    A NON-COMMERCIAL game with 100% original, programmatic art. Every company,
+    publisher and vehicle brand that appears here is invented for the game; any
+    resemblance to real companies is coincidental. Every item is fictional and has
+    no real-world value &mdash; nothing can be bought, sold or won for real money.
+    Place and landmark names are used geographically, nothing more. Your save and
+    your name live only in your own browser (localStorage) and are never uploaded
+    to any server.
   </div>
 
   <div class="set-sec">YOUR LIFE</div>
@@ -1442,14 +1440,14 @@
   <b>MONEY</b> an asset puts money IN your pocket, a liability takes it OUT &nbsp;&#183;&nbsp; passive income covering every bill = freedom<br>
   <b>BANK</b> BAD DEBT buys consumption (15% APR) &nbsp;&#183;&nbsp; GOOD DEBT buys an asset yielding more than its 6% APR &nbsp;&#183;&nbsp; interest is a monthly bill<br>
   <b>NIGHT</b> windows, street lamps, bridge lights and neon switch on at dusk and off at dawn &nbsp;&#183;&nbsp; toggle CITY LIGHTS in settings<br>
-  <b>GAME STORE</b> &#127918; a few shops sell fictional copies of GTA VI &amp; Zelda &nbsp;&#183;&nbsp; hover a title for original fan-made box art &nbsp;&#183;&nbsp; virtual only, no real purchase<br>
+  <b>GAME STORE</b> &#127918; a few shops sell games of our own invention &mdash; NEON COAST &amp; THE LEGEND OF AURELIA &nbsp;&#183;&nbsp; hover a title for original box art &nbsp;&#183;&nbsp; virtual only, no real purchase<br>
   <b>SAVE</b> &#128190; on the dock saves right now &nbsp;&#183;&nbsp; nothing saves by itself &nbsp;&#183;&nbsp; <b>&#9654;</b> on the dock (or CONTINUE on the cover) brings it back<br>
   <b>LEGAL</b> fan-made &amp; non-commercial parody &nbsp;&#183;&nbsp; not affiliated with any brand or publisher &nbsp;&#183;&nbsp; original art only &nbsp;&#183;&nbsp; virtual items, no real value
 </div>
 
 <div id="picker">
   <div id="coverSky"></div>
-  <h1 style="font-size:86px;letter-spacing:26px">MY LIFE</h1>
+  <h1 style="font-size:86px;letter-spacing:26px">MY LIFE<span style="display:block;font-size:15px;letter-spacing:7px;font-weight:normal;font-family:Verdana,sans-serif;margin-top:14px;color:#e2cf8f;background:none">A FREE LIFE SIMULATOR GAME IN YOUR BROWSER</span></h1>
   <p>A LIFE SIMULATOR ON THE STREETS OF NEW YORK</p>
   <button id="coverBtn" style="margin-top:18px">START LIFE</button>
   <button id="resumeBtn">&#9654; CONTINUE</button>
@@ -1459,8 +1457,8 @@
     the minds behind <b>Rich Dad Poor Dad</b> and the art of letting money work for you.
   </div>
   <div class="cover-legal">
-    A non-commercial fan-made parody. Not affiliated with, endorsed or sponsored by any brand, publisher or rights holder.
-    All trademarks (game, vehicle, store &amp; landmark names) belong to their owners and appear only as fictional,
+    A non-commercial game with original art. Not affiliated with, endorsed or sponsored by any brand, publisher or rights holder.
+    Every company and product name in the game is invented; place and landmark names are used only as geographic,
     nominative references. 100% original procedural art &middot; every item, price and currency is virtual and has no
     real-world value &middot; your save stays in your browser (localStorage), never uploaded.
   </div>
@@ -1480,7 +1478,7 @@
 </div>
 
 <div id="create">
-  <h1>WHO ARE YOU?</h1>
+  <h2>WHO ARE YOU?</h2>
   <p>TYPE YOUR NAME &middot; PICK MALE OR FEMALE</p>
   <input id="nameInput" maxlength="14" placeholder="Type your name..." autocomplete="off" spellcheck="false">
   <div class="sexRow">
@@ -2293,7 +2291,7 @@ function bld(b){
   s += `<rect x="${x+8}" y="${gfTop}" width="${w-16}" height="88" fill="${store}" stroke="#3a3228" stroke-width="3"/>`;
   if(type==='dealer'){
     /* car showroom: floor-to-ceiling glass with the stock lined up inside */
-    const brandCol={TESLA:'#cc2b35',FORD:'#1a4f9c',TOYOTA:'#c0392b',VOLKSWAGEN:'#123f6d'}[name]||'#26547c';
+    const brandCol={VOLTARI:'#cc2b35',HARLAN:'#1a4f9c',SHINSEI:'#c0392b',KESSLER:'#123f6d'}[name]||'#26547c';
     s += `<rect x="${x+10}" y="${gfTop+8}" width="${w-20}" height="80" fill="#9fc6d8" opacity=".55" stroke="#4a5a60" stroke-width="2.5"/>`;
     s += `<path d="M${x+12} ${gfTop+8} L${x+12+w*0.4} ${gfTop+88}" stroke="#fff" stroke-width="4" opacity=".3"/>`;
     [[x+w*0.22,'#b02a2a'],[x+w*0.46,'#e8c33a'],[x+w*0.70,'#2a4a8a']].forEach(([cx2,cc])=>{
@@ -2371,7 +2369,7 @@ const NAMES_BY_TYPE = {
   bookstore:['BOOK & BEAN','CORNER BOOKS','THE STRAND'],
   bakery:  ['MAGNOLIA BAKE','SUGAR PLUM','GOLDEN CRUST'],
   casino:  ['LUCKY 7 CASINO','FORTUNE PALACE','THE VELVET ROOM'],
-  dealer:  ['TESLA','FORD','TOYOTA','VOLKSWAGEN']
+  dealer:  ['VOLTARI','HARLAN','SHINSEI','KESSLER']
 };
 const nameCursor={};
 function pickName(t){
@@ -2457,10 +2455,10 @@ const LANDMARKS = [
   {road:'st', i:1, cb:4, name:'FIRE HOUSE 9',      fn:'WORK',    type:'fire',     w:380, h:330},
   {road:'st', i:7, cb:1, name:'BAKER\u2019S ROW',  fn:'FOOD',    type:'bakery',   w:360, h:320},
   /* the car row: four dealerships, one per corner of the city */
-  {road:'st', i:0, cb:6, name:'TESLA',         fn:'DEALER',  type:'dealer',   w:400, h:320},
-  {road:'st', i:2, cb:3, name:'FORD',          fn:'DEALER',  type:'dealer',   w:400, h:320},
-  {road:'st', i:5, cb:1, name:'TOYOTA',        fn:'DEALER',  type:'dealer',   w:390, h:310},
-  {road:'st', i:7, cb:6, name:'VOLKSWAGEN',    fn:'DEALER',  type:'dealer',   w:390, h:310},
+  {road:'st', i:0, cb:6, name:'VOLTARI',      fn:'DEALER',  type:'dealer',   w:400, h:320},
+  {road:'st', i:2, cb:3, name:'HARLAN',        fn:'DEALER',  type:'dealer',   w:400, h:320},
+  {road:'st', i:5, cb:1, name:'SHINSEI',       fn:'DEALER',  type:'dealer',   w:390, h:310},
+  {road:'st', i:7, cb:6, name:'KESSLER',       fn:'DEALER',  type:'dealer',   w:390, h:310},
   {road:'ave', i:2, rb:4, side:'W', name:'POLICE PCT 10', fn:'WORK',    type:'police',  w:380, h:330},
   {road:'ave', i:6, rb:2, side:'W', name:'RIVOLI CINEMA', fn:'FUN',     type:'cinema',  w:400, h:340},
   {road:'ave', i:4, rb:5, side:'E', name:'PLAZA HOTEL',   fn:'REST',    type:'hotel',   w:440, h:460},
@@ -4255,8 +4253,8 @@ document.getElementById('viewport').addEventListener('pointerup', e=>{
    They pay NO dividend: under Rich Dad's rule a collectible is a price bet,
    not an asset. What it does pay is HAPPY. */
 const GAMES=[
-  {id:'gta6', n:'GTA VI', sub:'open-world crime \u00B7 a neon coast', v:69, prev:69, art:'vice'},
-  {id:'zelda',n:'THE LEGEND OF ZELDA', sub:'fantasy adventure \u00B7 a new chapter', v:59, prev:59, art:'hyrule'}
+  {id:'gta6', n:'NEON COAST', sub:'open-world crime \u00B7 a neon coast', v:69, prev:69, art:'vice'},
+  {id:'zelda',n:'THE LEGEND OF AURELIA', sub:'fantasy adventure \u00B7 a new chapter', v:59, prev:59, art:'hyrule'}
 ];
 const GAME_MAX=5;                       /* copies per title: a shelf, not a hedge fund */
 const gameById=id=>GAMES.find(g=>g.id===id);
@@ -4372,22 +4370,22 @@ function showGamePreview(id, anchor){
 }
 function hideGamePreview(force){ if(!force && gpPinned) return; document.getElementById('gamePreview').classList.remove('show'); }
 const STOCKS=[
-  {n:'AAPL', name:'Apple',        v:232.40},
-  {n:'MSFT', name:'Microsoft',    v:428.10},
-  {n:'NVDA', name:'Nvidia',       v:118.20},
-  {n:'TSLA', name:'Tesla',        v:248.60},
-  {n:'GOOGL',name:'Alphabet',     v:176.30},
-  {n:'META', name:'Meta',         v:512.80},
-  {n:'AMZN', name:'Amazon',       v:205.70},
-  {n:'NFLX', name:'Netflix',      v:689.50},
-  {n:'JPM',  name:'JPMorgan',     v:245.30},
-  {n:'GS',   name:'Goldman Sachs',v:495.60},
-  {n:'DIS',  name:'Disney',       v:96.40},
-  {n:'UBER', name:'Uber',         v:72.90},
-  {n:'KO',   name:'Coca-Cola',    v:63.80},
-  {n:'XOM',  name:'Exxon Mobil',  v:118.90},
-  {n:'PFE',  name:'Pfizer',       v:28.40},
-  {n:'NYT',  name:'NY Times Co.', v:58.20}
+  {n:'POMM', name:'Pomme',        v:232.40},
+  {n:'SFTL', name:'Softline',     v:428.10},
+  {n:'VTEG', name:'Vanteg',       v:118.20},
+  {n:'VLTR', name:'Voltari',      v:248.60},
+  {n:'ORBX', name:'Orbix',        v:176.30},
+  {n:'VECA', name:'Vecta',        v:512.80},
+  {n:'FLUV', name:'Fluvia',       v:205.70},
+  {n:'CINE', name:'Cineo',        v:689.50},
+  {n:'MRDN', name:'Meridian Bank',v:245.30},
+  {n:'STLG', name:'Sterling House',v:495.60},
+  {n:'MGCX', name:'Magico',       v:96.40},
+  {n:'VYPR', name:'Vypr',         v:72.90},
+  {n:'SODA', name:'Sodalux',      v:63.80},
+  {n:'DRCK', name:'Derrick Oil',  v:118.90},
+  {n:'MDIX', name:'Medix Labs',   v:28.40},
+  {n:'NYLD', name:'NY Ledger Co.',v:58.20}
 ];
 const REALTY=[
   {n:'Chelsea Apartment',    v:268000},
@@ -5142,9 +5140,9 @@ const INFLATION   = 0.03;     /* savings barely outrun it - "savers are losers" 
 const GOOD_APR    = 0.06;     /* cheaper than the asset it buys: the asset pays the interest */
 const BAD_APR     = 0.15;     /* bad debt buys consumption */
 /* only a dividend payer is an asset in Rich Dad's book; a pure price bet is not */
-const DIVIDEND = {AAPL:0.005, MSFT:0.007, NVDA:0.0003, TSLA:0, GOOGL:0.005,
-                  META:0.004, AMZN:0, NFLX:0, UBER:0, JPM:0.023, GS:0.021,
-                  DIS:0.009, KO:0.030, XOM:0.034, PFE:0.055, NYT:0.012};
+const DIVIDEND = {POMM:0.005, SFTL:0.007, VTEG:0.0003, VLTR:0, ORBX:0.005,
+                  VECA:0.004, FLUV:0, CINE:0, VYPR:0, MRDN:0.023, STLG:0.021,
+                  MGCX:0.009, SODA:0.030, DRCK:0.034, MDIX:0.055, NYLD:0.012};
 const divYield   = n => DIVIDEND[n] || 0;
 const grossRent  = () => Math.round(Object.keys(ST.realty||{}).reduce((a,n)=>{const r=REALTY.find(x=>x.n===n);return a+(r?r.v*PROP_RENT:0);},0));
 const propUpkeep = () => Math.round(Object.keys(ST.realty||{}).reduce((a,n)=>{const r=REALTY.find(x=>x.n===n);return a+(r?r.v*PROP_UPKEEP:0);},0));
@@ -5567,10 +5565,10 @@ function openAction(b){
       ()=>{},{dis:()=>true, cls:'cur'});
   } else if(kind==='dealer'){
     const brand=b.name;
-    const CARS={TESLA:[{m:'MODEL 3',p:46000},{m:'MODEL Y',p:58000}],
-                FORD:[{m:'F-150',p:42000},{m:'MUSTANG',p:38000}],
-                TOYOTA:[{m:'COROLLA',p:22000},{m:'CAMRY',p:28000}],
-                VOLKSWAGEN:[{m:'GOLF',p:24000},{m:'TIGUAN',p:32000}]}[brand]||[{m:'SEDAN',p:25000}];
+    const CARS={VOLTARI:[{m:'FLUX 3',p:46000},{m:'FLUX X',p:58000}],
+                HARLAN:[{m:'HAULER 150',p:42000},{m:'STALLION GT',p:38000}],
+                SHINSEI:[{m:'SENDAI',p:22000},{m:'SAKURA',p:28000}],
+                KESSLER:[{m:'KOMPACT',p:24000},{m:'TRAILON',p:32000}]}[brand]||[{m:'SEDAN',p:25000}];
     const trade = ST.car ? Math.round(ST.car.price*0.55) : 0;
     descEl.textContent = (ST.car
       ? 'You drive a '+ST.car.brand+' '+ST.car.model+'. Trade it in for '+fmt$(trade)+', or upgrade. '
