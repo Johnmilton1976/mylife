@@ -3679,9 +3679,24 @@ put(`<g id="layerChars"></g>`);
 /* Shop signs go on last: window lights, neon and lamp halos are painted
    after the buildings and would otherwise wash out the lettering. */
 BUILT.filter(b=>b.gameStore).forEach(b=>put(gameStoreSign(b)));
-document.getElementById('world').innerHTML =
-  `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${S.join('')}</svg>`;
-startTraffic();                       /* the world is live — release the cars */
+/* the city SVG is the heaviest single DOM parse on the page. Mounting it
+   synchronously here used to hold the first paint back ~1.5s (LCP render
+   delay) — so the cover now paints first and the city builds right after,
+   in the background, before any human can reach the GO button. */
+function mountCity(){
+  if(window.__cityMounted) return;
+  window.__cityMounted=true;
+  document.getElementById('world').innerHTML =
+    `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${S.join('')}</svg>`;
+  startTraffic();                       /* the world is live — release the cars */
+  mini.innerHTML=mm;
+  mRect=document.getElementById('mRect');
+  mMe=document.getElementById('mMe');
+  layerChars=document.getElementById('layerChars');
+  wireNpcHover();
+  applyCam();                           /* re-assert the camera onto the fresh DOM */
+}
+setTimeout(mountCity, 60);
 
 /* ===================== minimap ===================== */
 const mini=document.getElementById('mini');
@@ -3699,8 +3714,8 @@ LANDMARKS.forEach(lm=>{
 mm+=`<path d="${PATH.map((p,i)=>(i?'L':'M')+p.x+','+p.y).join(' ')}" stroke="#ffd24a" stroke-width="30" fill="none" opacity=".7" stroke-linecap="round" stroke-linejoin="round"/>`;
 mm+=`<circle id="mMe" cx="${PATH[0].x}" cy="${PATH[0].y}" r="110" fill="#ffd24a" stroke="#fff" stroke-width="26"/>`;
 mm+=`<rect id="mRect" x="0" y="0" width="3000" height="2000" fill="none" stroke="#fff" stroke-width="60" opacity=".9"/>`;
-mini.innerHTML=mm;
-const mRect=document.getElementById('mRect'), mMe=document.getElementById('mMe');
+/* the minimap markup mounts inside mountCity(); these fill in right after */
+let mRect=null, mMe=null;
 
 /* the map sleeps as a small round marker; tap it to unfold, tap X to fold away */
 const miniWrap=document.getElementById('miniWrap');
@@ -3917,6 +3932,7 @@ function applyCam(){
   cam.x=Math.max(-1500, Math.min(W-VW()/cam.scale+1500, cam.x));
   cam.y=Math.max(-1500, Math.min(H-VH()/cam.scale+1500, cam.y));
   world.style.transform=`scale(${cam.scale}) translate(${-cam.x}px,${-cam.y}px)`;
+  if(!mRect) return;                    /* minimap rides inside the deferred city mount */
   mRect.setAttribute('x',cam.x); mRect.setAttribute('y',cam.y);
   mRect.setAttribute('width',VW()/cam.scale); mRect.setAttribute('height',VH()/cam.scale);
 }
@@ -5462,7 +5478,7 @@ function teleport(){
   cur=i; curCell=p; pendingDetour.length=0;
   const g=document.getElementById('me');
   g.setAttribute('transform','translate('+p.x+','+p.y+')');
-  mMe.setAttribute('cx',p.x); mMe.setAttribute('cy',p.y);
+  if(mMe){ mMe.setAttribute('cx',p.x); mMe.setAttribute('cy',p.y); }
   centerOn(p.x,p.y);
   setCellMark();
   advanceMinutes(45);
@@ -6647,6 +6663,7 @@ if(STORE.memoryOnly){
 
 function startGame(opts){
   opts = (opts && typeof opts.name==='string') ? opts : null;   /* goBtn passes a click event - ignore it */
+  mountCity();                          /* paranoia for a sub-60ms click: the board must exist */
   /* a saved life is precious: starting fresh must never be a stray click */
   let hasSave=false;
   try{ hasSave=!!JSON.parse(STORE.getItem(SAVE_KEY)||'null'); }catch(e){}
@@ -6859,10 +6876,30 @@ function openNpcCard(nc){
   ap.classList.add('show');
 }
 /* NPCs are quiet now: their card appears only while the mouse rests on them */
-const layerChars=document.getElementById('layerChars');
+let layerChars=null;   /* fills in when mountCity() mounts the board */
 let hoverNpc=null;
-/* NPCs are quiet now: their card appears only while the mouse rests on them.
-   body parts have ids like "npc0_thighR", so climb until the id IS an npc id. */
+/* NPC hover listeners ride on the layer, so wire them inside mountCity() too */
+function wireNpcHover(){
+  if(!layerChars || layerChars.dataset.wired) return;
+  layerChars.dataset.wired='1';
+  layerChars.addEventListener('mouseover',e=>{
+    if(!started) return;
+    const g=hoverNpcFrom(e);
+    if(!g||g.id===hoverNpc) return;
+    const nc=NPCS.find(n=>n.id===g.id);
+    if(!nc) return;
+    hoverNpc=g.id;
+    if(!actPanel.classList.contains('show')) openNpcCard(nc);
+  });
+  layerChars.addEventListener('mouseout',e=>{
+    const g=hoverNpcFrom(e);
+    if(!g||g.id!==hoverNpc) return;
+    hoverNpc=null;
+    /* hide only if the open card still belongs to this npc (a hover card, not a building menu) */
+    if(actPanel.classList.contains('show') && actPanel.dataset.npc===g.id) closeAct();
+  });
+}
+/* body parts have ids like "npc0_thighR", so climb until the id IS an npc id */
 function hoverNpcFrom(e){
   let n=e.target;
   while(n && n!==layerChars){
@@ -6871,22 +6908,6 @@ function hoverNpcFrom(e){
   }
   return null;
 }
-layerChars.addEventListener('mouseover',e=>{
-  if(!started) return;
-  const g=hoverNpcFrom(e);
-  if(!g||g.id===hoverNpc) return;
-  const nc=NPCS.find(n=>n.id===g.id);
-  if(!nc) return;
-  hoverNpc=g.id;
-  if(!actPanel.classList.contains('show')) openNpcCard(nc);
-});
-layerChars.addEventListener('mouseout',e=>{
-  const g=hoverNpcFrom(e);
-  if(!g||g.id!==hoverNpc) return;
-  hoverNpc=null;
-  /* hide only if the open card still belongs to this npc (a hover card, not a building menu) */
-  if(actPanel.classList.contains('show') && actPanel.dataset.npc===g.id) closeAct();
-});
 
 function tween(ms,fn){
   return new Promise(res=>{
@@ -6945,7 +6966,7 @@ async function walkTo(from,to,chk,keep,first){
   const dist=Math.hypot(b.x-a.x, b.y-a.y);
   const put=(x,y)=>{
     g.setAttribute('transform',`translate(${x},${y}) scale(${flip},1)`);
-    mMe.setAttribute('cx',x); mMe.setAttribute('cy',y);
+    if(mMe){ mMe.setAttribute('cx',x); mMe.setAttribute('cy',y); }
     followCam(x,y);                    /* edge-follow: keeps you in frame without locking the view */
   };
   /* constant pace across every cell (time proportional to distance): no surge-and-brake,
@@ -7375,6 +7396,7 @@ addEventListener('beforeunload',e=>{
 });
 
 function resumeGame(){
+  mountCity();                          /* the board must exist even for an instant click */
   let s=null;
   try{ s=JSON.parse(STORE.getItem(SAVE_KEY)||'null'); }catch(e){}
   if(!s || !s.ST) return;
