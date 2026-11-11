@@ -3110,24 +3110,8 @@ BUILT.forEach((b,i)=>{
 
 SIGNS.forEach(sg=>put(sg));
 
-/* rooftop billboards: the skyline starts talking — colour against the facades */
-const ADS=[['DRINK COLA','#d84a3a'],['JAZZ NIGHT','#7a4ac8'],['BROADWAY','#c8567a'],
-  ['BUY STOCKS','#2f8a52'],['HOTEL \u2605','#c98a2a'],['CITY BANK','#1a4f9c'],['EAT MORE','#e07830']];
-BUILT.forEach(b=>{
-  if(b===CHRYSLER_T || b.noTank) return;         /* the Chrysler and the dressed-up landmarks stay bare */
-  if(!['tower','hotel','bank','night','casino','office'].includes(b.type)) return;
-  if(rc()>0.42) return;
-  const top=b.base-b.h, bw=Math.min(b.w*0.92,470), bx=b.x+b.w/2-bw/2;
-  const [txt,col]=ADS[Math.floor(rc()*ADS.length)];
-  put(`<g>
-    <rect x="${b.x+b.w*0.2}" y="${top-64}" width="9" height="66" fill="#3a362e"/>
-    <rect x="${b.x+b.w*0.8-9}" y="${top-64}" width="9" height="66" fill="#3a362e"/>
-    <rect x="${bx}" y="${top-152}" width="${bw}" height="92" rx="8" fill="${col}" stroke="#241a10" stroke-width="4"/>
-    <rect x="${bx+6}" y="${top-146}" width="${bw-12}" height="80" rx="5" fill="none" stroke="#fff" stroke-width="2.5" opacity=".35"/>
-    <text x="${bx+bw/2}" y="${top-92}" text-anchor="middle" font-family="Georgia,serif" font-weight="bold"
-      font-size="${Math.min(44,Math.round(1500/txt.length))}" fill="#fff6e0" letter-spacing="3">${txt}</text>
-  </g>`);
-});
+/* rooftop slogan billboards removed: white shouty ad text crowded the roofline
+   and read as noise. Facades and name plates carry the skyline now. */
 /* the name layer goes up after every roof decoration in the city */
 PLATES.forEach(p=>put(p));
 for(let i=0;i<150;i++){
