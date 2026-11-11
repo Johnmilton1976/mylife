@@ -1465,6 +1465,8 @@
   <b>Drag / WASD</b> pan &nbsp;&#183;&nbsp; <b>Wheel</b> zoom &nbsp;&#183;&nbsp; <b>SPACE</b> spin<br>
   <b>O</b> settings &nbsp;&#183;&nbsp; <b>M</b> music &nbsp;&#183;&nbsp; <b>ESC</b> close all<br>
   <b>WORK</b> long high STRESS = a bad review &amp; a pay cut &nbsp;&#183;&nbsp; a long happy streak can bring a bonus and a raise<br>
+  <b>MIND</b> STRESS eats output (the higher it is, the less you get done) &nbsp;&#183;&nbsp; all-in on stocks or property = max STRESS, low HAPPY &nbsp;&#183;&nbsp; sell down and it lifts<br>
+  <b>GIG</b> shops &amp; cafés hand out 2-hour shifts for quick cash &nbsp;&#183;&nbsp; two a day &nbsp;&#183;&nbsp; no interview, no future, never beats a job<br>
   <b>MONEY</b> an asset puts money IN your pocket, a liability takes it OUT &nbsp;&#183;&nbsp; passive income covering every bill = freedom<br>
   <b>BANK</b> BAD DEBT buys consumption (15% APR) &nbsp;&#183;&nbsp; GOOD DEBT buys an asset yielding more than its 6% APR &nbsp;&#183;&nbsp; interest is a monthly bill<br>
   <b>NIGHT</b> windows, street lamps, bridge lights and neon switch on at dusk and off at dawn &nbsp;&#183;&nbsp; toggle CITY LIGHTS in settings<br>
@@ -4369,6 +4371,51 @@ function playGame(){
   advanceMinutes(120);
   toast('\uD83D\uDD79 Two hours well spent. HAPPY +5, STRESS -2. One session per visit.');
 }
+/* ---- one XP grant, clamped at LV10, so every source (luck, gigs, books) agrees ---- */
+function grantXp(id, xp){
+  if(!ST.skills || !(id in ST.skills)) return 0;
+  const cur=ST.skills[id]||0;
+  const gain=Math.max(0, Math.min(xp, SKILL_XP_CAP-cur));
+  if(gain) ST.skills[id]=cur+gain;
+  return gain;
+}
+const lowestSkill=()=>SKILLS.reduce((a,k)=>((ST.skills[k.id]||0)<(ST.skills[a.id]||0)?k:a), SKILLS[0]);
+const bestSkill  =()=>SKILLS.reduce((a,k)=>((ST.skills[k.id]||0)>(ST.skills[a.id]||0)?k:a), SKILLS[0]);
+
+/* ===================== odd jobs: the cash floor =====================
+   Two hours of unskilled work, on demand: no interview, no schedule, no future.
+   Design intent — a player with $0 and no job must never be stuck, and the gig must
+   never beat a career. The numbers:
+     living costs are ~$1,450/mo = ~$48 for one day of survival.
+     a gig pays $48 base, ±20%: exactly one day of living, not two.
+     the cap is 2 gigs/day, so the ceiling is ~$115/day ≈ a $3.4k/mo job — below
+     every LV1 job on the board ($3.6k-$4.8k). Skills and charm add a little,
+     STRESS takes a lot: a wrecked head works slow, same as at a desk. */
+const ODD_DAILY_CAP=2;
+function oddJobPay(s, preview){
+  const best=lvlOf(s.skills[bestSkill().id]||0);
+  const base=44 + Math.max(0,best-2)*5 + Math.round((s.charm||0)*0.2);
+  const focus=Math.max(0.55, 1-Math.max(0,(s.stress||0)-50)/110);   /* -45% at STRESS 100 */
+  const jitter=preview?1:(0.9+Math.random()*0.2);
+  return {pay:Math.max(15, Math.round(base*focus*jitter)), focus};
+}
+function oddJob(b, where){
+  const s=ST;
+  if((s.daily.odd||0)>=ODD_DAILY_CAP){ toast('Two gigs is all anyone hands out in a day. Walk on.'); return; }
+  s.daily.odd=(s.daily.odd||0)+1;
+  const r=oddJobPay(s);
+  const strain=where==='the dish pit'?5:4;
+  s.cash+=r.pay;
+  s.stress=clamp(s.stress+strain,0,100);
+  s.health=clamp(s.health-1,0,100);
+  const sk=SKILLS[Math.floor(Math.random()*SKILLS.length)];
+  const xp=grantXp(sk.id,3);
+  advanceMinutes(120);
+  toast('\uD83D\uDCAA Two hours in '+where+': '+fmt$(r.pay)
+    +(xp?' \u00B7 +'+xp+' '+skillName(sk.id)+' XP':'')
+    +(r.focus<0.9?' \u00B7 stress had your hands slow':'')
+    +' \u00B7 gig '+s.daily.odd+'/'+ODD_DAILY_CAP);
+}
 /* 100% original, procedurally drawn SVG. No screenshots, no logos, no characters
    from either franchise: a mood, not a copy. */
 function gameArt(kind){
@@ -4514,9 +4561,18 @@ const PRAISE_LINES=[
   '"The client asked for you by name."',
   '"I already told the partners about you."'
 ];
+/* How much of today's output STRESS eats. Not a flat tax: the first 35 points are
+   just being alive, and past 75 the curve turns quadratic — a mind that will not
+   switch off loses the thread every few minutes, so the last 25 points cost more
+   than the first 40 did. (A flat -0.55/point still let a STRESS-100 player deliver
+   25/100, which made "work through the burnout" a viable strategy. It should not be.) */
+function stressDrag(s){
+  const st=s.stress||0, over=Math.max(0,st-35), tail=Math.max(0,st-75);
+  return over*0.55 + tail*tail*0.035;
+}
 /* what your body and your mood can actually deliver at a desk today */
 function perfTarget(s){
-  return Math.round(clamp(58 + (s.happy-50)*0.70 - (s.stress-40)*0.55
+  return Math.round(clamp(58 + (s.happy-50)*0.70 - stressDrag(s)
                          - Math.max(0,60-s.health)*0.30, 5, 100));
 }
 /* one working day: performance drifts toward the target, it never jumps */
@@ -4732,7 +4788,22 @@ function moodTick(){
   /* ---- 1. STRESS is the sum of what you carry ---- */
   const stockCost=Object.keys(s.stocks).reduce((a,n)=>{const h=s.stocks[n]||{};return a+(h.qty||0)*(h.cost||0);},0);
   const homeCost=Object.keys(s.realty).reduce((a,n)=>{const r=s.realty[n]||{};return a+(r.cost||0);},0);
-  const invested=stockCost+homeCost;
+  /* What it cost you, and what it is worth today. The gap between the two is the
+     whole emotional story of owning things: cost basis is memory, market value is
+     the news. */
+  const basis=stockCost+homeCost;
+  const invested=stockValue()+estateValue();
+  const worth=Math.max(1,myWorth());
+  /* EXPOSURE, not size, is what keeps you up. $1m cash + $50k stocks sleeps fine;
+     $2k cash + $50k stocks checks the board every hour. */
+  const expo=Math.min(1, invested/worth);
+  /* ...but exposure that PAYS you is not the same animal as a price bet. When your
+     assets already cover half your bills, they are a wage, not a wager: count the
+     price risk up to 50% lighter. This is the one place the game rewards cashflow
+     assets over capital-gains assets, which is the whole Rich Dad argument. */
+  const covered=Math.min(1, freedomPct()/100);
+  const expoEff=expo*(1-covered*0.5);
+  const unreal=basis>0 ? (invested-basis)/basis : 0;   /* <0 = underwater */
   /* Sleep is the daily recovery channel. At -2 it lost to a working day (+2.5)
      plus the streak (+3), so STRESS climbed to 100 for every employed player and
      never came down. -6 makes a normal week net-negative, while a venture, a
@@ -4747,20 +4818,27 @@ function moodTick(){
      survivable, and a real day off actually moves the needle. */
   const stressPull=Math.round((28-before.stress)*0.12);
   push('stress', stressPull>=0?'the mind settling':'a mind that will not switch off', stressPull);
-  /* A portfolio costs peace — but it must never outrun the good it does. The old
-     formula could add 22 STRESS a day (10 + 3 + 9.6) to a player who owned a lot,
-     which pinned them at 100 STRESS and ground HEALTH into the twenties: the winning
-     strategy was slowly killing the winner. One capped total, then the comfort of
-     money that works for you is subtracted below. */
-  let hold=0;
-  if(stockCost) hold += Math.min(4, stockCost/30000);
-  if(homeCost)  hold += Math.min(2, homeCost/300000);
-  const pos=Object.keys(s.stocks).length+Object.keys(s.realty).length;
-  if(pos>3) hold += Math.min(3, (pos-3)*0.8);
-  if(hold>0){
-    const k=Math.round((stockCost+homeCost)/1000);
-    push('stress', pos+' holdings to watch ($'+k+'k)', Math.min(6, hold));
+  /* A portfolio costs peace — and the price is CONCENTRATION, not the size of the
+     pile. expo squared makes the top of the curve steep on purpose: half your worth
+     in the market costs a quarter of what all-in costs. Floored at 10% so a normal
+     index-fund player is not punished for investing at all.
+     Cap +7: this is the loudest single input in the game, but it must never outrun
+     the escape hatch (selling), or the winning strategy would be a death sentence. */
+  if(expoEff>0.10){
+    push('stress','$'+Math.round(invested/1000)+'k riding on prices \u00B7 '+Math.round(expo*100)+'% of your worth',
+         Math.min(7, 9*expoEff*expoEff));
   }
+  /* A loss is its own weight and it does not lift until you sell or the price comes
+     back — that is the trap the game is about. 30% underwater is the full +5. */
+  const dd=Math.max(0,-unreal);
+  if(dd>0.02){
+    push('stress','positions underwater '+Math.round(dd*100)+'%', Math.min(5, dd*20));
+    push('happy','watching a loss grow', -Math.min(6, Math.round(dd*22)));
+  } else if(unreal>0.10){
+    push('happy','positions in the green', 2);   /* profit lifts the mood, not the burden */
+  }
+  /* the cheapest stress medicine there is: three months of bills in reach */
+  if((s.cash+s.bank) >= 3*(trueExpenses()||1)) push('stress','a cushion in the bank',-1);
   /* money that covers the bills buys silence: this is what freedom is FOR */
   const coverPct = freedomPct();
   if(coverPct>=50)  push('stress','money working for you',-2);
@@ -4854,7 +4932,9 @@ function moodTick(){
     toast('\u26A0 HEALTH '+s.health+' \u2014 you are running on fumes. Sleep, eat, or cut something loose.');
   }
   if(before.stress<80 && s.stress>=80){
-    const reason = invested>60000 ? 'too much money in play'
+    const reason = expo>0.55 && dd>0.02 ? 'your positions are underwater and most of your worth is in them'
+                 : expo>0.55 ? 'most of your worth is riding on prices'
+                 : dd>0.05 ? 'a position you are sitting on a loss in'
                  : s.workStreak>=6 ? s.workStreak+' days without a break'
                  : s.course ? 'study on top of work'
                  : 'the rent is always on your mind';
@@ -5211,14 +5291,20 @@ function studySession(id){
   if((ST.skills[id]||0)>=SKILL_XP_CAP){ toast(name+' is maxed at LV10. A bigger job is the next step.'); return; }
   const fee=studyFee(id);
   ST.cash-=fee;
-  ST.skills[id]=Math.min(SKILL_XP_CAP, ST.skills[id]+12);
+  /* a head full of noise does not take notes: past STRESS 60 every point eats
+     focus, down to half a class at 100. Paying full tuition for half the lesson
+     is the point — that is the cost of carrying too much. */
+  const focus=Math.max(0.5, 1-Math.max(0,(ST.stress-60))/80);
+  const gain=grantXp(id, Math.max(4, Math.round(12*focus)));
   ST.daily.study=(ST.daily.study||0)+1;
   const cram=Math.max(0, ST.daily.study-1);
   ST.stress=clamp(ST.stress+3+cram*2,0,100);
   ST.happy=clamp(ST.happy-2-cram,0,100);
   studyStop=true;
   advanceMinutes(90);
-  toast('+12 '+name+' XP \u00B7 tuition '+fmt$(fee)+(cram?' \u00B7 cramming costs you':''));
+  toast('+'+gain+' '+name+' XP \u00B7 tuition '+fmt$(fee)
+    +(focus<0.9?' \u00B7 you could not focus (STRESS)':'')
+    +(cram?' \u00B7 cramming costs you':''));
 }
 
 /* ===================== entrepreneurship: build something of your own ===================== */
@@ -5518,6 +5604,18 @@ function openAction(b){
     A((showHere?'✓ ':'')+l, showHere?'one show per visit · walk on for another':s,
       ()=>{fn();showHere=true;},o);
   };
+  /* Odd jobs: cash today, no interview. Two a day city-wide, and the pay preview
+     already accounts for what STRESS is doing to your hands. */
+  const GIG=(l,where)=>{
+    const used=ST.daily.odd||0, out=used>=ODD_DAILY_CAP;
+    const {pay}=oddJobPay(ST,true);
+    const strain=where==='the dish pit'?5:4;
+    A(out?'✓ NO MORE GIGS TODAY':l,
+      out?'two gigs a day is the limit · walk on'
+         :'~\u0024'+pay+' in hand · 2h · STRESS +'+strain+' · gig '+(used+1)+'/'+ODD_DAILY_CAP,
+      ()=>oddJob(b,where),
+      {dis:()=>out});
+  };
 
   if(kind==='bank'){
     if(ST.loan){
@@ -5637,6 +5735,7 @@ function openAction(b){
       : 'Something smells great. ONE meal or drink per visit — happy is not an endless tap.';
     if(ST.cash<50) EAT('SOUP KITCHEN \u00B7 FREE','a hot meal, no questions asked \u00B7 health +5 \u00B7 happy -3',
       ()=>{ST.health=clamp(ST.health+5,0,100);ST.happy=clamp(ST.happy-3,0,100);advanceMinutes(45);toast('Warm food. Kind volunteers. Tomorrow you try again.');});
+    GIG('\uD83E\uDDFD WASH DISHES \u00B7 2H','the dish pit');
     EAT('HAVE A MEAL \u00B7 $18','happy +6 \u00B7 health +2',
       ()=>{ST.cash-=18;ST.happy=clamp(ST.happy+6,0,100);ST.health=clamp(ST.health+2,0,100);advanceMinutes(45);toast('Delicious.');},{dis:()=>ST.cash<18});
     EAT('COFFEE TO GO \u00B7 $6','happy +2 \u00B7 stress -3',
@@ -5652,7 +5751,8 @@ function openAction(b){
       ()=>{ST.cash-=220;ST.owned.print=true;ST.skills.art+=8;ST.happy=clamp(ST.happy+8,0,100);advanceMinutes(45);toast('Signed and numbered.');},
       {dis:()=>ST.owned.print||ST.cash<220});
   } else if(kind==='shop'){
-    descEl.textContent='Retail therapy. Try to resist.';
+    descEl.textContent='Retail therapy. Try to resist \u2014 or pick up a shift out back: cash today, no interview.';
+    GIG('\uD83D\uDCE6 STOCK THE SHELVES \u00B7 2H','the stockroom');
     A(ST.owned.suit?'\u2713 SUIT OWNED':'BUY A SUIT \u00B7 $260','charm +8 \u00B7 yours forever',
       ()=>{ST.cash-=260;ST.owned.suit=true;ST.charm=clamp(ST.charm+8,0,100);advanceMinutes(60);toast('Looking sharp! CHARM +8');},
       {dis:()=>ST.owned.suit||ST.cash<260});
@@ -5964,6 +6064,29 @@ const EVENTS=[
    d:'A rainbow over the river after the rain. You stop for a minute and just look.',
    run:()=>{ST.happy=clamp(ST.happy+6,0,100);ST.stress=clamp(ST.stress-5,0,100);
      return [['HAPPY +6','plus'],['STRESS -5','plus']];}},
+  /* ---- luck that leaves something behind: XP you keep after the card closes ---- */
+  {k:'good',ic:'\uD83C\uDFA7',h:'A PODCAST YOU ALMOST SKIPPED',
+   d:'Forty minutes on the train, and one idea you will still be using in five years.',
+   run:()=>{const sk=SKILLS[Math.floor(Math.random()*SKILLS.length)];
+     const g=grantXp(sk.id,9);
+     return g?[['+'+g+' '+skillName(sk.id)+' XP','plus']]:[['nothing new under the sun','']];}},
+  {k:'good',ic:'\u265F',h:'THE OLD MAN AT THE CHESS TABLE',
+   d:'He beat you three times without saying a word, then spent an hour telling you why.',
+   run:()=>{const sk=SKILLS[Math.floor(Math.random()*SKILLS.length)];
+     const g=grantXp(sk.id,12);ST.charm=clamp(ST.charm+3,0,100);
+     return [['+'+g+' '+skillName(sk.id)+' XP','plus'],['CHARM +3','plus']];}},
+  {k:'good',ic:'\uD83D\uDCDE',h:'YOUR OLD BOSS CALLS',
+   d:'Not to hire you back. To ask how you would handle it now \u2014 and to admit you were right.',
+   run:()=>{const sk=bestSkill();const g=grantXp(sk.id,14);ST.stress=clamp(ST.stress-3,0,100);
+     return [['+'+g+' '+skillName(sk.id)+' XP','plus'],['STRESS -3','plus']];}},
+  {k:'good',ic:'\uD83C\uDFDB\uFE0F',h:'A FREE SEMINAR IN THE LIBRARY',
+   d:'Rain outside, twelve folding chairs inside, and a retired tradesman who loves his subject.',
+   run:()=>{const sk=lowestSkill();const g=grantXp(sk.id,10);ST.happy=clamp(ST.happy+3,0,100);
+     return [['+'+g+' '+skillName(sk.id)+' XP','plus'],['HAPPY +3','plus']];}},
+  {k:'good',ic:'\uD83D\uDD27',h:'THE NEIGHBOUR\u2019S WORKSHOP',
+   d:'He needed a second pair of hands. You got a lesson and a sandwich out of it.',
+   run:()=>{const sk=lowestSkill();const g=grantXp(sk.id,8);ST.health=clamp(ST.health+3,0,100);
+     return [['+'+g+' '+skillName(sk.id)+' XP','plus'],['HEALTH +3','plus']];}},
 
   /* ---------------- the bad days ---------------- */
   {k:'bad',ic:'\uD83E\uDD77',h:'PICKPOCKET',
@@ -6800,6 +6923,8 @@ function renderMood(){
     html+='<div class="mnote" style="margin-top:2px">No job, no review. Once you are hired, your mood becomes a performance record, and that record becomes your paycheck.</div>';
   }else{
     html+='<div class="mline"><span>Performance</span><i class="'+((s.perf||70)<50?'neg':'')+'">'+(s.perf||70)+' / 100</i></div>';
+    const drag=Math.round(stressDrag(s));
+    if(drag>=4) html+='<div class="mline"><span>STRESS drag on output</span><i class="neg">-'+drag+'</i></div>';
     html+='<div class="mline"><span>Rough days in a row</span><i class="'+((s.burnDays||0)>=3?'neg':'')+'">'+(s.burnDays||0)+'</i></div>';
     html+='<div class="mline"><span>Good days in a row</span><i>'+(s.goodDays||0)+'</i></div>';
     html+='<div class="mline"><span>This month’s average</span><em>'+(avg===null?'—':avg+' / 100')+'</em></div>';
