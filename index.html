@@ -543,6 +543,10 @@
     box-shadow:0 10px 26px rgba(0,0,0,.55), 0 0 34px rgba(232,200,138,.35), inset 0 1px 0 rgba(255,255,255,.55);
   }
   #goBtn:hover,#coverBtn:hover{filter:brightness(1.07)}
+  /* INP fix: the pressed state paints instantly; heavy work is deferred a tick,
+     so a click always answers the finger before the main thread gets busy */
+  #goBtn,#coverBtn,#resumeBtn{transition:transform .1s,filter .1s}
+  #goBtn.pressed,#coverBtn.pressed,#resumeBtn.pressed{transform:scale(.96);filter:brightness(1.14)}
   #coverBtn{padding:16px 76px;font-size:24px;border-radius:18px;border-color:#a8842e;
     box-shadow:0 0 0 2px rgba(240,214,150,.75), 0 0 0 9px rgba(232,200,138,.13),
       0 14px 34px rgba(0,0,0,.6), 0 0 48px rgba(232,200,138,.45),
@@ -6548,17 +6552,18 @@ function setSex(s){
   if(sex!==s){ sex=s; selIdx=pickFace(s); }
   document.getElementById('sexM').classList.toggle('on',sex==='m');
   document.getElementById('sexF').classList.toggle('on',sex==='f');
-  renderFace();
+  setTimeout(renderFace,30);   /* the face SVG is heavy: paint the toggle first (INP) */
 }
 document.getElementById('sexM').addEventListener('click',()=>setSex('m'));
 document.getElementById('sexF').addEventListener('click',()=>setSex('f'));
 renderFace();
 
 document.getElementById('coverBtn').addEventListener('click',()=>{
-  /* every fresh attempt rolls a new face inside the chosen sex */
-  selIdx=pickFace(sex); renderFace();
+  /* INP: the screen swap classes paint instantly; the rolled face SVG builds
+     right after — the previous face is still on show for that one frame */
   document.getElementById('picker').classList.add('hide');
   document.getElementById('create').classList.add('show');
+  setTimeout(()=>{ selIdx=pickFace(sex); renderFace(); },30);
   setTimeout(()=>document.getElementById('nameInput').focus(),420);
 });
 document.getElementById('backBtn').addEventListener('click',()=>{
@@ -6791,7 +6796,14 @@ document.getElementById('moodRow').addEventListener('click',e=>{ e.stopPropagati
 document.getElementById('moodPop').addEventListener('click',e=>e.stopPropagation());
 document.getElementById('moodClose').addEventListener('click',e=>{ e.stopPropagation(); document.getElementById('moodPop').classList.remove('show'); });
 document.addEventListener('click',()=>document.getElementById('moodPop').classList.remove('show'));
-document.getElementById('goBtn').addEventListener('click', startGame);
+document.getElementById('goBtn').addEventListener('click',()=>{
+  /* INP: acknowledge the click with an instant pressed state, then let the
+     city mount after the browser has painted — the wait reads as loading,
+     not as a dead button (RUM had this click at ~1s to first response) */
+  const b=document.getElementById('goBtn');
+  b.classList.add('pressed');
+  setTimeout(()=>{ startGame(); b.classList.remove('pressed'); },30);
+});
 document.getElementById('nameInput').addEventListener('keydown', e=>{ if(e.key==='Enter') startGame(); });
 
 /* ===================== AI citizens: wander the streets, bump to meet ===================== */
@@ -7482,7 +7494,10 @@ syncSetUI();
     if(hint) hint.classList.toggle('show',has);
     if(has){
       b.innerHTML='&#9654; CONTINUE &mdash; '+(s.name||'Walker').toUpperCase()+' &middot; MONTH '+(Math.floor((s.day||0)/30)+1);
-      if(!wired){ b.addEventListener('click', resumeGame); wired=true; }
+      if(!wired){ b.addEventListener('click',()=>{
+        b.classList.add('pressed');                       /* INP: pressed paints first */
+        setTimeout(()=>{ resumeGame(); b.classList.remove('pressed'); },30);
+      }); wired=true; }
     }
   }
   checkSave();
