@@ -131,6 +131,9 @@
   .row .ic{font-size:16px;flex:none}
   .row .lab{font-size:11px;font-weight:bold;color:#7a4a10;letter-spacing:1px}
   .row .val{margin-left:auto;font-size:14px;font-weight:bold;color:#143a6b;text-shadow:0 1px 0 #fff}
+  /* overdraft: the cash figure itself has to shout, not a toast that fades in five seconds */
+  .row .val.neg{color:#c02020;animation:cashPulse 1.1s ease-in-out infinite}
+  @keyframes cashPulse{0%,100%{opacity:1}50%{opacity:.45}}
   .row .val small{display:block;font-size:9.5px;font-weight:bold;color:#a03020;letter-spacing:.2px;text-shadow:none;line-height:1.25;margin-top:1px;text-align:right}
   .sub{display:flex;gap:6px;margin-top:6px}
   .chip{flex:1;text-align:center;font-size:10px;font-weight:bold;color:#5a3a10;background:#f0e0b4;border:2px solid #b8965a;border-radius:7px;padding:3px 2px}
@@ -1025,6 +1028,7 @@
   .row:hover{background:rgba(255,233,176,.10) !important;border-color:rgba(216,180,112,.5) !important}
   .row .lab{color:#c9a35f !important;letter-spacing:1.4px}
   .row .val{color:#f5efe2 !important;text-shadow:none !important}
+  .row .val.neg{color:#ff6a55 !important;animation:cashPulse 1.1s ease-in-out infinite}
   .chip{background:rgba(255,244,214,.05) !important;border:1px solid rgba(216,180,112,.22) !important;
     border-radius:10px !important;color:#a8854a !important}
   .chip b{color:#f5efe2 !important}
@@ -3062,8 +3066,13 @@ SPOTS.forEach((sp,i)=>{
    one is on screen even on a narrow phone - and never under the walker.
    The loop revisits some junctions, so skip a cell that already has a cab. */
 const cabTaken=[];
+/* touch devices carry every parked cab as live SVG while walking: halve the
+   static fleet there (~140 -> ~70 nodes) and lean on ensureCabNearby() to
+   pull one over whenever the player actually wants advice */
+const CAB_LITE = matchMedia('(max-width:760px)').matches || matchMedia('(pointer:coarse)').matches;
 PATH.forEach((p,i)=>{
-  const k=i%8; if(k!==2 && k!==6) return;
+  const k=i%(CAB_LITE?12:8);
+  if(CAB_LITE ? k!==2 : (k!==2 && k!==6)) return;
   const prev=PATH[i-1];
   const vert = prev && prev.u===p.u;          /* this stretch runs north-south */
   const ahead=k===2, along=ahead?60:-60, lane=ahead?-134:134;
@@ -5344,7 +5353,9 @@ function updatePanel(){
   /* age creeps up one year for every 365 in-game days on the street */
   ST.age = AGE_START + Math.floor(Math.floor(clockMin/1440)/365);
   document.getElementById('cAge').textContent=ST.age;
-  document.getElementById('vCash').textContent=fmt$(ST.cash);
+  const vc=document.getElementById('vCash');
+  vc.textContent=fmt$(ST.cash);
+  vc.classList.toggle('neg', ST.cash<0);
   document.getElementById('vBank').textContent=fmt$(ST.bank);
   const bankSub=document.getElementById('vBankSub');
   if(bankSub) bankSub.textContent = ST.loan
