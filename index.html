@@ -416,6 +416,14 @@
   #brand{position:fixed;top:14px;left:18px;z-index:15;color:#ffe9b0;letter-spacing:5px;font-size:24px;text-shadow:0 2px 8px #000}
   #brand small{display:block;font-size:12px;letter-spacing:3px;color:#c8d8c0;margin-top:3px}
   #zoomhint{position:fixed;left:18px;top:84px;z-index:15;color:#a8bfae;font-size:12px;letter-spacing:1px;text-shadow:0 2px 4px #000}
+  #jobHint{position:fixed;left:18px;top:112px;z-index:15;color:#ffd98a;font-size:11.5px;letter-spacing:1.5px;
+    text-shadow:0 2px 4px #000;opacity:0;pointer-events:none;transition:opacity .6s;font-family:Verdana,sans-serif}
+  #jobHint.show{opacity:.95}
+  #jobBeacon .bRing{transform-box:fill-box;transform-origin:center;animation:beaconPulse 1.8s ease-out infinite}
+  #jobBeacon .b2{animation-delay:.9s}
+  #jobBeacon .bCone{animation:beaconGlow 1.8s ease-out infinite}
+  @keyframes beaconPulse{0%{transform:scale(.35);opacity:.95}75%{transform:scale(2.8);opacity:0}100%{transform:scale(2.8);opacity:0}}
+  @keyframes beaconGlow{0%,100%{opacity:.55}50%{opacity:.9}}
 
   /* ---------- the cab talks: hover a parked taxi for a line of wisdom ---------- */
   #cab{position:fixed;z-index:42;display:none;max-width:min(336px,84vw);pointer-events:none;
@@ -640,6 +648,9 @@
     body.mobile-lite #traffic{display:none}
     /* the zoom hint reads huge under WeChat's font boosting — keep it a whisper */
     #zoomhint{font-size:9.5px;letter-spacing:.5px;opacity:.75}
+    /* the job hint must clear the folded HUD card AND the left toolbar column */
+    #jobHint{top:176px;left:84px;font-size:9.5px;letter-spacing:.8px;max-width:62vw;
+      background:rgba(10,14,10,.55);padding:5px 9px;border-radius:6px}
     /* ---- the fold: phones boot with a 3-line HUD (clock · health · fold) ---- */
     /* the fold button costs the health line ~28px — keep "HEALTH 68 / 100" on one line */
     .hpnum{font-size:8.5px;letter-spacing:.2px;white-space:nowrap}
@@ -1211,6 +1222,7 @@
 
 <div id="brand">MY LIFE<small>NEW YORK &#183; A LIFE, WALKED</small></div>
 <div id="zoomhint">zoom out = city overview &#183; zoom in = street level</div>
+<div id="jobHint">&#128188; FIRST STOP: A JOB &mdash; walk to the golden beacon and stop on it</div>
 <div id="cab" role="status" aria-live="polite"><div id="cabQ"></div><div id="cabBy"></div></div>
 
 <div id="tabs">
@@ -3532,6 +3544,9 @@ const TRAFFIC=[];
       speed:150+rc()*130});
   }
   put(`<g id="traffic" style="pointer-events:none">${markup}</g>`);
+  /* the first-job beacon: a pulsing gold column over the nearest hiring building.
+     Painted above traffic so nothing in the city can cover it. */
+  put(`<g id="jobBeacon" style="pointer-events:none"></g>`);
 })();
 function startTraffic(){
   const g=document.getElementById('traffic'); if(!g||!TRAFFIC.length) return;
@@ -3568,6 +3583,7 @@ function setCellMark(){
   fx.innerHTML=`<circle cx="${p.x}" cy="${p.y}" r="54" fill="#ffd24a" opacity=".13"/>
     <circle cx="${p.x}" cy="${p.y}" r="45" fill="none" stroke="#ffd24a" stroke-width="7"/>
     <circle cx="${p.x}" cy="${p.y}" r="31" fill="none" stroke="#fff8e0" stroke-width="2.5" opacity=".6"/>`;
+  if(typeof syncJobBeacon==='function') syncJobBeacon();   /* re-aim the beacon after every landing */
 }
 let camSaved=0;
 let sessionPulled=false;                  /* the cinematic near->far pull plays once per session */
@@ -3980,22 +3996,41 @@ const CAB_LINES=[
   {q:'Health buys back the only currency you cannot earn more of.', by:'From the back seat'},
   {q:'The wheel decides where you land. What you buy there is up to you.', by:'From the back seat'},
   {q:'Cash sitting idle is a slow leak. Cash waiting for a crash is a loaded gun.', by:'From the back seat'},
-  {q:'Boredom is the price of a long hold. Pay it.', by:'From the back seat'}
+  {q:'Boredom is the price of a long hold. Pay it.', by:'From the back seat'},
+
+  /* context lines: the driver reads your wallet, not just the map */
+  {q:'Broke is a season, not a verdict. Rent first, then one small thing that pays you.', by:'From the back seat', tag:'broke'},
+  {q:'I have seen this city break better wallets than yours. It repairs the ones that keep showing up.', by:'From the back seat', tag:'broke'},
+  {q:'Debt at 15% is a fire. Put it out before you dream at 6%.', by:'From the back seat', tag:'broke'},
+  {q:'Every empire here started with somebody\u2019s ugly first month. Work, eat, sleep, repeat.', by:'From the back seat', tag:'broke'},
+  {q:'Half your bills pay themselves now. The rest is arithmetic and patience.', by:'From the back seat', tag:'free'},
+  {q:'At this point your salary is a hobby. The assets are the job.', by:'From the back seat', tag:'free'},
+  {q:'Guard the streak. One big liability can undo ten quiet years.', by:'From the back seat', tag:'free'}
 ];
 (function cabTalk(){
   const tip=document.getElementById('cab');
   if(!tip) return;
   const qEl=document.getElementById('cabQ'), byEl=document.getElementById('cabBy');
-  let last=-1, over=null, hoverT=0, closeT=0, stayT=0, downX=0, downY=0, downAt=0, downCab=null;
+  let lastLine=null, over=null, hoverT=0, closeT=0, stayT=0, downX=0, downY=0, downAt=0, downCab=null;
 
   /* parked cab, or a car actually driving past — both are the driver talking */
   const cabAt=el=> (el && el.closest) ? el.closest('g.taxi, #traffic .drive') : null;
   const isMoving=el=> !!el && el.tagName.toLowerCase()==='use';
 
   function pick(){
-    let i=Math.floor(Math.random()*CAB_LINES.length);
-    if(i===last) i=(i+1+Math.floor(Math.random()*(CAB_LINES.length-1)))%CAB_LINES.length;
-    last=i; return CAB_LINES[i];
+    /* the driver reads your wallet: broke players get encouragement,
+       half-free players get the endgame talk — everyone else, the whole pool */
+    let pool=CAB_LINES;
+    try{
+      const pct=typeof freedomPct==='function'?freedomPct():0;
+      const broke=(ST.cash||0)<500;
+      const ctx=broke ? CAB_LINES.filter(l=>l.tag==='broke')
+            : (pct>=50 ? CAB_LINES.filter(l=>l.tag==='free') : null);
+      if(ctx && ctx.length && Math.random()<0.5) pool=ctx;
+    }catch(e){}
+    let i=Math.floor(Math.random()*pool.length);
+    if(pool[i]===lastLine) i=(i+1)%pool.length;
+    lastLine=pool[i]; return pool[i];
   }
   function place(cx,topY,botY){
     tip.style.left='0px'; tip.style.top='0px';           /* measure unshifted */
@@ -5064,6 +5099,34 @@ function jobsHere(kind){
     return Array.isArray(j.where) ? j.where.indexOf(kind)>=0 : j.where===kind;
   });
 }
+/* ---- the first-job beacon: nobody should spend minute one lost ---- */
+function jobBeaconTarget(){
+  if(!started || ST.employed) return null;
+  if(ST.goals && ST.goals.job) return null;
+  let best=null, bd=1e9;
+  for(const b of BUILT){
+    if(!b.kind || !jobsHere(b.kind).length) continue;
+    const d=rectDist(mePos.x, mePos.y, b);
+    if(d<bd){ bd=d; best=b; }
+  }
+  return best;
+}
+function syncJobBeacon(){
+  const g=document.getElementById('jobBeacon');
+  if(!g) return;
+  const hint=document.getElementById('jobHint');
+  const b=jobBeaconTarget();
+  if(!b){ g.innerHTML=''; if(hint) hint.classList.remove('show'); return; }
+  const cx=b.x+b.w/2, top=b.base-b.h;
+  g.innerHTML=
+    `<g transform="translate(${cx},${top})">
+       <path class="bCone" d="M -26 0 L -7 -160 L 7 -160 L 26 0 Z" fill="#ffd98a" opacity=".55"/>
+       <circle class="bRing b1" r="15" fill="none" stroke="#ffe9b0" stroke-width="3"/>
+       <circle class="bRing b2" r="15" fill="none" stroke="#ffd98a" stroke-width="2"/>
+       <circle r="6" fill="#ffe9b0"/>
+     </g>`;
+  if(hint) hint.classList.add('show');
+}
 /* the pay scale is alive: +10% for every level above the hiring bar, +2% per month served.
    Study, level up, and the same desk pays more. */
 function salaryOf(j){
@@ -5084,6 +5147,7 @@ function payAt(j){
 function applyJob(j){
   ST.employed=j; ST.jobMonths=0; advanceMinutes(120);
   ST.perf=70; ST.burnDays=0; ST.goodDays=0; ST.perfMonth=0; ST.perfDays=0; ST.payStub=null;
+  syncJobBeacon();                     /* the beacon's whole job is done */
   toast('\uD83D\uDCBC HIRED: '+j.title+' \u00B7 '+fmt$(salaryOf(j))+'/mo');
 }
 function quitJob(){
@@ -6060,6 +6124,7 @@ function npcWeekAll(){
 function publishRank(){
   const rows=leaderboard();
   const rank=rows.findIndex(r=>r.you)+1;
+  const prevRank=ST.rank;                              /* last week's print */
   ST.rank=rank; ST.rankOf=rows.length; ST.rankWeek=Math.floor(ST.day/RANK_EVERY);
   const rowEl=document.getElementById('rowRank'), v=document.getElementById('vRank');
   if(rowEl){ rowEl.style.display='flex'; rowEl.classList.toggle('champ', rank===1); }
@@ -6069,6 +6134,20 @@ function publishRank(){
     toast('\uD83D\uDC51 CITY RANKINGS \u00B7 WEEK '+ST.rankWeek+': you are #1 of '+rows.length+'. Somebody is coming for it.');
   } else {
     toast('\uD83D\uDCCA CITY RANKINGS \u00B7 WEEK '+ST.rankWeek+': #'+rank+' of '+rows.length+' \u2014 '+lead.name+' leads with '+fmt$(lead.worth)+'.');
+  }
+  /* the board moved: the paper prints it. Rivalry is the cheapest retention there is. */
+  if(prevRank && rank!==prevRank && started && !ST.ended){
+    if(rank<prevRank){
+      showPaper(rank===1 ? 'YOU TAKE THE TOP OF THE CITY BOARD'
+                         : 'YOU CLIMB TO #'+rank+' ON THE CITY BOARD',
+        rank===1
+          ? 'Week '+ST.rankWeek+' print: the summit is yours. Somebody below is studying your numbers right now.'
+          : 'Week '+ST.rankWeek+' print: up from #'+prevRank+'. '+lead.name+' still holds the summit with '+fmt$(lead.worth)+' \u2014 for now.');
+    } else {
+      const rival=rows[rank-1];
+      showPaper('OVERTAKEN ON THE CITY BOARD',
+        'Week '+ST.rankWeek+' print: '+rival.name+' passes you into #'+rank+'. The gap is '+fmt$(rival.worth-rows.find(r=>r.you).worth)+' \u2014 the next issue is yours to write.');
+    }
   }
   const rp=document.getElementById('rankPanel');
   if(rp && rp.classList.contains('show')) renderRank();
@@ -6416,18 +6495,21 @@ const NEWS=[
   {h:'JOBLESS CLAIMS HIT LOW', s:'The labor market stays firm; wages keep outpacing prices.', mkt:'up'}
 ];
 let newsT=null;
-function openNews(){
-  const n=NEWS[Math.floor(Math.random()*NEWS.length)];
+function showPaper(head,body){
   const d=clockNow();  document.getElementById('npDate').textContent=
     `${DOW[d.getDay()]} \u00B7 ${MON[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
-  document.getElementById('npHead').textContent=n.h;
-  document.getElementById('npBody').textContent=n.s;
-  if(n.mkt==='up') driftMarket(0.012);
-  if(n.mkt==='down') driftMarket(-0.012);
+  document.getElementById('npHead').textContent=head;
+  document.getElementById('npBody').textContent=body;
   const np=document.getElementById('newsPanel');
   clearToasts();                 /* the paper owns the top of the screen while it is up */
   np.classList.add('show');
   clearTimeout(newsT); newsT=setTimeout(()=>np.classList.remove('show'), 5000);
+}
+function openNews(){
+  const n=NEWS[Math.floor(Math.random()*NEWS.length)];
+  showPaper(n.h, n.s);
+  if(n.mkt==='up') driftMarket(0.012);
+  if(n.mkt==='down') driftMarket(-0.012);
 }
 document.getElementById('newsPanel').addEventListener('click',()=>document.getElementById('newsPanel').classList.remove('show'));
 
@@ -6598,6 +6680,7 @@ function startGame(opts){
   updateWheels();
   updatePanel();
   setMusic(musicOn);                          /* keep whatever the player chose in settings */
+  syncJobBeacon();                     /* minute one has a destination, not just a hint card */
   toast(`Welcome to New York, ${typed}. Spin the disc to walk.`);
   /* first visit? the tutorial card explains the loop in three beats */
   let tutSeen=null; try{ tutSeen=STORE.getItem(TUT_KEY); }catch(e){}
@@ -7162,10 +7245,20 @@ document.getElementById('scDownload').addEventListener('click',async()=>{
 });
 
 document.getElementById('scCopy').addEventListener('click',async()=>{
-  try{ await navigator.clipboard.writeText(SC_URL); toast('Link copied \u2014 '+SC_URL); }
+  /* the pasted text carries the story: numbers first, link last — it has to
+     survive Reddit/Twitter timelines without the image attached.
+     Mid-game the text reports the walk; finished lives announce freedom. */
+  const finished=goalsDoneCount()>=GOALS.length;
+  const shareText=finished
+    ? 'A LIFE, LIVED \u2014 '+(lastLife&&lastLife.name?lastLife.name:'WALKER')+' reached financial freedom in MY LIFE\n'
+      +(ST.day||0)+' days \u00B7 net worth '+fmt$(myWorth())+' \u00B7 bills covered by passive income: '+freedomPct()+'%\n'
+      +'14/14 life goals \u00B7 free life simulator, no install: '+SC_URL
+    : 'Day '+(ST.day||0)+' of my New York life in MY LIFE \u2014 net worth '+fmt$(myWorth())+', passive income covers '+freedomPct()+'% of the bills\n'
+      +'14 goals, one city, free in your browser, no install: '+SC_URL;
+  try{ await navigator.clipboard.writeText(shareText); toast('Story + link copied \u2014 paste it anywhere.'); }
   catch(e){
-    const ta=document.createElement('textarea'); ta.value=SC_URL; document.body.appendChild(ta);
-    ta.select(); try{ document.execCommand('copy'); toast('Link copied \u2014 '+SC_URL); }
+    const ta=document.createElement('textarea'); ta.value=shareText; document.body.appendChild(ta);
+    ta.select(); try{ document.execCommand('copy'); toast('Story + link copied \u2014 paste it anywhere.'); }
     catch(e2){ toast(SC_URL); }
     ta.remove();
   }
@@ -7225,7 +7318,9 @@ function saveGame(force){
   if(!started) return false;
   if(!force && !saveDirty) return false;
   try{
-    STORE.setItem(SAVE_KEY, JSON.stringify(snapshot()));
+    const snap=snapshot();
+    STORE.setItem(SAVE_KEY, JSON.stringify(snap));
+    lastSavedDay=ST.day|0;
     saveDirty=false;
     const el=document.getElementById('saveStatus');
     if(el){
@@ -7241,7 +7336,19 @@ function saveGame(force){
     return true;
   }catch(e){ return false; }
 }
-/* no timer, no hidden writes — saving is a decision, not a side effect */
+/* no timer, no hidden writes — saving is a decision, not a side effect.
+   The one guardrail: closing the tab with UNSAVED progress asks for a confirm,
+   so an hour of walking is never lost to a mis-click. Measured in game-DAYS:
+   the clock is always moving, so a snapshot diff would nag on every close.
+   Same-day closes stay silent; a day lived but not banked gets a warning. */
+let lastSavedDay=-1;
+addEventListener('beforeunload',e=>{
+  try{
+    if(started && !ST.ended && !STORE.memoryOnly && (ST.day|0)>lastSavedDay){
+      e.preventDefault(); e.returnValue='';
+    }
+  }catch(err){}
+});
 
 function resumeGame(){
   let s=null;
@@ -7287,6 +7394,7 @@ function resumeGame(){
   setMusic(musicOn);
   toast('Welcome back, '+typed+'. Month '+Math.floor(ST.day/30)+' \u00B7 your city kept turning while you were away.');
   saveGame(true);
+  syncJobBeacon();                     /* a saved-but-jobless life still gets the pointer */
 }
 
 /* ===================== FIRST-RUN TUTORIAL · three beats, once ===================== */
@@ -7300,6 +7408,7 @@ function tutDone(){
   const t=document.getElementById('tut');
   if(t) t.classList.remove('show');
   try{ STORE.setItem(TUT_KEY,'1'); }catch(e){}
+  syncJobBeacon();                     /* the card is gone — point at the first job */
 }
 
 /* boot the settings */
