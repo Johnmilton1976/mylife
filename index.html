@@ -3532,6 +3532,7 @@ ROSTER.forEach(o=>{ o.g = SEX_OF[o.name] || 'm'; });
 /* the world is still a string at this point, so stage the cars as markup + specs,
    then startTraffic() wires them up right after the world mounts */
 const TRAFFIC=[];
+var started=false;    /* declared early: background loops read it the moment they wake */
 (function trafficStage(){
   /* no taxi yellow here: a yellow car at speed reads as a second cab stacking
      the kerb lane — moving cars stay clearly not-cabs */
@@ -3696,7 +3697,8 @@ function mountCity(){
   wireNpcHover();
   applyCam();                           /* re-assert the camera onto the fresh DOM */
 }
-setTimeout(mountCity, 60);
+/* scheduled at the END of the script: the main script itself can take longer
+   than 60ms to execute, and mountCity must never fire mid-parse (TDZ) */
 
 /* ===================== minimap ===================== */
 const mini=document.getElementById('mini');
@@ -4233,12 +4235,21 @@ const CHARS={};
 let lastT=performance.now();
 (function loop(t){
   const dt=Math.min(120, t-lastT); lastT=t;
-  if(clockOn){ clockMin += dt/1000 * BASE_MIN_PER_SEC * SPEEDS[speedIdx]; renderClock(); }
-  Object.keys(CHARS).forEach(id=>{
+  /* the clock is HUD: nothing ticks before the first life starts, so an idle
+     title screen costs one comparison per frame (time no longer leaks into a
+     fresh life while the player sits on the cover) */
+  if(clockOn && started){
+    clockMin += dt/1000 * BASE_MIN_PER_SEC * SPEEDS[speedIdx];
+    renderClock();
+  }
+  for(const id in CHARS){
     const c=CHARS[id]; c.t=t;
-    if(c.walking) c.phase+=dt*0.0155; else c.phase=0;
-    setPose(id,c.phase,c.walking);
-  });
+    if(c.walking){ c.phase+=dt*0.0155; c.settled=false; setPose(id,c.phase,true); }
+    /* standing still: settle the pose once, then stop writing attributes —
+       this used to push 7 identical attribute writes x 7 characters x 60fps
+       at a player who was just standing on the pavement */
+    else if(!c.settled){ c.settled=true; setPose(id,0,false); }
+  }
   requestAnimationFrame(loop);
 })(lastT);
 
@@ -6546,7 +6557,7 @@ function openNews(){
 document.getElementById('newsPanel').addEventListener('click',()=>document.getElementById('newsPanel').classList.remove('show'));
 
 /* ===================== flow ===================== */
-let cur=0, curCell=PATH[0], busy=false, started=false, newsStreak=0;
+let cur=0, curCell=PATH[0], busy=false, newsStreak=0;
 
 /* ---- onboarding: name + sex, then the city deals you a face ----
    The old 24-card roster page is gone: picking a look was a slow, low-stakes
@@ -6687,6 +6698,10 @@ function startGame(opts){
   const o=ROSTER[myIdx];
   lastLife={name:typed, selIdx:myIdx};
   try{ STORE.removeItem(SAVE_KEY); }catch(e){}      /* a fresh life, not a resumed one */
+  /* the clock no longer runs on the title screen, but reset anyway: a fresh
+     life starts at CLOCK_BASE, never at "however long you sat on the cover" */
+  clockMin=0; lastShownMin=-1;
+  window._clockDay=clockNow().toDateString();   /* pre-seed: no phantom day-shift */
   if(!opts) inp.value=typed;
   document.getElementById('pName').textContent=typed.toUpperCase();
   document.getElementById('pAvatar').innerHTML=
@@ -7528,6 +7543,7 @@ syncSetUI();
 document.getElementById('tutBtn').addEventListener('click', tutDone);
 
 applyCam();
+setTimeout(mountCity, 60);   /* city mounts just after the first paint */
 window.__mlBooted=true;      /* from here on, script errors are logged, never fatal */
 </script>
 </body>
