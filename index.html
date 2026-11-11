@@ -288,20 +288,37 @@
     padding:13px 16px 16px;transition:transform .18s ease, opacity .18s ease;opacity:0;
   }
   #kModal.show{display:block;transform:translate(-50%,-50%) scale(1);opacity:1}
-  .km-trade{display:flex;align-items:center;gap:6px;margin-top:8px}
-  .km-trade .km-held{font-size:11px;font-weight:bold;letter-spacing:.6px;color:#c9a35f;min-width:70px}
-  .km-trade button{
-    width:28px;height:28px;flex:none;cursor:pointer;font-weight:bold;font-size:14px;line-height:1;
+  /* what you hold, then two trade rows: buy and sell never share a quantity box */
+  .km-pos{display:flex;align-items:baseline;gap:9px;margin-top:7px;padding:5px 9px;border-radius:8px;
+    background:rgba(201,163,95,.09);border:1px solid rgba(201,163,95,.26);
+    font-size:11.5px;letter-spacing:.4px;color:#c9b78e}
+  .km-pos b{font-family:Georgia,serif;font-size:15px;color:#ffe9b0}
+  .km-pos .up{margin-left:auto;color:#8fd07a;font-weight:bold}
+  .km-pos .down{margin-left:auto;color:#ff9a8a;font-weight:bold}
+  .km-pos.empty{color:#96876e;font-style:italic}
+  .km-side{display:flex;align-items:center;gap:6px;margin-top:7px}
+  .km-side-l{flex:0 0 34px;font-family:Georgia,serif;font-size:10px;letter-spacing:1.4px;color:#c9a35f}
+  .km-side button{
+    width:26px;height:28px;flex:none;cursor:pointer;font-weight:bold;font-size:14px;line-height:1;
     color:#e8c88a;background:rgba(255,233,176,.07);border:1.5px solid rgba(201,163,95,.5);border-radius:6px;padding:0;
   }
-  .km-trade button:hover{background:rgba(255,233,176,.16);color:#ffe9b0;border-color:#c9a35f}
-  .km-trade input{
-    width:64px;height:28px;text-align:center;font-family:Georgia,serif;font-weight:bold;font-size:15px;
+  .km-side button:not(.km-go):hover{background:rgba(255,233,176,.16);color:#ffe9b0;border-color:#c9a35f}
+  .km-side input{
+    width:56px;height:28px;flex:none;text-align:center;font-family:Georgia,serif;font-weight:bold;font-size:15px;
     color:#ffe9b0;background:rgba(10,8,6,.85);border:1.5px solid rgba(201,163,95,.5);border-radius:6px;outline:none;
   }
-  .km-trade input:focus{border-color:#ffe9b0}
-  .km-trade input::-webkit-outer-spin-button,.km-trade input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-  .km-trade input[type=number]{-moz-appearance:textfield;appearance:textfield}
+  .km-side input:focus{border-color:#ffe9b0}
+  .km-side input::-webkit-outer-spin-button,.km-side input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .km-side input[type=number]{-moz-appearance:textfield;appearance:textfield}
+  .km-side .km-max{width:auto;padding:0 8px;font-size:10px;letter-spacing:.5px;color:#c9a35f}
+  .km-side-est{flex:1;min-width:0;text-align:right;font-size:10.5px;color:#c9b78e;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .km-side-est .over{color:#ff9a8a;font-style:normal}
+  .km-side .km-go{width:58px;height:28px;flex:none;border-radius:7px;
+    font-family:Georgia,serif;font-size:11px;letter-spacing:1.2px;font-weight:bold;color:#fffaf0;
+    border:1.5px solid rgba(201,163,95,.5)}
+  .km-go.buy{background:linear-gradient(180deg,#4e9e5f,#337a44)}
+  .km-go.sell{background:linear-gradient(180deg,#c9604f,#a03e30)}
+  .km-go:disabled{opacity:.35;cursor:not-allowed}
   .km-btns{display:flex;gap:8px;margin-top:8px}
   .km-btns button{
     flex:1;min-width:0;cursor:pointer;font-family:Georgia,serif;font-weight:bold;font-size:13px;letter-spacing:1.5px;
@@ -310,7 +327,6 @@
   .km-btns [data-kbuy]{background:linear-gradient(180deg,#4e9e5f,#337a44)}
   .km-btns [data-ksell]{background:linear-gradient(180deg,#c9604f,#a03e30)}
   .km-btns button:disabled{opacity:.4;cursor:not-allowed}
-  .km-est{font-size:11.5px;letter-spacing:.5px;color:#c9b78e;text-align:center;margin-top:6px;font-style:italic}
   #kMeta{display:flex;align-items:baseline;gap:12px;margin:6px 2px 2px}
   .km-price{font-size:24px;font-weight:bold;color:#143a6b}
   .km-chg{font-size:14px;font-weight:bold}
@@ -666,6 +682,16 @@
     #goalsBtn{top:300px}
     #rankBtn{top:350px}
     .sbNum{font-size:8px;padding:0 4px;right:-7px;bottom:-4px}
+    /* trade sheet on a phone: tighten both rows, keep every control reachable */
+    .km-side{gap:4px}
+    .km-side-l{flex:0 0 28px;font-size:9px;letter-spacing:1px}
+    .km-side button{width:24px;height:26px;font-size:13px}
+    .km-side input{width:44px;height:26px;font-size:14px}
+    .km-side .km-max{padding:0 5px;font-size:9px}
+    .km-side .km-go{width:48px;height:26px;font-size:10px;letter-spacing:.6px}
+    .km-side-est{font-size:9.5px}
+    .km-pos{font-size:10.5px;gap:7px;padding:4px 7px}
+    .km-pos b{font-size:13px}
     body #goalsPanel,body #rankPanel{left:12px;right:12px;width:auto;top:auto;bottom:70px;max-height:52vh}
     /* Desktop anchors the side sheets beside a 228px HUD (#actPanel at
        right:324px) and parks market/realty/portfolio at left:80px + 340px wide.
@@ -963,6 +989,11 @@
   #rankList .rn .w{color:#a8d68a;font-size:12px}
   #rankList .rn.you{color:#ffe9b0}
   #rankList .rn.you .w{color:#ffe9b0}
+  /* the rank is net worth, and now the line says so piece by piece */
+  #rankList .rn-break{display:flex;flex-wrap:wrap;gap:0 10px;margin:-3px 0 5px 26px;
+    font-size:9.5px;line-height:1.65;letter-spacing:.3px;color:#9a8d74}
+  #rankList .rn-break span{white-space:nowrap}
+  #rankList .rn-break .neg{color:#ff9a8a}
   #rankList .rn.no1{color:#ffd76a}
   #rankList .rn.no1 .w{color:#ffd76a}
   #rankFoot{font-size:10.5px;line-height:1.7;color:#8fae9c;margin-top:8px;
@@ -6692,12 +6723,26 @@ function renderRank(){
   const me=rows.findIndex(r=>r.you);
   const host=document.getElementById('rankList');
   if(!host) return;
+  /* the rank is net worth: say so with the actual pieces, not just a total */
+  const parts=[
+    ['CASH', Math.round(ST.cash)],
+    ['BANK', Math.round(ST.bank)],
+    ['STOCKS', Math.round(stockValue())],
+    ['PROPERTY', Math.round(estateValue())],
+    ['BUSINESS', ST.biz?bizSellPrice():0]
+  ];
+  if(ST.fund) parts.push(['FUND', Math.round(ST.fund)]);
+  if(gameValue()) parts.push(['COLLECTION', gameValue()]);
+  const brk=parts.filter(x=>x[1])
+    .map(x=>'<span>'+x[0]+' '+fmt$(x[1])+'</span>').join('')
+    + (debtValue()?'<span class="neg">DEBT \u2212'+fmt$(Math.round(debtValue()))+'</span>':'');
   host.innerHTML=rows.map((r,i)=>
     '<div class="rn'+(r.you?' you':'')+(i===0?' no1':'')+'">'+
       '<span class="no">'+(i===0?'\uD83D\uDC51':(i+1))+'</span>'+
       '<span class="nm">'+r.name+(r.you?' <small>(you)</small>':'')+'</span>'+
       '<span class="w">'+fmt$(r.worth)+'</span>'+
-    '</div>').join('');
+    '</div>'+
+    (r.you&&brk?'<div class="rn-break">'+brk+'</div>':'')).join('');
   const streak=ST.champMonths||0;
   const gap=me===0?0:rows[0].worth-rows[me].worth;
   document.getElementById('rankFoot').innerHTML=
@@ -6861,66 +6906,95 @@ function renderKModal(){
   const held=isStock? ST.stocks[it.n] : null;
   let trade='';
   if(isStock){
-    const maxBuy=Math.floor(ST.cash/it.v);
-    trade=`<div class="km-trade">
-      <span class="km-held">${held? held.qty+' sh held':'no shares'}</span>
-      <button data-kq="-1" title="less">&minus;</button>
-      <input id="kQty" type="number" min="1" step="1" value="1">
-      <button data-kq="1" title="more">+</button>
-      <button data-kmax="1" title="max affordable">MAX</button>
-    </div>
-    <div class="km-btns">
-      <button data-kbuy="1" ${maxBuy<1?'disabled':''}>BUY</button>
-      <button data-ksell="1" ${held?'':'disabled'}>SELL</button>
-    </div>
-    <div class="km-est" id="kEst"></div>`;
+    /* One quantity box used to serve both buttons, so MAX always meant "most you can
+       afford" - which is the wrong number the moment you are selling. Two rows, two
+       MAXes, and the position sits on top where it belongs. */
+    const maxBuy=Math.floor(ST.cash/it.v), maxSell=held?held.qty:0;
+    const pl=held?(it.v-held.cost)*held.qty:0, plPct=(held&&held.cost)?(it.v/held.cost-1)*100:0;
+    trade=(held
+      ? `<div class="km-pos"><b>${held.qty}</b> sh held<span>avg $${held.cost.toFixed(2)}</span>`
+        + `<span class="${pl>=0?'up':'down'}">${pl>=0?'+':''}${fmt$(Math.round(pl))} (${plPct>=0?'+':''}${plPct.toFixed(1)}%)</span></div>`
+      : `<div class="km-pos empty">no shares held \u2014 SELL stays locked until you own one</div>`)
+      + `<div class="km-side">
+           <span class="km-side-l">BUY</span>
+           <button data-kq="-1" data-side="buy" title="fewer">\u2212</button>
+           <input id="kQtyBuy" type="number" min="1" step="1" value="1" aria-label="shares to buy">
+           <button data-kq="1" data-side="buy" title="more">+</button>
+           <button class="km-max" id="kMaxBuy" data-kmax="buy" title="the most your cash can buy">MAX ${maxBuy}</button>
+           <span class="km-side-est" id="kEstBuy"></span>
+           <button class="km-go buy" data-kbuy="1" ${maxBuy<1?'disabled':''}>BUY</button>
+         </div>`
+      + `<div class="km-side">
+           <span class="km-side-l">SELL</span>
+           <button data-kq="-1" data-side="sell" title="fewer">\u2212</button>
+           <input id="kQtySell" type="number" min="1" step="1" value="1" aria-label="shares to sell">
+           <button data-kq="1" data-side="sell" title="more">+</button>
+           <button class="km-max" id="kMaxSell" data-kmax="sell" title="everything you hold">MAX ${maxSell}</button>
+           <span class="km-side-est" id="kEstSell"></span>
+           <button class="km-go sell" data-ksell="1" ${maxSell<1?'disabled':''}>SELL</button>
+         </div>`;
   }else{
-    const own=!!ST.realty[it.n];
-    trade=`<div class="km-btns">
+    const own=!!ST.realty[it.n], rec=ST.realty[it.n];
+    const pl=own?(it.v-rec.cost):0, plPct=(own&&rec.cost)?(it.v/rec.cost-1)*100:0;
+    trade=(own
+      ? `<div class="km-pos"><b>1</b> house owned<span>bought ${fmt$(Math.round(rec.cost))}</span>`
+        + `<span class="${pl>=0?'up':'down'}">${pl>=0?'+':''}${fmt$(Math.round(pl))} (${plPct>=0?'+':''}${plPct.toFixed(1)}%)</span></div>`
+      : `<div class="km-pos empty">not owned \u2014 ${fmt$(Math.round(it.v))} buys it outright</div>`)
+      + `<div class="km-btns">
       <button data-kbuy="1" ${own||ST.cash<it.v?'disabled':''}>${own?'OWNED':'BUY HOUSE'}</button>
       <button data-ksell="1" ${own?'':'disabled'}>SELL HOUSE</button>
-    </div>
-    <div class="km-est" id="kEst"></div>`;
+    </div>`;
   }
   document.getElementById('kChart').innerHTML=trade+kTabs()+candlesSVG(it,KWIN,520,190);
   updKEst();
 }
-function kQtyVal(){
-  const inp=document.getElementById('kQty');
+function kQtyVal(side){
+  const inp=document.getElementById(side==='sell'?'kQtySell':'kQtyBuy');
   if(!inp) return 1;
   return Math.max(1, Math.floor(+inp.value||1));
 }
+function kHeldQty(){
+  return (KITEM && STOCKS.includes(KITEM) && ST.stocks[KITEM.n]) ? ST.stocks[KITEM.n].qty : 0;
+}
 function updKEst(){
-  const est=document.getElementById('kEst'); if(!est||!KITEM) return;
-  if(STOCKS.includes(KITEM)){
-    const q=kQtyVal(), held=ST.stocks[KITEM.n];
-    const maxBuy=Math.floor(ST.cash/KITEM.v);
-    est.textContent=`${q} sh \u00B7 $${(q*KITEM.v).toFixed(2)} \u00B7 max buy ${maxBuy}${held?` \u00B7 held ${held.qty}`:''}`;
-  }else{
-    est.textContent=`One unit \u00B7 ${fmt$(Math.round(KITEM.v))}`;
-  }
+  if(!KITEM || !STOCKS.includes(KITEM)) return;
+  const held=kHeldQty(), maxBuy=Math.floor(ST.cash/KITEM.v);
+  const qb=kQtyVal('buy'), qs=kQtyVal('sell');
+  const eb=document.getElementById('kEstBuy');
+  if(eb) eb.innerHTML = qb>maxBuy
+    ? '<span class="over">only '+maxBuy+' affordable</span>'
+    : '\u2248 '+fmt$(Math.round(qb*KITEM.v));
+  const es=document.getElementById('kEstSell');
+  if(es) es.innerHTML = qs>held
+    ? '<span class="over">you hold '+held+'</span>'
+    : '\u2248 '+fmt$(Math.round(qs*KITEM.v));
+  const mb=document.getElementById('kMaxBuy'); if(mb) mb.textContent='MAX '+maxBuy;
+  const ms=document.getElementById('kMaxSell'); if(ms) ms.textContent='MAX '+held;
 }
 document.getElementById('kModal').addEventListener('click',e=>{
   if(e.target.id==='kClose'||e.target.id==='kModal'){ closeKChart(); return; }
   const b=e.target.closest('button');
   if(b&&b.dataset.kw){ KWIN=+b.dataset.kw; renderKModal(); return; }
   if(!b||!KITEM) return;
-  /* quantity stepper inside the trade row */
+  /* quantity steppers: buy and sell have their own box */
   if(b.dataset.kq){
-    const inp=document.getElementById('kQty');
-    if(inp) inp.value=Math.max(1, kQtyVal()+(+b.dataset.kq));
+    const side=b.dataset.side==='sell'?'sell':'buy';
+    const inp=document.getElementById(side==='sell'?'kQtySell':'kQtyBuy');
+    if(inp) inp.value=Math.max(1, kQtyVal(side)+(+b.dataset.kq));
     updKEst(); return;
   }
   if(b.dataset.kmax){
-    const inp=document.getElementById('kQty');
-    if(inp) inp.value=Math.max(1, Math.floor(ST.cash/KITEM.v));
+    const side=b.dataset.kmax==='sell'?'sell':'buy';
+    const inp=document.getElementById(side==='sell'?'kQtySell':'kQtyBuy');
+    if(inp) inp.value = side==='sell' ? Math.max(1, kHeldQty())
+                                      : Math.max(1, Math.floor(ST.cash/KITEM.v));
     updKEst(); return;
   }
   /* trade execution */
   const isStock=STOCKS.includes(KITEM);
   if(b.dataset.kbuy){
     if(isStock){
-      const s=KITEM, q=Math.min(kQtyVal(), Math.floor(ST.cash/s.v));
+      const s=KITEM, q=Math.min(kQtyVal('buy'), Math.floor(ST.cash/s.v));
       if(q<1){ toast('Not enough cash for one share.'); return; }
       ST.cash-=s.v*q;
       const h=ST.stocks[s.n]||(ST.stocks[s.n]={qty:0,cost:0});
@@ -6935,7 +7009,7 @@ document.getElementById('kModal').addEventListener('click',e=>{
   } else if(b.dataset.ksell){
     if(isStock){
       const s=KITEM, h=ST.stocks[s.n]; if(!h) return;
-      const q=Math.min(kQtyVal(), h.qty);
+      const q=Math.min(kQtyVal('sell'), h.qty);
       h.qty-=q; ST.cash+=s.v*q;
       toast(`Sold ${q} ${s.n} @ $${s.v.toFixed(2)} \u2014 $${(s.v*q).toFixed(2)}`);
       if(!h.qty) delete ST.stocks[s.n];
@@ -6953,7 +7027,7 @@ document.getElementById('kModal').addEventListener('click',e=>{
 });
 /* typing a quantity also refreshes the estimate */
 document.getElementById('kModal').addEventListener('input',e=>{
-  if(e.target.id==='kQty') updKEst();
+  if(e.target && e.target.id && e.target.id.indexOf('kQty')===0) updKEst();
 });
 function kRowOpen(e,findFn,ic){
   const kr=e.target.closest('[data-krow]');
