@@ -228,6 +228,18 @@
   #mktBtn{top:168px}
   #realtyBtn{top:228px}
   #portBtn{top:288px}
+  #goalsBtn{top:348px}
+  #rankBtn{top:408px;display:none}
+  /* the rail icons carry the number the HUD rows used to show */
+  .sbNum{
+    position:absolute;right:-9px;bottom:-5px;padding:1px 5px;white-space:nowrap;
+    font-family:Georgia,serif;font-size:9px;line-height:1.5;letter-spacing:.2px;
+    color:#ffe9b0;background:#3a2a16;border:1px solid rgba(201,163,95,.55);border-radius:9px;
+    box-shadow:0 2px 6px rgba(0,0,0,.55);
+  }
+  #goalsBtn.allDone .sbNum{color:#2a1c08;background:#e2c878;border-color:#ffe9b0}
+  #rankBtn.champ{border-color:#ffd76a;box-shadow:0 0 0 3px rgba(255,215,106,.22),0 10px 24px rgba(0,0,0,.55)}
+  #rankBtn.champ .sbNum{color:#2a1c08;background:#ffd76a;border-color:#ffe9b0}
   #mktPanel,#realtyPanel,#portPanel{
     position:fixed;left:80px;width:340px;overflow:auto;
     z-index:46;display:none;
@@ -646,6 +658,15 @@
     #wheelWrap{transform:scale(.78);transform-origin:bottom left}
     #dock{gap:7px}
     .dockBtn{width:40px;height:40px;font-size:18px}
+    /* five rail icons now: shrink the rail so the last one clears the wheel */
+    .sideBtn{width:44px;height:44px;font-size:20px}
+    #mktBtn{top:150px}
+    #realtyBtn{top:200px}
+    #portBtn{top:250px}
+    #goalsBtn{top:300px}
+    #rankBtn{top:350px}
+    .sbNum{font-size:8px;padding:0 4px;right:-7px;bottom:-4px}
+    body #goalsPanel,body #rankPanel{left:12px;right:12px;width:auto;top:auto;bottom:70px;max-height:52vh}
     /* Desktop anchors the side sheets beside a 228px HUD (#actPanel at
        right:324px) and parks market/realty/portfolio at left:80px + 340px wide.
        On a phone the act sheet lands almost fully OFF-SCREEN (a 36px sliver
@@ -870,8 +891,8 @@
 
   /* ---------- goals popover ---------- */
   #goalsPanel{
-    position:fixed;right:16px;top:320px;width:250px;z-index:34;display:none;
-    max-height:calc(100vh - 344px);overflow-y:auto;      /* 18 rungs now: never taller than the screen */
+    position:fixed;left:80px;top:300px;width:250px;z-index:34;display:none;
+    max-height:calc(100vh - 324px);overflow-y:auto;      /* 18 rungs now: never taller than the screen */
     background:linear-gradient(180deg,rgba(26,23,20,.94),rgba(16,13,10,.97));
     border:1.5px solid rgba(216,180,112,.42);border-radius:18px;padding:12px 14px 10px;
     box-shadow:0 14px 34px rgba(0,0,0,.5);backdrop-filter:blur(14px);
@@ -923,7 +944,7 @@
 
   /* ---------- the city board ---------- */
   #rankPanel{
-    position:fixed;right:16px;top:320px;width:300px;z-index:34;display:none;
+    position:fixed;left:80px;top:300px;width:300px;z-index:34;display:none;
     background:linear-gradient(180deg,rgba(26,23,20,.95),rgba(16,13,10,.97));
     border:1.5px solid rgba(216,180,112,.42);border-radius:18px;padding:12px 14px 10px;
     box-shadow:0 14px 34px rgba(0,0,0,.5);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
@@ -1307,8 +1328,10 @@
   <div class="row" id="rowPerf" title="Your standing at work" style="display:none"><span class="ic">&#128202;</span><span class="lab">WORK</span><span class="val" id="vPerf">&mdash;</span></div>
   <div class="row" id="rowSkills"><span class="ic">&#129504;</span><span class="lab">SKILLS</span><span class="val" id="vSkills">LV 1</span></div>
   <div class="row" id="rowFree" title="Passive income vs monthly bills"><span class="ic">&#127793;</span><span class="lab">FREE</span><span class="val" id="vFree">0%</span></div>
-  <div class="row" id="rowGoals" title="Your life goals" style="cursor:pointer"><span class="ic">&#127942;</span><span class="lab">GOALS</span><span class="val" id="vGoals">0 / 18</span></div>
-  <div class="row" id="rowRank" title="City rankings &mdash; net worth of everyone on this map" style="cursor:pointer;display:none"><span class="ic">&#128202;</span><span class="lab">RANK</span><span class="val" id="vRank">&mdash;</span></div>
+  <!-- GOALS and RANK moved to the left icon rail. These rows stay in the DOM (display:none)
+       as the anchors their click handlers hang on; the live numbers live in the rail badges. -->
+  <div class="row" id="rowGoals" style="display:none"><span class="ic">&#127942;</span><span class="lab">GOALS</span><span class="val" id="vGoalsOld">0 / 18</span></div>
+  <div class="row" id="rowRank" style="display:none"><span class="ic">&#128202;</span><span class="lab">RANK</span><span class="val" id="vRankOld">&mdash;</span></div>
   <div class="sub" id="moodRow" title="Tap to see why the numbers moved">
     <div class="chip">AGE<b id="cAge">18</b></div>
     <div class="chip">HAPPY<b id="cHappy">50</b></div>
@@ -1378,6 +1401,8 @@
 <button id="mktBtn" class="sideBtn" title="Stock market">&#128200;</button>
 <button id="realtyBtn" class="sideBtn" title="Real estate market">&#127968;</button>
 <button id="portBtn" class="sideBtn" title="My portfolio">&#128188;</button>
+<button id="goalsBtn" class="sideBtn" title="Life goals &mdash; 14 to live, 4 to climb">&#127919;<span class="sbNum" id="vGoals">0 / 18</span></button>
+<button id="rankBtn" class="sideBtn" title="City rankings &mdash; net worth of everyone on this map" style="display:none">&#128202;<span class="sbNum" id="vRank">&mdash;</span></button>
 
 <div id="mktPanel">
   <div class="fin-t"><span>&#128200;</span><b>WALL STREET LIVE</b><span id="mktClose">&#10005;</span></div>
@@ -5745,6 +5770,8 @@ function updatePanel(){
   if(ST.rank){
     const rv=document.getElementById('vRank');
     if(rv) rv.textContent='#'+ST.rank+' / '+ST.rankOf;
+    const rb=document.getElementById('rankBtn');
+    if(rb){ rb.style.display='flex'; rb.classList.toggle('champ', ST.rank===1); }
     const rp=document.getElementById('rankPanel');
     if(rp && rp.classList.contains('show')) renderRank();
   }
@@ -5773,6 +5800,8 @@ function updatePanel(){
   /* life goals: check, celebrate, and keep the HUD count fresh */
   const nDone=checkGoals();
   document.getElementById('vGoals').textContent=nDone+' / '+GOALS.length;
+  const gb=document.getElementById('goalsBtn');
+  if(gb) gb.classList.toggle('allDone', nDone>=GOALS.length);
 }
 
 /* ---- location action modal ---- */
@@ -6631,7 +6660,7 @@ function publishRank(){
   const rank=rows.findIndex(r=>r.you)+1;
   const prevRank=ST.rank;                              /* last week's print */
   ST.rank=rank; ST.rankOf=rows.length; ST.rankWeek=Math.floor(ST.day/RANK_EVERY);
-  const rowEl=document.getElementById('rowRank'), v=document.getElementById('vRank');
+  const rowEl=document.getElementById('rankBtn'), v=document.getElementById('vRank');
   if(rowEl){ rowEl.style.display='flex'; rowEl.classList.toggle('champ', rank===1); }
   if(v) v.textContent='#'+rank+' / '+rows.length;
   const lead=rows[0];
@@ -7248,6 +7277,9 @@ document.getElementById('rowRank').addEventListener('click',e=>{
 document.getElementById('rankClose').addEventListener('click',e=>{
   e.stopPropagation(); rankOpen=false; document.getElementById('rankPanel').classList.remove('show');
 });
+/* the left rail is the only door to these two panels now: it just presses the old rows */
+document.getElementById('goalsBtn').addEventListener('click',()=>document.getElementById('rowGoals').click());
+document.getElementById('rankBtn').addEventListener('click',()=>document.getElementById('rowRank').click());
 
 /* ===================== the daily receipt: why health / happy / stress moved ===================== */
 function renderMood(){

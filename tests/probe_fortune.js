@@ -78,7 +78,7 @@ const PAGE = 'file://' + path.resolve(__dirname, '../index.html').replace(/\\/g,
   });
   const hudAfter = await pg.evaluate(() => document.getElementById('vGoals').textContent);
   console.log('HUD after banking one rung:', JSON.stringify(hudAfter));
-  await pg.click('#rowGoals');
+  await pg.click('#goalsBtn');
   await pg.waitForTimeout(400);
   const panel = await pg.evaluate(() => {
     const list = document.getElementById('goalsList');
@@ -111,7 +111,7 @@ const PAGE = 'file://' + path.resolve(__dirname, '../index.html').replace(/\\/g,
   await mp.evaluate(() => { ST.cash = 12_000_000; checkGoals(); });
   await mp.click('#hudToggle').catch(() => {});        /* the phone boots with the HUD folded */
   await mp.waitForTimeout(400);
-  await mp.click('#rowGoals');
+  await mp.click('#goalsBtn');
   await mp.waitForTimeout(400);
   const mob = await mp.evaluate(() => {
     const p = document.getElementById('goalsPanel'), r = p.getBoundingClientRect();
