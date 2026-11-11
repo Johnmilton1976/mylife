@@ -4405,6 +4405,9 @@ const bestSkill  =()=>SKILLS.reduce((a,k)=>((ST.skills[k.id]||0)>(ST.skills[a.id
      every LV1 job on the board ($3.6k-$4.8k). Skills and charm add a little,
      STRESS takes a lot: a wrecked head works slow, same as at a desk. */
 const ODD_DAILY_CAP=2;
+/* Two hours on your feet: the body pays (HEALTH -1), the mind barely notices.
+   Kept in one place so the button label can never drift from the effect. */
+function gigStrain(where){ return where==='the dish pit' ? 2 : 1; }
 function oddJobPay(s, preview){
   const best=lvlOf(s.skills[bestSkill().id]||0);
   const base=44 + Math.max(0,best-2)*5 + Math.round((s.charm||0)*0.2);
@@ -4417,7 +4420,7 @@ function oddJob(b, where){
   if((s.daily.odd||0)>=ODD_DAILY_CAP){ toast('Two gigs is all anyone hands out in a day. Walk on.'); return; }
   s.daily.odd=(s.daily.odd||0)+1;
   const r=oddJobPay(s);
-  const strain=where==='the dish pit'?5:4;
+  const strain=gigStrain(where);
   s.cash+=r.pay;
   s.stress=clamp(s.stress+strain,0,100);
   s.health=clamp(s.health-1,0,100);
@@ -4850,8 +4853,13 @@ function moodTick(){
   } else if(unreal>0.10){
     push('happy','positions in the green', 2);   /* profit lifts the mood, not the burden */
   }
-  /* the cheapest stress medicine there is: three months of bills in reach */
-  if((s.cash+s.bank) >= 3*(trueExpenses()||1)) push('stress','a cushion in the bank',-1);
+  /* Breathing room is its own medicine, and it should arrive in steps: the old
+     single -1 at three months of bills was so far away it never fired for anyone
+     who actually needed it. A month covered buys quiet; three buys sleep. */
+  const monthsAhead=(s.cash+s.bank)/(trueExpenses()||1);
+  if(monthsAhead>=3)      push('stress','three months of bills in the bank',-3);
+  else if(monthsAhead>=2) push('stress','two months ahead on the bills',-2);
+  else if(monthsAhead>=1) push('stress','a month of bills covered',-1);
   /* money that covers the bills buys silence: this is what freedom is FOR */
   const coverPct = freedomPct();
   if(coverPct>=50)  push('stress','money working for you',-2);
@@ -4862,7 +4870,32 @@ function moodTick(){
   if(s.biz) push('stress','a business',4);
   if(sunday && s.employed) push('stress','a day off the job',-1);
   else push('stress', s.employed?'the job':'no work', s.employed?2.5:4);
-  if(s.cash<300) push('stress','bills you cannot cover',4);
+  /* ---- cash on hand: the most immediate pressure there is ---- */
+  /* No portfolio pays for tonight's dinner. These tiers read what you can SPEND,
+     not what you own, and they are deliberately steep: $40 in your pocket is not
+     a mood, it is a countdown. The way out is always the same - sell something or
+     pick up a shift - which is the lesson the tier exists to teach. */
+  let cashFloor=0;
+  /* Payday changes the arithmetic. Someone with a job and $99 left is waiting for
+     Friday; someone with no job and $99 left is out of moves. Same wallet,
+     different night - so every tier below lands at 60% when wages are in sight. */
+  const cashW=(s.employed||s.biz)?0.6:1;
+  if(s.cash<0){
+    push('stress','the account is in the red', Math.round(10*cashW));
+    push('happy','overdrawn \u00B7 every purchase is a decision', -Math.round(6*cashW));
+    cashFloor=Math.round(88*cashW);
+  } else if(s.cash<25){
+    push('stress','$'+Math.floor(s.cash)+' left to your name', Math.round(9*cashW));
+    push('happy','counting coins for dinner', -Math.round(5*cashW));
+    cashFloor=Math.round(82*cashW);
+  } else if(s.cash<100){
+    push('stress','under $100 to your name', Math.round(7*cashW));
+    push('happy','money worry keeps you up', -Math.round(4*cashW));
+    cashFloor=Math.round(72*cashW);
+  } else if(s.cash<300){
+    push('stress','bills you cannot cover', Math.round(4*cashW));
+    push('happy','money worry', -Math.round(1*cashW));
+  }
   if(s.workStreak>=5) push('stress',s.workStreak+' days without a break',Math.min(3,(s.workStreak-4)*0.8));
   if(before.happy>=70) push('stress','a good mood',-3);
   if(before.health>=85) push('stress','a strong body',-2);
@@ -4893,7 +4926,6 @@ function moodTick(){
   if(s.employed && before.stress>=60) push('happy','a grinding job',-1);
   if(s.workStreak>=6) push('happy','no day off',-1);
   if(before.health<=35) push('happy','feeling run down',-2);
-  if(s.cash<200) push('happy','money worry',-1);
   if(passiveIncome()>=500) push('happy','assets paying the bills',1);
   /* Rich Dad's real payoff is psychological: when assets cover half the bills,
      the job stops being a matter of survival. +2/day keeps an investor's mood
@@ -4904,8 +4936,25 @@ function moodTick(){
   if(before.health>=85) push('happy','feeling strong',1);
 
   /* ---- apply, with a leash on how fast a single day can move you ---- */
-  const dS=Math.max(-5, Math.min(8, Math.round(d.stress)));
+  /* The leash is looser than it was (8 -> 10). A stressor that arrives all at once
+     - an account in the red, a rent cheque you cannot cover - should not need a
+     fortnight to register. Slow burns still climb only a few points a day. */
+  const dS=Math.max(-5, Math.min(10, Math.round(d.stress)));
   s.stress=clamp(s.stress+dS,0,100);
+  /* A floor, not a nudge: no amount of good news makes $30 in your pocket feel
+     comfortable. It climbs at 6 a day rather than snapping there, so going broke
+     reads as a bad week, not a light switch. Eased to 60% when there is something
+     sellable, because the fear is then liquidity, not ruin. */
+  if(cashFloor){
+    const sellable=(s.bank||0)+stockValue()+estateValue()*0.6;
+    const fl=Math.round(cashFloor*(sellable>=2000?0.6:1));
+    const room=fl-s.stress;
+    if(room>0){
+      const add=Math.min(6, room);
+      why.stress.push({label:'nothing to fall back on', val:add});
+      s.stress=Math.min(fl, s.stress+add);
+    }
+  }
   /* a heavy head eats the good days, on top of everything else */
   if(s.stress>=70){
     const bite=Math.round((s.stress-65)/7);
@@ -5622,7 +5671,7 @@ function openAction(b){
   const GIG=(l,where)=>{
     const used=ST.daily.odd||0, out=used>=ODD_DAILY_CAP;
     const {pay}=oddJobPay(ST,true);
-    const strain=where==='the dish pit'?5:4;
+    const strain=gigStrain(where);
     A(out?'✓ NO MORE GIGS TODAY':l,
       out?'two gigs a day is the limit · walk on'
          :'~\u0024'+pay+' in hand · 2h · STRESS +'+strain+' · gig '+(used+1)+'/'+ODD_DAILY_CAP,
