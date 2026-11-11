@@ -4305,7 +4305,7 @@ const GAMES=[
   {id:'gta6', n:'NEON COAST', sub:'open-world crime \u00B7 a neon coast', v:69, prev:69, art:'vice'},
   {id:'zelda',n:'THE LEGEND OF AURELIA', sub:'fantasy adventure \u00B7 a new chapter', v:59, prev:59, art:'hyrule'}
 ];
-const GAME_MAX=5;                       /* copies per title: a shelf, not a hedge fund */
+const GAME_MAX=1;                       /* one copy per title: a collection, not a hedge fund */
 const gameById=id=>GAMES.find(g=>g.id===id);
 const gameValue=()=>Math.round(Object.keys(ST.games||{}).reduce((a,id)=>{
   const h=ST.games[id], g=gameById(id); return a+(g?g.v*(h.qty||0):0);
@@ -4320,13 +4320,6 @@ function buyGame(g){
   ST.happy=clamp(ST.happy+6,0,100);
   advanceMinutes(30);
   toast('\uD83C\uDFAE Bought a fictional copy of '+g.n+' for '+fmt$(g.v)+'. HAPPY +6. No money left this game.');
-}
-function sellGame(g){
-  const h=ST.games[g.id]; if(!h||!h.qty) return;
-  ST.cash+=g.v; h.qty--;
-  if(!h.qty) delete ST.games[g.id];
-  advanceMinutes(15);
-  toast('\uD83D\uDCB5 Sold one '+g.n+' at '+fmt$(g.v)+'. '+(g.v>=h.cost?'A small win.':'The market had other plans.'));
 }
 function playGame(){
   if(playHere) return;
@@ -5625,12 +5618,10 @@ function openAction(b){
     GAMES.forEach(g=>{
       const h=ST.games[g.id], held=h?h.qty:0;
       const pc=g.prev?((g.v/g.prev-1)*100):0;
-      A((held?'\u2713 ':'')+'BUY \u00B7 '+g.n+' \u00B7 '+fmt$(g.v),
-        g.sub+' \u00B7 '+(held?held+' cop'+(held>1?'ies':'y')+' owned':'hover for box art')+' \u00B7 '+(pc>=0?'+':'')+pc.toFixed(1)+'% today',
+      A((held?'\u2713 OWNED \u00B7 ':'BUY \u00B7 ')+g.n+(held?'':' \u00B7 '+fmt$(g.v)),
+        g.sub+' \u00B7 '+(held?'in your collection, value '+fmt$(g.v):'hover for box art')+' \u00B7 '+(pc>=0?'+':'')+pc.toFixed(1)+'% today',
         ()=>buyGame(g),
         {dis:()=>ST.cash<g.v||held>=GAME_MAX, hover:g.id});
-      A('SELL 1 COPY \u00B7 '+g.n, 'at '+fmt$(g.v)+' \u00B7 '+(held?held+' available':'you own none'),
-        ()=>sellGame(g), {dis:()=>!held});
       A('\uD83D\uDC41 PREVIEW \u00B7 '+g.n, 'tap to see the fan-made box art (touch screens)',
         ()=>{ gpPinned=gpPinned===g.id?null:g.id; if(gpPinned) showGamePreview(g.id); else hideGamePreview(true); },
         {preview:g.id});
