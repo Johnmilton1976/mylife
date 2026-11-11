@@ -5096,13 +5096,23 @@ function jobsHere(kind){
 function jobBeaconTarget(){
   if(!started || ST.employed) return null;
   if(ST.goals && ST.goals.job) return null;
-  let best=null, bd=1e9;
+  /* the hint says "walk to the golden beacon", so the beacon must be somewhere
+     the player can actually SEE: prefer the nearest hiring building on screen,
+     and only fall back to the city-wide nearest when the view shows none */
+  let best=null, bd=1e9, onBest=null, onBd=1e9;
   for(const b of BUILT){
     if(!b.kind || !jobsHere(b.kind).length) continue;
     const d=rectDist(mePos.x, mePos.y, b);
     if(d<bd){ bd=d; best=b; }
+    /* screen-space test against the CONE tip (the cone reaches 160 world units
+       above the roof): that is the thing the player is asked to look at */
+    const tip=(b.base-b.h-160-cam.y)*cam.scale, sx=(b.x+b.w/2-cam.x)*cam.scale;
+    if(sx>-60 && sx<innerWidth+60 && tip>-60 && tip<innerHeight*0.92){
+      const dc=Math.hypot(sx-innerWidth/2, tip-innerHeight*0.55);
+      if(dc<onBd){ onBd=dc; onBest=b; }
+    }
   }
-  return best;
+  return onBest||best;
 }
 function syncJobBeacon(){
   const g=document.getElementById('jobBeacon');
