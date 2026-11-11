@@ -893,11 +893,33 @@
     letter-spacing:1.6px;color:#c9a05c}
   #goalsList .gl-h b{flex:1;font-weight:400;color:#a8854a}
   /* ---------- skills panel: the work you can own ---------- */
-  #actBody .sk-info{font-size:11px;line-height:1.55;color:#8fae9c;margin:-1px 0 7px 23px}
   #actBody .sk-work{margin:-2px 0 9px 23px;font-size:11px;line-height:1.5;font-weight:bold;letter-spacing:.3px}
   #actBody .sk-work.own{color:#e8c88a}
   #actBody .sk-work.lock{color:#8a7f6c;font-weight:normal}
   #actBody .sk-make{margin:-2px 0 9px 23px;width:calc(100% - 23px);text-align:left}
+  /* ---------- skills panel: the ladder of what each level unlocks ---------- */
+  #actBody .sk-block{margin-bottom:9px}
+  #actBody .sk-toggle{
+    display:flex;align-items:center;gap:6px;width:100%;margin:-3px 0 7px;padding:4px 7px;
+    background:rgba(201,163,95,.07);border:1px solid rgba(201,163,95,.28);border-radius:6px;
+    cursor:pointer;text-align:left;font-family:Georgia,serif;font-size:10px;letter-spacing:.6px;color:#c9a35f;
+  }
+  #actBody .sk-toggle:hover{background:rgba(201,163,95,.15)}
+  #actBody .sk-toggle.open{background:rgba(201,163,95,.16);color:#ffe9b0}
+  #actBody .sk-ta{flex:0 0 auto;font-size:9px;line-height:1;opacity:.85}
+  #actBody .sk-th{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #actBody .sk-tc{flex:0 0 auto;font-size:9.5px;color:#9c8a68}
+  #actBody .sk-ladder{margin:0 0 8px;padding:2px 0 2px 8px;border-left:2px solid rgba(201,163,95,.28)}
+  #actBody .sk-u{display:flex;align-items:baseline;gap:6px;font-size:10.5px;line-height:1.72;color:#8f8069}
+  #actBody .sk-ul{flex:0 0 36px;font-variant-numeric:tabular-nums;color:#9c8a68}
+  #actBody .sk-un{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #actBody .sk-uv{flex:0 0 auto;font-size:9.5px;color:#9c8a68}
+  #actBody .sk-u.done{color:#e2c878}
+  #actBody .sk-u.done .sk-ul,#actBody .sk-u.done .sk-uv{color:#c9a35f}
+  #actBody .sk-u.next{color:#ffe9b0;font-weight:bold}
+  #actBody .sk-u.next .sk-ul{color:#e2c878}
+  #actBody .sk-u.ready{color:#e8a04a;font-weight:bold}
+  #actBody .sk-u.ready .sk-ul{color:#e8a04a}
 
   /* ---------- the city board ---------- */
   #rankPanel{
@@ -6221,15 +6243,65 @@ function makeWork(id){
      ['ROYALTY +'+fmt$(workRoyalty(w,lv))+'/MO','plus'],
      ['STRESS +10','minus']]);
 }
-document.getElementById('rowSkills').addEventListener('click',()=>{
+/* ---------- the ladder: a level is a key, this table says which door it opens ----------
+   Players were levelling a skill for an abstract number. Everything a level buys — the job
+   tier, the business it lets you run, the work you can sell at LV5, the LV10 ceiling — now
+   sits under the skill it belongs to, folded but one tap away, and the folded line always
+   names the next door. */
+const SKILL_OPEN={};
+var skillOpenSeeded=false;
+const KIND_ORDER={job:0,biz:1,work:2,cap:3};
+function skillLadder(id, lv){
+  const rows=[];
+  JOBS.filter(j=>j.skill===id).forEach(j=>rows.push(
+    {lv:j.lvl, kind:'job', name:j.title, note:fmt$(j.pay)+'/mo', done:lv>=j.lvl}));
+  BIZ.filter(b=>b.skill===id).forEach(b=>{
+    const own=!!(ST.biz&&ST.biz.id===b.id);
+    rows.push({lv:b.lvl, kind:'biz', name:b.name, note:fmt$(b.cost)+' \u00B7 market',
+               done:own, ready:!own&&lv>=b.lvl});
+  });
+  const w=workOf(id);
+  if(w){
+    const made=!!(ST.works&&ST.works[id]);
+    rows.push({lv:WORK_LV, kind:'work', ic:w.ic, name:w.what,
+               note:fmt$(workRoyalty(w,Math.max(lv,WORK_LV)))+'/mo',
+               done:made, ready:!made&&lv>=WORK_LV});
+  }
+  rows.push({lv:10, kind:'cap', name:'MAX LEVEL', note:'the ceiling', done:lv>=10});
+  rows.sort((a,b)=>a.lv-b.lv || KIND_ORDER[a.kind]-KIND_ORDER[b.kind]);
+  const nx=rows.find(r=>!r.done && !r.ready);
+  if(nx) nx.next=true;
+  return rows;
+}
+function ladderHTML(rows){
+  return rows.map(r=>{
+    const cls=r.done?'done':(r.ready?'ready':(r.next?'next':'lock'));
+    const ic=r.kind==='work'?(r.ic||''):(r.kind==='biz'?'\uD83C\uDFEA':(r.kind==='cap'?'\uD83C\uDFC1':''));
+    return '<div class="sk-u '+cls+'"><span class="sk-ul">'+(r.done?'\u2713 ':'')+'LV'+r.lv+'</span>'+
+      '<span class="sk-un">'+ic+(ic?' ':'')+r.name+'</span>'+
+      '<span class="sk-uv">'+r.note+'</span></div>';
+  }).join('');
+}
+function renderSkills(){
+  const panel=document.getElementById('actPanel');
+  const keep=panel.scrollTop||0;
   document.getElementById('actIc').textContent='\uD83E\uDDE0';
   document.getElementById('actTitle').textContent='MY SKILLS';
-  document.getElementById('actDesc').textContent='100 XP per level, LV10 is the ceiling. Study at schools, libraries and bookshops; train at gyms. At LV5 any skill can become a WORK \u2014 make it once, get paid every month.';
+  document.getElementById('actDesc').textContent='100 XP per level, LV10 is the ceiling. The bar under each skill folds open the whole ladder: the jobs each level unlocks, the business you can run, the WORK you can sell at LV5.';
+  if(!skillOpenSeeded){
+    let top=SKILLS[0], bx=-1;
+    SKILLS.forEach(s=>{ const x=(ST.skills||{})[s.id]||0; if(x>bx){ bx=x; top=s; } });
+    SKILL_OPEN[top.id]=true; skillOpenSeeded=true;
+  }
   document.getElementById('actBody').innerHTML=SKILLS.map(sk=>{
     const xp=(ST.skills||{})[sk.id]||0, pc=Math.min(100,xp%100), lv=lvlOf(xp);
-    const here=JOBS.filter(j=>j.skill===sk.id&&j.lvl<=lv);
-    const next=JOBS.filter(j=>j.skill===sk.id&&j.lvl>lv).sort((a,b)=>a.lvl-b.lvl)[0];
-    const pay=here.length?here[here.length-1].pay:0;
+    const rows=skillLadder(sk.id,lv);
+    const got=rows.filter(r=>r.done).length;
+    const open=!!SKILL_OPEN[sk.id];
+    const nx=rows.find(r=>r.ready) || rows.find(r=>!r.done) || null;
+    const head=open ? 'WHAT EACH LEVEL UNLOCKS'
+                    : (nx ? (nx.ready?'READY \u00B7 ':'NEXT \u00B7 ')+'LV'+nx.lv+' '+nx.name
+                          : 'EVERYTHING UNLOCKED');
     const w=workOf(sk.id), made=ST.works&&ST.works[sk.id];
     let work='';
     if(w){
@@ -6238,24 +6310,31 @@ document.getElementById('rowSkills').addEventListener('click',()=>{
       } else if(lv>=WORK_LV){
         work='<button class="act-btn sk-make" data-make="'+sk.id+'"><b>'+w.ic+' '+w.verb+' YOUR '+w.what+'</b>'
             +'<span>'+w.hours+' HOURS \u00B7 '+fmt$(w.adv)+' advance \u00B7 then '+fmt$(workRoyalty(w,lv))+'/mo for life</span></button>';
-      } else {
-        work='<div class="sk-work lock">'+w.ic+' '+w.what+' \u2014 unlocks at LV'+WORK_LV+' ('
-            +fmt$(w.base)+'/mo at LV'+WORK_LV+')</div>';
       }
     }
-    return '<div class="sk-row"><span>'+sk.ic+'</span><span class="sklv">'+sk.name+'</span>'+
+    return '<div class="sk-block"><div class="sk-row"><span>'+sk.ic+'</span><span class="sklv">'+sk.name+'</span>'+
       '<div class="skbar"><div style="width:'+pc+'%"></div></div>'+
       '<span class="sklv">LV '+lv+'</span></div>'+
-      '<div class="sk-info">'+
-        (here.length ? ('\u2713 '+here[here.length-1].title+' \u00B7 '+fmt$(pay)+'/mo') : 'no job at this level yet')+
-        (next ? (' &nbsp;\u2192 LV'+next.lvl+': '+next.title+' \u00B7 '+fmt$(next.pay)+'/mo') : '')+
-      '</div>'+work;
+      '<button class="sk-toggle'+(open?' open':'')+'" data-open="'+sk.id+'">'+
+        '<span class="sk-ta">'+(open?'\u25BE':'\u25B8')+'</span>'+
+        '<span class="sk-th">'+head+'</span>'+
+        '<span class="sk-tc">'+got+'/'+rows.length+'</span></button>'+
+      (open?('<div class="sk-ladder">'+ladderHTML(rows)+'</div>'):'')+
+      work+'</div>';
   }).join('');
   document.querySelectorAll('#actBody [data-make]').forEach(b=>{
     b.addEventListener('click',()=>makeWork(b.dataset.make));
   });
+  document.querySelectorAll('#actBody [data-open]').forEach(b=>{
+    b.addEventListener('click',()=>{
+      SKILL_OPEN[b.dataset.open]=!SKILL_OPEN[b.dataset.open];
+      renderSkills();
+      panel.scrollTop=keep;
+    });
+  });
   actPanel.classList.add('show');
-});
+}
+document.getElementById('rowSkills').addEventListener('click',()=>renderSkills());
 document.getElementById('rowJob').addEventListener('click',()=>{
   document.getElementById('actIc').textContent='\uD83D\uDCBC';
   document.getElementById('actTitle').textContent='CAREER';
