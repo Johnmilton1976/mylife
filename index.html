@@ -944,6 +944,12 @@
   #actBody .sk-work.own{color:#e8c88a}
   #actBody .sk-work.lock{color:#8a7f6c;font-weight:normal}
   #actBody .sk-make{margin:-2px 0 9px 23px;width:calc(100% - 23px);text-align:left}
+  /* the desk you sit at: the daily XP it pays on top of the salary */
+  #actBody .sk-desk{margin:-3px 0 7px 23px;font-size:10.5px;line-height:1.5;color:#9fb98d}
+  #actBody .sk-desk b{color:#a8d68a}
+  #actBody .sk-desk span{color:#8a8064}
+  #actBody .sk-desk.cap{color:#c9a35f}
+  #actBody .sk-desk.cap b,#actBody .sk-desk.cap span{color:#9c8a68}
   /* ---------- skills panel: the ladder of what each level unlocks ---------- */
   #actBody .sk-block{margin-bottom:9px}
   #actBody .sk-toggle{
@@ -4703,6 +4709,50 @@ function perfTarget(s){
   return Math.round(clamp(58 + (s.happy-50)*0.70 - stressDrag(s)
                          - Math.max(0,60-s.health)*0.30, 5, 100));
 }
+/* ===================== the desk is also a classroom =====================
+   A job pays twice: a salary, and the skill it forces you to practise. Until now
+   the second half was missing - you could work a support desk for a decade and
+   your PROGRAMMING never moved, which is not how hands learn.
+   The rate is deliberately slower than a class (+12 XP for 90 minutes, plus a fee)
+   because a shift is not a lesson: 1-4 XP a day, free, for as long as you show up.
+   Two dampers keep it honest:
+     - performance: a wrecked head learns little (STRESS already drags perf down)
+     - a teaching ceiling: a desk can only take you JOB_TEACH grades past its own.
+       IT SUPPORT can turn you into a senior engineer; it cannot make you a chief.
+       Past that ceiling the only way up is a class, a book, or a bigger desk. */
+const JOB_TEACH = 3;
+const JOB_XP    = 2;                 /* base XP for a full day at the desk */
+function jobTeachCap(j){ return Math.min(10, (j.lvl||1) + JOB_TEACH); }
+function jobXpDay(j){
+  if(!j) return 0;
+  const lv=lvlOf((ST.skills||{})[j.skill]||0);
+  if(lv>=jobTeachCap(j)) return 0;                       /* the desk has nothing left to teach */
+  const perf=clamp(ST.perf===undefined?70:ST.perf, 0, 100);
+  const perfF=0.55+perf/100;                             /* perf 70 -> 1.25x, 100 -> 1.55x, 40 -> 0.95x */
+  const stretch = lv<j.lvl ? 1.5 : (lv===j.lvl ? 1.15 : 0.85);  /* a stretch job teaches fastest */
+  return Math.max(1, Math.round(JOB_XP*perfF*stretch));
+}
+/* called inside workDay(): the shift is over, the lesson stays */
+function jobTrain(j){
+  if(!j) return 0;
+  const lv=lvlOf((ST.skills||{})[j.skill]||0);
+  const got=jobXpDay(j);
+  if(!got){
+    ST.teachHint=ST.teachHint||{};
+    if(!ST.teachHint[j.id]){                             /* say it once per desk, then stay quiet */
+      ST.teachHint[j.id]=1;
+      toast('\uD83C\uDF93 '+j.title+' has taught you all it can \u2014 '+skillName(j.skill)
+            +' LV'+lv+'. A bigger desk, or a class.');
+    }
+    return 0;
+  }
+  const gain=grantXp(j.skill, got);
+  if(gain){
+    ST.deskXp=ST.deskXp||{};
+    ST.deskXp[j.skill]=(ST.deskXp[j.skill]||0)+gain;     /* lifetime XP earned on the job */
+  }
+  return gain;
+}
 /* one working day: performance drifts toward the target, it never jumps */
 function workDay(){
   const s=ST;
@@ -4731,6 +4781,8 @@ function workDay(){
     s.perfLog={day:s.day,kind:'praise',text:'Day '+s.day+' \u2014 '+s.employed.company+': '+line};
     toast('\uD83C\uDF1F '+s.employed.company+' noticed ('+s.goodDays+' good days running): '+line);
   }
+  /* and the desk teaches: today's shift is a little more of the craft */
+  jobTrain(s.employed);
 }
 /* month end: this is where the numbers turn into money */
 function monthlyReview(){
@@ -6193,10 +6245,14 @@ function openAction(b){
       const lv=lvlOf(ST.skills[j.skill]);
       const need=skillName(j.skill)+' LV'+j.lvl;
       const repTag=ST.rep?(' \u00B7 +'+Math.round(ST.rep*100)+'% reputation'):'';
+      const skShort=((SKILLS.find(k=>k.id===j.skill)||{}).abbr || skillName(j.skill).split(' ')[0]);
+      const learn=' \u00B7 trains '+skShort+' +'+jobXpDay(j)+'/day to LV'+jobTeachCap(j);
+      const trainTag=(lv>=jobTeachCap(j)) ? ' \u00B7 already past what this desk teaches' : learn;
       const tag=curJob ? ('current job \u00B7 '+fmt$(salaryOf(j))+'/mo \u00B7 '+ST.jobMonths+' mo served'+repTag)
               : lv>=j.lvl ? (fmt$(payAt(j))+'/mo at your LV'+lv+' \u00B7 needs '+need+repTag)
               : ('opens at '+need);
-      A((curJob?'\u2713 ':'APPLY: ')+j.title, j.company+' \u00B7 '+tag,
+      const tagFull=tag+trainTag;
+      A((curJob?'\u2713 ':'APPLY: ')+j.title, j.company+' \u00B7 '+tagFull,
         ()=>applyJob(j),
         {dis:()=>curJob||lv<j.lvl||!!ST.employed, cls:curJob?'cur':''});
     });
@@ -6362,6 +6418,17 @@ function renderSkills(){
     const head=open ? 'WHAT EACH LEVEL UNLOCKS'
                     : (nx ? (nx.ready?'READY \u00B7 ':'NEXT \u00B7 ')+'LV'+nx.lv+' '+nx.name
                           : 'EVERYTHING UNLOCKED');
+    /* the desk you sit at today may be the biggest XP source you have: say it */
+    const jb=(ST.employed && ST.employed.skill===sk.id) ? ST.employed : null;
+    let desk='';
+    if(jb){
+      const cap=jobTeachCap(jb), per=jobXpDay(jb), life=(ST.deskXp&&ST.deskXp[sk.id])||0;
+      desk = per
+        ? '<div class="sk-desk">\uD83D\uDCBC '+jb.title+': the desk teaches <b>+'+per+' XP/day</b>'
+          +' <span>\u00B7 up to LV'+cap+(life?' \u00B7 '+life+' XP earned here':'')+'</span></div>'
+        : '<div class="sk-desk cap">\uD83D\uDCBC '+jb.title+': this desk has taught you all it can'
+          +' <span>\u00B7 ceiling LV'+cap+' \u2014 a class or a bigger desk'+(life?' \u00B7 '+life+' XP earned here':'')+'</span></div>';
+    }
     const w=workOf(sk.id), made=ST.works&&ST.works[sk.id];
     let work='';
     if(w){
@@ -6379,6 +6446,7 @@ function renderSkills(){
         '<span class="sk-ta">'+(open?'\u25BE':'\u25B8')+'</span>'+
         '<span class="sk-th">'+head+'</span>'+
         '<span class="sk-tc">'+got+'/'+rows.length+'</span></button>'+
+      desk+
       (open?('<div class="sk-ladder">'+ladderHTML(rows)+'</div>'):'')+
       work+'</div>';
   }).join('');
@@ -6402,7 +6470,11 @@ document.getElementById('rowJob').addEventListener('click',()=>{
     ? ('You are a '+ST.employed.title+' at '+ST.employed.company+', making '+fmt$(salaryOf(ST.employed))+'/mo'
         +(lvlOf(ST.skills[ST.employed.skill])>ST.employed.lvl?' \u00B7 skill bonus included':'')
         +'. Every level of '+skillName(ST.employed.skill)+' adds 10% to this desk.'
-        +' \u00B7 '+ST.workDays+' days worked, '+(ST.workStreak||0)+' without a break.')
+        +' \u00B7 '+ST.workDays+' days worked, '+(ST.workStreak||0)+' without a break.'
+        +(jobXpDay(ST.employed)
+           ? ' The work itself is training: +'+jobXpDay(ST.employed)+' '+skillName(ST.employed.skill)
+             +' XP a day, up to LV'+jobTeachCap(ST.employed)+'.'
+           : ' This desk has taught you all it can (LV'+jobTeachCap(ST.employed)+') \u2014 a class or a bigger desk.'))
     : 'You are unemployed. Offices, banks, fire & police houses and markets all hire.';
   const body=document.getElementById('actBody');
   body.innerHTML='';
