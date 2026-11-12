@@ -8186,9 +8186,26 @@ function resumeGame(){
   Object.keys(ST).forEach(k=>{ if(k in s.ST) ST[k]=s.ST[k]; });
   /* older saves: IT became PROGRAMMING, WRITING is new, and a work can now be owned */
   if(!ST.skills) ST.skills={};
-  if(ST.skills.it!==undefined){ ST.skills.prog=Math.max(ST.skills.prog||0, ST.skills.it); delete ST.skills.it; }
+  if(ST.skills.it!==undefined){
+    ST.skills.prog=Math.max(ST.skills.prog||0, ST.skills.it); delete ST.skills.it;
+    /* everything that pointed at IT must follow: the work, its seen-card, the break,
+       the desk the player is sitting at, the snapshot ladder */
+    if(ST.works && ST.works.it!==undefined){ ST.works.prog=ST.works.it; delete ST.works.it; }
+    if(ST.craftSeen && ST.craftSeen.it!==undefined){ ST.craftSeen.prog=ST.craftSeen.it; delete ST.craftSeen.it; }
+    if(ST.breaks && ST.breaks.it!==undefined){ ST.breaks.prog=ST.breaks.it; delete ST.breaks.it; }
+    if(ST.employed && ST.employed.skill==='it') ST.employed.skill='prog';
+    if(ST.lvSnap && ST.lvSnap.it!==undefined){ ST.lvSnap.prog=Math.max(ST.lvSnap.prog||0, ST.lvSnap.it); delete ST.lvSnap.it; }
+  }
   /* ENGLISH merged into WRITING; every skill caps at LV5 (400 XP) now */
-  if(ST.skills.eng!==undefined){ ST.skills.write=Math.min(SKILL_XP_CAP,(ST.skills.write||0)+ST.skills.eng); delete ST.skills.eng; }
+  if(ST.skills.eng!==undefined){
+    ST.skills.write=Math.min(SKILL_XP_CAP,(ST.skills.write||0)+ST.skills.eng); delete ST.skills.eng;
+    /* the LANGUAGE COURSE work no longer exists — drop its leftovers so nothing
+       renders a ghost (worksIncome already skips unknown skills, this is hygiene) */
+    if(ST.works) delete ST.works.eng;
+    if(ST.craftSeen) delete ST.craftSeen.eng;
+    if(ST.breaks) delete ST.breaks.eng;
+    if(ST.lvSnap) delete ST.lvSnap.eng;
+  }
   SKILLS.forEach(k=>{ if(typeof ST.skills[k.id]!=='number') ST.skills[k.id]=0; ST.skills[k.id]=Math.min(SKILL_XP_CAP, ST.skills[k.id]); });
   if(ST.lvSnap){ delete ST.lvSnap.eng; SKILLS.forEach(k=>{ ST.lvSnap[k.id]=Math.min(5, ST.lvSnap[k.id]||1); }); }
   ST.works=ST.works||{}; ST.craftSeen=ST.craftSeen||{};

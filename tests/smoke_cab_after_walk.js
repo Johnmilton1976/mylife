@@ -23,9 +23,9 @@ const PAGE = 'file:///C:/Users/Johnmilton/WorkBuddy/2026-11-08-10-33-18/my-life-
   await page.click('#tutBtn').catch(() => {});
   await page.waitForTimeout(600);
 
-  for (let i = 0; i < 5; i++) {
-    await page.click('#rollBtn').catch(() => {});
-    await page.waitForFunction(() => typeof busy === 'undefined' || busy === false, { timeout: 25000 }).catch(() => {});
+  for (let i = 0; i < 2; i++) {
+    await page.click('#wheelBtn').catch(() => {});      /* the real mover: spinAndGo, not #rollBtn (never existed) */
+    await page.waitForFunction(() => typeof busy === 'undefined' || busy === false, { timeout: 60000 }).catch(() => {});
     await page.waitForTimeout(400);
   }
 

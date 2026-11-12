@@ -1,7 +1,9 @@
 /* Probe: the welcome-back message after LOAD fades by itself after 5s.
+   Measures the toast's REAL lifetime with a MutationObserver — a naive
+   "wait 3.9s then look" checkpoint is flaky because detection lag shifts it.
    1) start a life (a save is written)
-   2) reload → CONTINUE → the welcome toast appears and has the sticky ✕ look
-   3) it is still there at 4.5s, gone by 6s — no click needed */
+   2) reload → CONTINUE → observer records birth and fade-out
+   3) visible life must be 5000±400ms, no click needed */
 const { chromium } = require('C:/Users/Johnmilton/.workbuddy/binaries/node/versions/24.14.0/node_modules/@playwright/cli/node_modules/playwright');
 const path = require('path');
 const PAGE = 'file://' + path.resolve(__dirname, '../index.html').replace(/\\/g, '/');
@@ -23,30 +25,29 @@ const PAGE = 'file://' + path.resolve(__dirname, '../index.html').replace(/\\/g,
   await pg.click('#tutBtn').catch(() => {});
   await pg.evaluate(() => saveGame(true));             /* a life only gets banked by hand or by play */
 
-  /* 2. reload and continue */
+  /* 2. reload and continue — observer timestamps birth and fade-out */
   await pg.reload();
-  await pg.waitForTimeout(1800);
-  await pg.click('#resumeBtn');
-  await pg.waitForTimeout(600);
-  const findW = () => [...document.querySelectorAll('#toastWrap .tmsg.stick')]
-    .some(e => e.textContent.includes('Welcome back'));
-  await pg.waitForFunction(findW, null, { timeout: 4000 });
-  const at0 = await pg.evaluate(() => {
-    const e = [...document.querySelectorAll('#toastWrap .tmsg.stick')].find(el => el.textContent.includes('Welcome back'));
-    return e ? { text: e.textContent.replace(/\s+/g, ' ').trim(), hasX: !!e.querySelector('.tm-x') } : null;
+  await pg.waitForTimeout(1700);
+  await pg.evaluate(() => {
+    window.__wT0 = null; window.__wT1 = undefined;
+    const wrap = document.getElementById('toastWrap');
+    new MutationObserver(() => {
+      const w = [...wrap.querySelectorAll('.tmsg.stick')].find(el => el.textContent.includes('Welcome back'));
+      if (w && window.__wT0 === null) window.__wT0 = performance.now();
+      if (w && w.dataset.out && window.__wT1 === undefined) window.__wT1 = performance.now();
+    }).observe(wrap, { childList: true, attributes: true, subtree: true, attributeFilter: ['data-out'] });
+    document.getElementById('resumeBtn').click();
   });
-  console.log('\n--- welcome-back shown ---');
-  console.log(at0 ? ('"' + at0.text + '" · sticky look with ✕: ' + at0.hasX) : 'NOT SHOWN (bug)');
-
-  /* 3. still readable just before the deadline… */
-  await pg.waitForTimeout(3900);                       /* ~4.5s after it appeared */
-  const at45 = await pg.evaluate(findW);
-  console.log('--- at ~4.5s: still on screen: ' + at45 + (at45 ? ' (good)' : ' (bug: too early)'));
-
-  /* …and gone by 6s without any click */
-  await pg.waitForTimeout(1800);                       /* ~6.3s */
-  const at6 = await pg.evaluate(findW);
-  console.log('--- at ~6.3s: welcome-back still there: ' + at6 + (at6 ? ' (bug)' : ' (faded by itself)'));
+  await pg.waitForTimeout(6500);
+  const r = await pg.evaluate(() => ({ t0: window.__wT0, t1: window.__wT1 }));
+  console.log('\n--- welcome-back lifetime ---');
+  if (r.t0 === null) { console.log('NOT SHOWN (bug)'); }
+  else if (r.t1 === undefined) { console.log('never fades (bug: sticky forever)'); }
+  else {
+    const life = r.t1 - r.t0;
+    const ok = life >= 4600 && life <= 5400;
+    console.log('visible life = ' + life.toFixed(0) + 'ms (target 5000±400) ' + (ok ? 'OK' : 'BUG'));
+  }
 
   console.log('\npage errors:', errs.length ? errs : 'none');
   await b.close();
