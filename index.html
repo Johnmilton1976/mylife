@@ -1369,7 +1369,7 @@
   <div class="row" data-fin><span class="ic">&#127962;</span><span class="lab">ESTATE</span><span class="val" id="vEstate">$0</span></div>
   <div class="row" id="rowJob"><span class="ic">&#128188;</span><span class="lab">JOB</span><span class="val" id="vJob">UNEMPLOYED</span></div>
   <div class="row" id="rowPerf" title="Your standing at work" style="display:none"><span class="ic">&#128202;</span><span class="lab">WORK</span><span class="val" id="vPerf">&mdash;</span></div>
-  <div class="row" id="rowSkills"><span class="ic">&#129504;</span><span class="lab">SKILLS</span><span class="val" id="vSkills">LV 1</span></div>
+  <div class="row" id="rowSkills" title="Tap: all 8 skills, each ladder LV1-LV5, and the works you own"><span class="ic">&#129504;</span><span class="lab">SKILLS</span><span class="val" id="vSkills">LV 1</span></div>
   <div class="row" id="rowFree" title="Passive income vs monthly bills"><span class="ic">&#127793;</span><span class="lab">FREE</span><span class="val" id="vFree">0%</span></div>
   <!-- GOALS and RANK moved to the left icon rail. These rows stay in the DOM (display:none)
        as the anchors their click handlers hang on; the live numbers live in the rail badges. -->
@@ -1381,7 +1381,7 @@
     <div class="chip">CHARM<b id="cCharm">20</b></div>
     <div class="chip">STRESS<b id="cStress">20</b></div>
   </div>
-  <div class="finHint">&#9654; TAP CASH / BANK / ESTATE &middot; SEE WHAT PAYS YOU vs WHAT COSTS YOU</div>
+  <div class="finHint">&#9654; TAP CASH / BANK / ESTATE &middot; SKILLS FOR LADDERS &middot; SEE WHAT PAYS YOU vs WHAT COSTS YOU</div>
 </div>
 
 <!-- folded HUD: one badge in the corner; the ring around the face is your health -->
@@ -1605,8 +1605,11 @@
   <div class="cover-guides">
     <a href="/how-to-play/">HOW TO PLAY</a>
     <a href="/rich-dad-rules/">RICH DAD RULES</a>
+    <a href="/rich-dad-poor-dad-game/">RICH DAD GAME</a>
     <a href="/new-york-map/">NEW YORK MAP</a>
     <a href="/goals/">18 LIFE GOALS</a>
+    <a href="/text-based-life-simulator/">TEXT-BASED SIMS</a>
+    <a href="/life-simulator-browser-game/">BROWSER LIFE SIMS</a>
   </div>
   <div class="cover-legal">
     A non-commercial game with original art. Not affiliated with, endorsed or sponsored by any brand, publisher or rights holder.
@@ -4513,7 +4516,7 @@ function grantXp(id, xp){
   if(!ST.skills || !(id in ST.skills)) return 0;
   const cur=ST.skills[id]||0;
   const gain=Math.max(0, Math.min(xp, SKILL_XP_CAP-cur));
-  if(gain) ST.skills[id]=cur+gain;
+  if(gain){ ST.skills[id]=cur+gain; if(typeof updateSkillsHud==='function') updateSkillsHud(); }
   return gain;
 }
 const lowestSkill=()=>SKILLS.reduce((a,k)=>((ST.skills[k.id]||0)<(ST.skills[a.id]||0)?k:a), SKILLS[0]);
@@ -5505,7 +5508,7 @@ function showLifeEnd(){
     ['PASSIVE INCOME',fmt$(passiveIncome())+'/mo'],
     ['BILLS COVERED',freedomPct()+'%'],
     ['CASH IN HAND',fmt$(ST.cash)],
-    ['BEST SKILL','LV '+best+' / 10'],
+    ['BEST SKILL','LV '+best+' / 5'],
     ['CITY RANK','#'+myRank()+' of '+(leaderboard().length)],
     ['LONGEST REIGN',(ST.champBest||0)+' month'+((ST.champBest||0)===1?'':'s')]
   ];
@@ -5821,6 +5824,16 @@ function myWorth(){
   return Math.round(ST.cash + ST.bank + estateValue() + stockValue() + gameValue()
                     + (ST.fund||0) + (ST.biz?bizSellPrice():0) - debtValue());
 }
+/* the HUD skills chip: best skill + how many other skills are above LV1.
+   Called from updatePanel AND straight from grantXp — XP lands mid-walk, and a
+   chip that only refreshes on panel opens lies about who you have become. */
+function updateSkillsHud(){
+  const el=document.getElementById('vSkills'); if(!el) return;
+  const best=SKILLS.reduce((a,s)=>lvlOf(ST.skills[s.id])>lvlOf(ST.skills[a.id])?s:a,SKILLS[0]);
+  const above=SKILLS.filter(s=>lvlOf(ST.skills[s.id])>1).length;
+  el.textContent=(best.abbr||skillName(best.id).split(' ')[0])+' LV'+lvlOf(ST.skills[best.id])
+    +(above>1?' \u00B7 '+above+'/8':'');
+}
 function updatePanel(){
   syncFin();
   /* age creeps up one year for every 365 in-game days on the street */
@@ -5846,8 +5859,7 @@ function updatePanel(){
     rf.classList.add(pct>=100?'good':(pct>=40?'mid':'bad'));
     rf.title='An asset puts money IN your pocket. Passive '+fmt$(pas)+'/mo vs bills '+fmt$(out)+'/mo. Cover 100% and the job becomes optional.';
   }
-  const best=SKILLS.reduce((a,s)=>lvlOf(ST.skills[s.id])>lvlOf(ST.skills[a.id])?s:a,SKILLS[0]);
-  document.getElementById('vSkills').textContent=(best.abbr||skillName(best.id).split(' ')[0])+' LV'+lvlOf(ST.skills[best.id]);
+  updateSkillsHud();
   document.getElementById('vJob').textContent=ST.biz?('\uD83D\uDE80 '+BIZ.find(x=>x.id===ST.biz.id).name):(ST.employed?ST.employed.title:'UNEMPLOYED');
   const rp=document.getElementById('rowPerf');
   if(rp){
