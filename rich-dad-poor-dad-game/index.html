@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rich Dad Poor Dad Game — Play the Cash-Flow Loop Free in Your Browser</title>
+<meta name="description" content="A free Rich Dad Poor Dad style game: start at 18 with $1,000, buy assets that pay every month, and escape the rat race. Browser only — no install, no account.">
+<link rel="canonical" href="https://mylifesim.com/rich-dad-poor-dad-game/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Rich Dad Poor Dad Game — play the cash-flow loop free in your browser">
+<meta property="og:description" content="Start at 18 with $1,000. Buy assets that pay monthly. Escape the rat race. MY LIFE is a free browser game built on the Rich Dad cash-flow rule.">
+<meta property="og:url" content="https://mylifesim.com/rich-dad-poor-dad-game/">
+<meta property="og:image" content="https://mylifesim.com/docs/gameplay.png">
+<link rel="icon" href="data:,">
+<style>
+  :root{--gold:#d8b470;--goldL:#ffd98a;--ink:#fff6e0;--dim:#a8bfae;--bg:#0f1512;--panel:#171d19}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:Verdana,Geneva,sans-serif;font-size:15px;line-height:1.85;
+       background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.012) 0 2px,transparent 2px 14px)}
+  a{color:var(--goldL);text-decoration:none;border-bottom:1px dotted #a8854a}
+  a:hover{color:#fff}
+  header{padding:26px 6vw;border-bottom:1px solid #2a332c;display:flex;align-items:baseline;gap:26px;flex-wrap:wrap}
+  header .brand{font-family:Georgia,serif;font-size:24px;letter-spacing:8px;color:var(--goldL);border:none}
+  header nav a{font-size:11.5px;letter-spacing:2px;color:var(--dim);margin-right:18px}
+  header nav a:hover{color:var(--goldL)}
+  main{max-width:860px;margin:0 auto;padding:56px 6vw 40px}
+  .kick{font-size:11px;letter-spacing:4px;color:#a8854a;font-family:Verdana}
+  h1{font-family:Georgia,serif;font-size:clamp(30px,5vw,44px);letter-spacing:4px;color:var(--goldL);
+     margin:10px 0 6px;text-shadow:0 2px 6px rgba(0,0,0,.6)}
+  h2{font-family:Georgia,serif;font-size:22px;letter-spacing:2px;color:#e8c88a;margin:46px 0 14px;
+     border-left:3px solid var(--gold);padding-left:12px}
+  p{margin:14px 0;color:#dfe6dc}
+  strong{color:var(--goldL)}
+  ul,ol{margin:12px 0 12px 24px;color:#dfe6dc}
+  li{margin:9px 0}
+  table{width:100%;border-collapse:collapse;margin:20px 0;font-size:13.5px}
+  th{font-family:Georgia,serif;color:var(--gold);text-align:left;letter-spacing:1.5px;font-size:12px;
+     border-bottom:1px solid #3a443a;padding:9px 12px}
+  td{border-bottom:1px solid #232b25;padding:9px 12px;color:#cfd8cd}
+  td:first-child{color:var(--goldL);white-space:nowrap}
+  figure{margin:30px 0;border:1px solid #3a443a;border-radius:6px;overflow:hidden;background:#0a0f0c}
+  figure img{width:100%;display:block}
+  figcaption{padding:10px 16px;font-size:11.5px;color:var(--dim);letter-spacing:1px}
+  .cta{display:block;text-align:center;margin:56px auto 20px;max-width:420px;padding:16px 30px;
+       font-family:Georgia,serif;font-size:17px;letter-spacing:3px;color:#171519;background:linear-gradient(180deg,#ffe9b0,#d8b470);
+       border:none;border-radius:4px;cursor:pointer;font-weight:bold}
+  .cta:hover{filter:brightness(1.08)}
+  footer{border-top:1px solid #2a332c;margin-top:60px;padding:26px 6vw 40px}
+  footer .fl{display:flex;gap:24px;flex-wrap:wrap;margin-bottom:14px}
+  footer .fl a{font-size:12px;letter-spacing:2px;color:var(--dim)}
+  footer small{color:#5f6b60;font-size:11px;letter-spacing:.5px;display:block;line-height:1.8}
+</style>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","name":"Rich Dad Poor Dad Game — play the cash-flow loop free in your browser",
+"description":"A free browser game built on the Rich Dad cash-flow rule: buy assets that pay you monthly and escape the rat race.",
+"url":"https://mylifesim.com/rich-dad-poor-dad-game/",
+"isPartOf":{"@type":"WebSite","name":"MY LIFE","url":"https://mylifesim.com/"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"Is there a free Rich Dad Poor Dad game I can play in a browser?","acceptedAnswer":{"@type":"Answer","text":"Yes. MY LIFE is free, runs in any modern browser with no install and no account, and plays the same cash-flow loop as the Rich Dad board game: buy assets that pay you every month, keep liabilities out of your life, and escape the rat race when passive income covers your bills."}},
+{"@type":"Question","name":"Is MY LIFE affiliated with Robert Kiyosaki?","acceptedAnswer":{"@type":"Answer","text":"No. It is an independent game. Rich Dad Poor Dad is a book by Robert Kiyosaki and Cashflow is a board game published by Rich Dad Company; MY LIFE uses the same public idea — assets versus liabilities — and is not endorsed by or connected to either."}},
+{"@type":"Question","name":"How is this different from the Cashflow 101 board game?","acceptedAnswer":{"@type":"Answer","text":"Cashflow is a tabletop game for two to six players and usually takes a couple of hours. MY LIFE is single-player, free, runs in a browser tab, and compresses the same lesson into sessions of a few minutes."}}]}
+</script>
+</head>
+<body>
+<header>
+  <a class="brand" href="/">MY LIFE</a>
+  <nav>
+    <a href="/how-to-play/">HOW TO PLAY</a>
+    <a href="/rich-dad-rules/">RICH DAD RULES</a>
+    <a href="/new-york-map/">NEW YORK MAP</a>
+    <a href="/goals/">18 GOALS</a>
+  </nav>
+</header>
+<main>
+  <div class="kick">CASH FLOW · FREE IN YOUR BROWSER</div>
+  <h1>Rich Dad Poor Dad Game</h1>
+  <p>People search for a "Rich Dad Poor Dad game" and usually mean one of three things: the <strong>Cashflow</strong> board game, a digital version of it, or any game that teaches the book's one useful idea. This page is about the third one — and <a href="/">MY LIFE</a> is a free, single-player browser game built on that idea. You start at 18 with $1,000, no job and no assets, and the whole game is a monthly argument between what pays you and what bills you.</p>
+
+  <figure><img src="/docs/gameplay.png" alt="MY LIFE gameplay: walking a Manhattan street with taxis and the player HUD on the right showing cash, salary and stress" loading="lazy"><figcaption>The city is the board. The panel on the right is the cash-flow statement the book spends its first hundred pages on.</figcaption></figure>
+
+  <h2>The one rule the book actually teaches</h2>
+  <p>Strip away the anecdotes and <em>Rich Dad Poor Dad</em> makes a single mechanical claim: <strong>an asset puts money in your pocket every month, and a liability takes money out.</strong> A rental that clears $200 after the mortgage is an asset. The car that costs $400 a month to insure, fuel and park is a liability, no matter how it looks in the driveway. Everything else in the book — the four quadrants, the rat race, "pay yourself first" — is downstream of that one line.</p>
+  <p>That is also the only rule MY LIFE enforces. Every purchase in the game resolves into a monthly number, and the number is either positive or negative. There is no "net worth" score to hide behind, because net worth is what lets people feel rich while their cash flow is negative.</p>
+
+  <h2>The four quadrants, and where the game puts you</h2>
+  <p>The book sorts income into four quadrants: <strong>E</strong> (employee), <strong>S</strong> (self-employed), <strong>B</strong> (business owner) and <strong>I</strong> (investor). The point is not that one is virtuous — it is that E and S income stops when you stop, and B and I income does not. MY LIFE moves you through the same ladder rather than letting you pick a quadrant at the start:</p>
+  <table>
+    <tr><th>Quadrant</th><th>What it looks like in the book</th><th>How MY LIFE implements it</th></tr>
+    <tr><td>E — Employee</td><td>Trading hours for a salary</td><td>29 jobs across 8 skills, from IT support at $4,200/month to head of engineering at $16,500. Work days raise salary and skill; stop working and the salary stops</td></tr>
+    <tr><td>S — Self-employed</td><td>Your own labour, still tied to your hours</td><td>Freelance and contract rungs on the same job ladders — more money per day, more stress, and the same link between your presence and your income</td></tr>
+    <tr><td>B — Business owner</td><td>A system that runs without you</td><td>A skill at LV5 becomes a <strong>WORK</strong> — a novel, an app, a sauce line, a print series — that pays a royalty every month whether you show up or not</td></tr>
+    <tr><td>I — Investor</td><td>Money that earns money</td><td>Dividend stocks and positive-cash-flow rentals. The bank lends at 6% for assets and 15% for consumption, and the game calls those numbers what the book calls them: good debt and bad debt</td></tr>
+  </table>
+  <p>The leap that matters is the one from S to B, because it is the only one that changes the shape of your month. A $10,400 salary is a bigger number than a $900 royalty, and the salary is worth less the moment you cannot work. That asymmetry is the whole lesson, and the game makes you feel it rather than read it.</p>
+
+  <h2>Escaping the rat race, with an actual condition</h2>
+  <p>The book's exit condition is precise: <strong>your passive income exceeds your monthly expenses</strong>. Not your salary — your asset income. MY LIFE uses exactly that as the fourteenth of its eighteen goals — the last of the 14 life goals, with four fortune rungs above it, measured in net worth. Until the rentals, dividends and royalties clear your bills, you are still in the race, whatever your bank balance says.</p>
+  <p>The ladder in between is the part the book leaves vague, and the part a game can make concrete. The <a href="/goals/">18-goal ladder</a> runs from landing a first job to that final condition, and each one is a legible step rather than a vibe: own your first dividend stock, buy a rental, launch a work at LV5, survive a health hit without selling assets.</p>
+
+  <h2>How to play in five minutes</h2>
+  <ol>
+    <li>Press <strong>START LIFE</strong>, type a name, pick a face. You are 18 with $1,000.</li>
+    <li>Tap the gold wheel (or press <strong>SPACE</strong>) to walk 1–6 blocks. Land on a building and it opens.</li>
+    <li>Find a job in the first week. Salary is the seed capital for everything else — the book's "pay yourself first" only works if there is something to pay with.</li>
+    <li>At the bank, turn on <strong>pay yourself first</strong>: 10% of every salary is swept into the asset fund before bills see it.</li>
+    <li>Buy dividend stock before you buy anything with a logo on it. Then a rental that clears its own mortgage.</li>
+    <li>Use a skill until it hits LV5, launch a WORK, and let the royalty arrive while you sleep.</li>
+  </ol>
+  <p>The full control list, the job ladders and the stress mechanics are in the <a href="/how-to-play/">how to play guide</a>. If you want the rules explained without the game, they are in <a href="/rich-dad-rules/">Rich Dad rules</a> — a page about the mechanics rather than about how to start playing.</p>
+
+  <h2>Browser game or board game?</h2>
+  <p>Both teach the same thing and they are not interchangeable. The board game is a social evening; this is a browser tab you open in a spare ten minutes. Choose by which one you will actually do twice.</p>
+  <table>
+    <tr><th></th><th>Cashflow (board game)</th><th>MY LIFE (browser)</th></tr>
+    <tr><td>Players</td><td>Two to six, around a table</td><td>Single player</td></tr>
+    <tr><td>Time</td><td>A couple of hours per session</td><td>Minutes per session, save and resume</td></tr>
+    <tr><td>Cost</td><td>Boxed game, bought once</td><td>Free, no account, no install</td></tr>
+    <tr><td>Setup</td><td>Cards, tokens, spreadsheets, one person who knows the rules</td><td>Open the page and press start</td></tr>
+    <tr><td>What it teaches best</td><td>The social pressure of "everyone else is buying"</td><td>The monthly arithmetic — what a purchase does to your cash flow in 30 days</td></tr>
+    <tr><td>Where it is weak</td><td>Needs a group; hard to play alone; rule arguments</td><td>No opponents, so no negotiation and no deal-making</td></tr>
+  </table>
+  <p>One honest caveat about this game: it has no multiplayer and no trading, so the deal-making half of the board game is absent. What it has instead is time compression — a month settles every few real seconds, which means a bad purchase shows up in your life in under a minute rather than in round eleven.</p>
+
+  <h2>What the game takes from the book, and what it leaves out</h2>
+  <p>Takes: the asset-versus-liability rule, the four quadrants, the exit condition, and the distinction between good and bad debt — expressed here as 6% for assets and 15% for consumption.</p>
+  <p>Leaves out: the book's property-specific advice, its tax arguments, and its more colourful claims about schooling and employment. Those are opinions about the world; a game should teach the arithmetic and let you form the opinions. MY LIFE is also <strong>not affiliated with Robert Kiyosaki, Rich Dad Company, or the Cashflow board game</strong> — "Rich Dad Poor Dad" is used here to name the idea being taught, the way a book review names its book.</p>
+  <p>What it adds: a city to walk through, a job ladder with 29 rungs, stress and health as real costs, and a save file in your own browser. Also a rule the book never states out loud — that a collapse in health can force you to sell an asset at the worst moment, which is the most expensive lesson in the game and the one people remember.</p>
+
+  <h2>Frequently asked</h2>
+  <p><strong>Is it really free?</strong> Yes. No account, no install, no purchase, no ads in the game. Saves live in your browser.</p>
+  <p><strong>Do I need to have read the book?</strong> No. The <a href="/how-to-play/">guide</a> covers everything the game assumes, and the rules page covers the reasoning.</p>
+  <p><strong>Can I play on a phone?</strong> Yes — it runs in a mobile browser, though the city is easier to read on a laptop or tablet.</p>
+
+  <a class="cta" href="/">PLAY MY LIFE — FREE, NO INSTALL</a>
+</main>
+<footer>
+  <div class="fl">
+    <a href="/how-to-play/">HOW TO PLAY</a>
+    <a href="/rich-dad-rules/">RICH DAD RULES</a>
+    <a href="/rich-dad-poor-dad-game/">RICH DAD GAME</a>
+    <a href="/new-york-map/">NEW YORK MAP</a>
+    <a href="/goals/">18 LIFE GOALS</a>
+    <a href="/text-based-life-simulator/">TEXT-BASED SIMS</a>
+    <a href="/life-simulator-browser-game/">BROWSER LIFE SIMS</a>
+  </div>
+  <small>MY LIFE is a free, non-commercial life simulator. Every company and product name in the game is invented; place names are used only as geographic references. Your save lives in your own browser and is never uploaded. Rich Dad Poor Dad is a book by Robert Kiyosaki and Cashflow is a board game published by Rich Dad Company — this site is independent and unaffiliated with both.</small>
+</footer>
+</body>
+</html>
