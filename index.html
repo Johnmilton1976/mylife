@@ -1365,7 +1365,7 @@
     <button id="hudMin" type="button" title="Fold the panel into a corner badge" aria-label="Fold the panel">&minus;</button>
   </div>
   <div class="row" data-fin><span class="ic">&#128176;</span><span class="lab">CASH</span><span class="val" id="vCash">$1,000</span></div>
-  <div class="row" data-fin title="What you have saved, and what you owe the bank. Tap for the full sheet."><span class="ic">&#127974;</span><span class="lab">BANK</span><span class="val"><span id="vBank">$0</span><small id="vBankSub"></small></span></div>
+  <div class="row" id="rowBank" data-fin title="What you have saved, and what you owe the bank. Tap for the full sheet."><span class="ic">&#127974;</span><span class="lab">BANK</span><span class="val"><span id="vBank">$0</span><small id="vBankSub"></small></span></div>
   <div class="row" data-fin><span class="ic">&#127962;</span><span class="lab">ESTATE</span><span class="val" id="vEstate">$0</span></div>
   <div class="row" id="rowJob"><span class="ic">&#128188;</span><span class="lab">JOB</span><span class="val" id="vJob">UNEMPLOYED</span></div>
   <div class="row" id="rowPerf" title="Your standing at work" style="display:none"><span class="ic">&#128202;</span><span class="lab">WORK</span><span class="val" id="vPerf">&mdash;</span></div>
@@ -4508,7 +4508,7 @@ function playGame(){
   advanceMinutes(120);
   flash('\uD83D\uDD79 Two hours well spent. HAPPY +5, STRESS -2. One session per visit.');
 }
-/* ---- one XP grant, clamped at LV10, so every source (luck, gigs, books) agrees ---- */
+/* ---- one XP grant, clamped at LV5, so every source (luck, gigs, books) agrees ---- */
 function grantXp(id, xp){
   if(!ST.skills || !(id in ST.skills)) return 0;
   const cur=ST.skills[id]||0;
@@ -4728,7 +4728,7 @@ function perfTarget(s){
        Past that ceiling the only way up is a class, a book, or a bigger desk. */
 const JOB_TEACH = 3;
 const JOB_XP    = 2;                 /* base XP for a full day at the desk */
-function jobTeachCap(j){ return Math.min(10, (j.lvl||1) + JOB_TEACH); }
+function jobTeachCap(j){ return Math.min(5, (j.lvl||1) + JOB_TEACH); }
 function jobXpDay(j){
   if(!j) return 0;
   const lv=lvlOf((ST.skills||{})[j.skill]||0);
@@ -5297,8 +5297,7 @@ const SKILLS=[
   {id:'cook', ic:'\uD83C\uDF73', name:'COOKING'},
   {id:'art',  ic:'\uD83C\uDFA8', name:'ART'},
   {id:'fin',  ic:'\uD83D\uDCCA', name:'FINANCE'},
-  {id:'fit',  ic:'\uD83C\uDFCB\uFE0F', name:'FITNESS'},
-  {id:'eng',  ic:'\uD83D\uDDE3\uFE0F', name:'ENGLISH'}
+  {id:'fit',  ic:'\uD83C\uDFCB\uFE0F', name:'FITNESS'}
 ];
 const skillName=id=>SKILLS.find(s=>s.id===id).name;
 const lvlOf=xp=>Math.floor(xp/100)+1;
@@ -5307,44 +5306,70 @@ const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 /* ===================== a body of work: LV5 turns a skill into an asset =====================
    A job trades hours for money. A WORK is the thing you make once and sell forever:
    fetch a small advance on delivery, then a fixed cheque every month for the rest of the life.
-   Gated at LV5 because that is what mastery should buy, and priced low enough that a
-   salary still pays the rent — a work is freedom money, not a lottery win.
-   The royalty is recalculated from your CURRENT level, so the work grows with you. */
+   Gated at LV5 (the ceiling) because that is what mastery should buy, and priced low enough
+   that a salary still pays the rent — a work is freedom money, not a lottery win.
+   And past LV5 the Kiyosaki promise can come true: each work carries ONE possible
+   BIG BREAK (brk) — a rare lucky card that lands a windfall, a headline in the paper,
+   and a large permanent monthly income. That is the leap from wage to asset.
+   brk.pay is the monthly add [user-specified for prog: $80k or $100k; the rest are scaled
+   to that anchor]. brk.cash is the one-off windfall. One break per skill, ever. */
 const WORK_LV = 5;
 const WORKS=[
   {skill:'write', ic:'\uD83D\uDCD6', what:'NOVEL',            verb:'WRITE',  hours:6, base:190, per:38, adv:600,
    unlock:'A small press read the pages you left on a park bench. They want the rest of it.',
-   made:'Your novel is on the shelf at the Strand \u2014 and on a royalty statement every month.'},
+   made:'Your novel is on the shelf at the Strand \u2014 and on a royalty statement every month.',
+   brk:{pay:45000, cash:20000, tag:'BESTSELLER LIST \u00B7 WEEK ONE',
+        body:'A Big-Five publisher bought the paperback rights. Sunday paper, bestseller list, second printing before the month ends. The book you wrote at a kitchen table is now a machine that prints money.',
+        paper:['THE NOVEL EVERYONE IS TALKING ABOUT','A debut novel from an unknown New Yorker tops the bestseller list. Critics call it "the voice of the decade." Rights auctions are still open.']}},
   {skill:'prog',  ic:'\uD83D\uDCBB', what:'APP',              verb:'BUILD',  hours:8, base:230, per:46, adv:900,
    unlock:'The tool you wrote for your own desk actually works. Three strangers asked to pay for it.',
-   made:'Your app is live. Server bills, support tickets \u2014 and revenue that arrives while you sleep.'},
+   made:'Your app is live. Server bills, support tickets \u2014 and revenue that arrives while you sleep.',
+   brk:{pay:[100000,80000], cash:50000, tag:'ENTERPRISE LICENSE \u00B7 SIGNED',
+        body:'A Fortune 500 company wants your tool on every employee\u2019s desktop. Their lawyers send a licence; their bank sends the wire. The app you built for yourself now runs inside a giant \u2014 and pays like one.',
+        paper:['UNKNOWN DEVELOPER\u2019S APP GOES ENTERPRISE','A Fortune 500 firm licensed a solo developer\u2019s app for company-wide use. "We could not have built it better ourselves," their CIO admitted.']}},
   {skill:'art',   ic:'\uD83D\uDDBC\uFE0F', what:'PRINT SERIES',      verb:'MAKE',   hours:5, base:160, per:32, adv:450,
    unlock:'A gallery in Chelsea hung one of your pieces as filler. It sold before the wine ran out.',
-   made:'An editioned print series, consigned to the gallery. A cheque arrives every month.'},
+   made:'An editioned print series, consigned to the gallery. A cheque arrives every month.',
+   brk:{pay:15000, cash:300000, tag:'AUCTION \u00B7 HAMMER DOWN',
+        body:'The original went under the hammer at a evening auction. Two phone bidders fought it out; the hammer fell at a price nobody in the room believed. Reprint requests flood the gallery by morning.',
+        paper:['DAWN OF A NEW NAME IN CONTEMPORARY ART','A canvas by a previously unknown artist sold at auction for a sum the house refused to disclose. "The phone bidders knew exactly what they wanted," the auctioneer said.']}},
   {skill:'cook',  ic:'\uD83E\uDDF4', what:'SAUCE LINE',       verb:'BOTTLE', hours:5, base:150, per:30, adv:400,
    unlock:'The sauce you bring to every dinner party had three people asking where to buy it.',
-   made:'Your sauce is bottled, labelled, and on eight shelves in Brooklyn.'},
-  {skill:'eng',   ic:'\uD83D\uDCDD', what:'LANGUAGE COURSE',  verb:'RECORD', hours:6, base:170, per:34, adv:500,
-   unlock:'You explained a grammar point so clearly that a stranger asked you to record it.',
-   made:'Your course sells while you sleep. Every enrolment is a small monthly cheque.'},
+   made:'Your sauce is bottled, labelled, and on eight shelves in Brooklyn.',
+   brk:{pay:30000, cash:25000, tag:'NATIONAL SHELF SPACE',
+        body:'A national grocery chain tasted the sauce and cleared a shelf for it in 400 stores. The kitchen that bottled forty jars a week now runs three shifts. You still cook every batch\u2019s first pot yourself.',
+        paper:['BROOKLYN SAUCE GOES NATIONAL','A grocery chain is stocking a small-batch Brooklyn sauce in 400 stores. Food editors call it "the most honest jar on the shelf."']}},
   {skill:'fin',   ic:'\uD83D\uDCCA', what:'ADVISORY PRACTICE',verb:'BUILD',  hours:6, base:200, per:40, adv:700,
    unlock:'Two friends started asking you the same question about money. Then their friends did.',
-   made:'A small book of retainer clients. They pay monthly; you answer emails.'},
+   made:'A small book of retainer clients. They pay monthly; you answer emails.',
+   brk:{pay:50000, cash:30000, tag:'RETAINER \u00B7 A FAMILY OFFICE',
+        body:'A billionaire\u2019s family office heard you on a podcast and offered a retainer before the interview aired. One client, one cheque, more than most people\u2019s yearly salary \u2014 every month. You still read the filings yourself.',
+        paper:['THE MONEY MIND EVERYONE WANTS','A family office signed an unknown adviser to a seven-figure retainer. Their only public footprint: a podcast episode about paying yourself first.']}},
   {skill:'proj',  ic:'\uD83D\uDCCB', what:'PLAYBOOK',         verb:'WRITE',  hours:6, base:210, per:42, adv:750,
    unlock:'You ran a launch that nearly died, and wrote down exactly why. The write-up is circulating.',
-   made:'Your playbook is licensed to three firms. Project management, productised.'},
+   made:'Your playbook is licensed to three firms. Project management, productised.',
+   brk:{pay:35000, cash:20000, tag:'ENTERPRISE LICENCE \u00B7 RENEWED',
+        body:'The consulting giants noticed three mid-size firms running your playbook and paid for an enterprise licence \u2014 their trainers now teach your method in their rooms. The dead launch you wrote down honestly became a curriculum.',
+        paper:['THE PLAYBOOK CONSULTANTS NOW TEACH','Three of the Big Four are licensing a project playbook written by a single practitioner. Its first chapter is titled: "The launch that nearly died."']}},
   {skill:'fit',   ic:'\uD83D\uDCAA', what:'TRAINING PLAN',    verb:'FILM',   hours:5, base:140, per:28, adv:350,
    unlock:'The plan you wrote for yourself fixed a stranger\u2019s back in six weeks.',
-   made:'Your training plan sells by subscription \u2014 a hundred people, a few dollars each.'},
+   made:'Your training plan sells by subscription \u2014 a hundred people, a few dollars each.',
+   brk:{pay:25000, cash:20000, tag:'THE PLAN GOES VIRAL',
+        body:'A film star credited your training plan in an interview and suddenly a hundred thousand people want the same six weeks. Servers strain, subscriptions spike, and the plan sells whether you are awake or asleep.',
+        paper:['THE SIX-WEEK PLAN A STAR SWEARS BY','An A-list actor credits an unknown trainer\u2019s plan for their last transformation. Subscriptions grew a thousandfold overnight.']}},
   {skill:'drive', ic:'\uD83D\uDE95', what:'ROUTE CONTRACT',   verb:'SET UP', hours:6, base:130, per:26, adv:300,
    unlock:'A courier firm offered you their worst route. You know how to make it the best one.',
-   made:'You own the route; a driver runs it. The contract pays whether you show up or not.'}
+   made:'You own the route; a driver runs it. The contract pays whether you show up or not.',
+   brk:{pay:20000, cash:15000, tag:'FIVE MORE ROUTES \u00B7 YOURS',
+        body:'The courier firm handed you five more routes and the vans to run them. You did not buy trucks \u2014 you bought contracts, and contracts pay whether you show up or not. The fleet has your name on the manifest.',
+        paper:['THE ROUTE KING OF THE BOROUGHS','A courier firm handed five routes and their vans to a driver who once ran their worst route. "He made it the best one," the dispatcher said.']}}
 ];
 const workOf      = id => WORKS.find(w=>w.skill===id);
 const workRoyalty = (w,lv) => Math.round(w.base + Math.max(0, lv-WORK_LV)*w.per);
+const breakOf     = id => (ST.breaks&&ST.breaks[id])||0;         /* the big-break monthly add, once won */
 const worksCount  = () => Object.keys(ST.works||{}).length;
 const worksIncome = () => Object.keys(ST.works||{}).reduce((a,id)=>{
-  const w=workOf(id); return w ? a + workRoyalty(w, lvlOf((ST.skills||{})[id]||0)) : a;
+  const w=workOf(id); return w ? a + workRoyalty(w, lvlOf((ST.skills||{})[id]||0)) + breakOf(id) : a;
 },0);
 
 /* ---- a fresh start: 18 years old, $1,000 in the pocket, nothing else ---- */
@@ -5504,7 +5529,7 @@ document.getElementById('leNew').addEventListener('click',()=>{
   location.reload();
 });
 
-/* EVERY skill has a career ladder: 9 skills, 29 jobs. The figure on the door is only the
+/* EVERY skill has a career ladder: 8 skills, 29 jobs. The figure on the door is only the
    starting pay \u2014 what you actually take home is recalculated from your skill level. */
 const JOBS=[
   {id:'itsup', title:'IT SUPPORT',          company:'TECH FLOOR \u00B7 5TH AVE', skill:'prog',   lvl:1, pay:4200},
@@ -5530,9 +5555,9 @@ const JOBS=[
   {id:'ff',    title:'FIREFIGHTER',         company:'FIRE HOUSE 9',              skill:'fit',  lvl:2, pay:5600, where:'fire'},
   {id:'po',    title:'POLICE OFFICER',      company:'POLICE PCT 10',             skill:'fit',  lvl:2, pay:5800, where:'police'},
   {id:'fd',    title:'FITNESS DIRECTOR',    company:'IRON GYM',                  skill:'fit',  lvl:3, pay:6900, where:'gym'},
-  {id:'guide', title:'MUSEUM GUIDE',        company:'COLUMBIA HALL',             skill:'eng',  lvl:1, pay:4000, where:'study'},
-  {id:'trans', title:'TRANSLATOR',          company:'COLUMBIA HALL',             skill:'eng',  lvl:2, pay:5800, where:'study'},
-  {id:'pr',    title:'PRESS SPOKESPERSON',  company:'METLIFE BLDG',              skill:'eng',  lvl:3, pay:8800},
+  {id:'guide', title:'COLUMNIST',           company:'COLUMBIA HALL',             skill:'write',lvl:1, pay:4000, where:'study'},
+  {id:'trans', title:'SCREENWRITER',        company:'COLUMBIA HALL',             skill:'write',lvl:2, pay:5800, where:'books'},
+  {id:'pr',    title:'PRESS SPOKESPERSON',  company:'METLIFE BLDG',              skill:'write',lvl:3, pay:8800},
   {id:'copy',  title:'COPYWRITER',          company:'METLIFE BLDG',              skill:'write',lvl:1, pay:4300},
   {id:'edit',  title:'EDITOR',              company:'COLUMBIA HALL',             skill:'write',lvl:2, pay:6600, where:'books'},
   {id:'eic',   title:'EDITOR-IN-CHIEF',     company:'METLIFE BLDG',              skill:'write',lvl:3, pay:10400}
@@ -5582,13 +5607,11 @@ function syncJobBeacon(){
   if(hint) hint.classList.add('show');
 }
 /* the pay scale is alive: +10% for every level above the hiring bar, +2% per month served.
-   Study, level up, and the same desk pays more. */
+   Study, level up, and the same desk pays more. With a LV5 ceiling the bonus tops at +40%
+   over the hiring bar for a LV1 desk \u2014 the real money past that is the work and the break. */
 function salaryOf(j){
   if(!j) return 0;
   const lv=lvlOf(ST.skills[j.skill]||0);
-  /* Cap at 8 levels (+80%). Without it, one study per block gave LV44 and a
-     $23,250/mo IT SUPPORT salary after a year - the entire economy inflated.
-     Past 8 levels the player is supposed to move to a higher-lvl job. */
   const over=Math.min(8, Math.max(0, lv-j.lvl));
   const tenure=Math.min(0.24, (ST.jobMonths||0)*0.02);
   return Math.round(j.pay*(1+over*0.10+tenure+(ST.rep||0))/50)*50;
@@ -5613,13 +5636,13 @@ function quitJob(){
 
 /* one class: XP, a little strain, and the door closes until you walk somewhere new.
    cramming a second class into the same day costs more than it gives. */
-const SKILL_XP_CAP = 900;                 /* LV10. After this, take a bigger job, not another class */
-/* Tuition rises with level: $40 at LV1, $265 at LV10. Rationale - education has
+const SKILL_XP_CAP = 400;                 /* LV5. LV1-4 pay the desk better; LV5 is mastery \u2014 the WORK and the big break */
+/* Tuition rises with level: $40 at LV1, $140 at LV5. Rationale - education has
    increasing marginal cost, and a fixed $40 let a player buy 12 XP per block. */
 function studyFee(id){ return 40 + Math.floor((ST.skills[id]||0)/100)*25; }
 function studySession(id){
   const name=skillName(id);
-  if((ST.skills[id]||0)>=SKILL_XP_CAP){ flash(name+' is maxed at LV10. A bigger job is the next step.'); return; }
+  if((ST.skills[id]||0)>=SKILL_XP_CAP){ flash(name+' is maxed at LV5. Mastery is the ceiling \u2014 the world now comes to you.'); return; }
   const fee=studyFee(id);
   ST.cash-=fee;
   /* a head full of noise does not take notes: past STRESS 60 every point eats
@@ -5642,7 +5665,7 @@ function studySession(id){
 /* income = expected monthly profit ± var; risk = chance per month the whole venture dies */
 const BIZ=[
   {id:'cart',  name:'COFFEE CART',  cost:1500,  skill:null,  lvl:0, inc:350,  vr:150,  risk:0,    note:'a corner hustle'},
-  {id:'store', name:'ONLINE STORE', cost:5000,  skill:'eng', lvl:1, inc:800,  vr:400,  risk:0.01, note:'e-commerce from your room'},
+  {id:'store', name:'ONLINE STORE', cost:5000,  skill:'write', lvl:1, inc:800,  vr:400,  risk:0.01, note:'e-commerce from your room'},
   {id:'truck', name:'FOOD TRUCK',   cost:12000, skill:'cook',lvl:2, inc:1900, vr:800,  risk:0.02, note:'wheels, grease, profit'},
   {id:'app',   name:'APP STARTUP',  cost:30000, skill:'prog',lvl:3, inc:5200, vr:2600, risk:0.05, note:'high risk, high ceiling'},
   {id:'franch',name:'FRANCHISE',    cost:60000, skill:'fin', lvl:2, inc:9000, vr:1500, risk:0.005,note:'a proven playbook'}
@@ -5807,10 +5830,13 @@ function updatePanel(){
   vc.textContent=fmt$(ST.cash);
   vc.classList.toggle('neg', ST.cash<0);
   document.getElementById('vBank').textContent=fmt$(ST.bank);
+  /* the loan detail is hover-only now: the panel shows the balance, not a red scream */
   const bankSub=document.getElementById('vBankSub');
-  if(bankSub) bankSub.textContent = ST.loan
-    ? '-'+fmt$(debtValue())+' owed \u00B7 '+fmt$(ST.loan.payment)+'/mo ('+fmt$(loanMonthInterest(ST.loan))+' int)'
-    : '';
+  if(bankSub) bankSub.textContent='';
+  const bankRow=document.getElementById('rowBank');
+  if(bankRow) bankRow.title = ST.loan
+    ? 'Loan '+fmt$(debtValue())+' owed \u00B7 '+fmt$(ST.loan.payment)+'/mo ('+fmt$(loanMonthInterest(ST.loan))+' int). Tap for the full sheet.'
+    : 'What you have saved, and what you owe the bank. Tap for the full sheet.';
   document.getElementById('vEstate').textContent=fmt$(estateValue());
   const rf=document.getElementById('rowFree'), vf=document.getElementById('vFree');
   if(rf){
@@ -5878,7 +5904,7 @@ function updatePanel(){
     /* LV5: the skill can now be sold as a work. Announce it once, when no card is up. */
     const w=workOf(k.id);
     if(w && lv>=WORK_LV && evReady
-       && !(ST.works&&ST.works[k.id]) && !(ST.craftSeen&&ST.craftSeen[k.id])
+       && !(ST.works && ST.works[k.id]!==undefined) && !(ST.craftSeen&&ST.craftSeen[k.id])
        && !evCard.classList.contains('show')){
       ST.craftSeen=ST.craftSeen||{};
       ST.craftSeen[k.id]=1;
@@ -6011,7 +6037,7 @@ function openAction(b){
       A('DROP '+ck.name+' COURSE','quit \u00B7 pick another skill next time',
         ()=>{ST.course=null;flash('Dropped '+ck.name+' course');openAction(b);},{cls:'danger'});
     } else {
-      descEl.textContent='Evening classes. One skill, one class per visit. Tuition rises with your level (LV10 cap) \u2014 choose well.';
+      descEl.textContent='Evening classes. One skill, one class per visit. Tuition rises with your level (LV5 cap) \u2014 choose well.';
       SKILLS.forEach(sk=>{
         const lv=lvlOf(ST.skills[sk.id]);
         const unlocks=JOBS.filter(j=>j.skill===sk.id&&j.lvl<=lv+1&&j.lvl>lv).map(j=>j.title)[0];
@@ -6023,13 +6049,13 @@ function openAction(b){
   } else if(kind==='books'){
     descEl.textContent='A cozy bookshop. Reading grows the mind.';
     A(ST.owned.book?'\u2713 BOOK OWNED':'BUY A BOOK \u00B7 $15','+8 XP to a random skill',
-      ()=>{ST.cash-=15;ST.owned.book=true;const sk=SKILLS[Math.floor(Math.random()*SKILLS.length)];const g=grantXp(sk.id,8);advanceMinutes(45);flash('+'+g+' '+sk.name+' XP'+(g?'':' \u00B7 already LV10'));},
+      ()=>{ST.cash-=15;ST.owned.book=true;const sk=SKILLS[Math.floor(Math.random()*SKILLS.length)];const g=grantXp(sk.id,8);advanceMinutes(45);flash('+'+g+' '+sk.name+' XP'+(g?'':' \u00B7 already LV5'));},
       {dis:()=>ST.owned.book||ST.cash<15});
     A(ST.daily.browse?'\u2713 BROWSED TODAY':'BROWSE FOR FREE','+3 XP to a random skill \u00B7 happy +2',
-      ()=>{ST.daily.browse=true;const sk=SKILLS[Math.floor(Math.random()*SKILLS.length)];const g=grantXp(sk.id,3);ST.happy=clamp(ST.happy+2,0,100);advanceMinutes(30);flash('+'+g+' '+sk.name+' XP'+(g?'':' \u00B7 already LV10'));},
+      ()=>{ST.daily.browse=true;const sk=SKILLS[Math.floor(Math.random()*SKILLS.length)];const g=grantXp(sk.id,3);ST.happy=clamp(ST.happy+2,0,100);advanceMinutes(30);flash('+'+g+' '+sk.name+' XP'+(g?'':' \u00B7 already LV5'));},
       {dis:()=>!!ST.daily.browse});
-    A(ST.owned.firstEdition?'\u2713 FIRST EDITION OWNED':'BUY A FIRST EDITION \u00B7 $400','+20 ENGLISH XP \u00B7 happy +6 \u00B7 yours forever',
-      ()=>{ST.cash-=400;ST.owned.firstEdition=true;const g=grantXp('eng',20);ST.happy=clamp(ST.happy+6,0,100);advanceMinutes(60);flash('A collector piece. +'+g+' ENGLISH XP');},
+    A(ST.owned.firstEdition?'\u2713 FIRST EDITION OWNED':'BUY A FIRST EDITION \u00B7 $400','+20 WRITING XP \u00B7 happy +6 \u00B7 yours forever',
+      ()=>{ST.cash-=400;ST.owned.firstEdition=true;const g=grantXp('write',20);ST.happy=clamp(ST.happy+6,0,100);advanceMinutes(60);flash('A collector piece. +'+g+' WRITING XP');},
       {dis:()=>ST.owned.firstEdition||ST.cash<400});
   } else if(kind==='office'||kind==='fire'||kind==='police'){
     descEl.textContent=ST.biz?('You run '+BIZ.find(x=>x.id===ST.biz.id).name+' from this floor.')
@@ -6351,7 +6377,7 @@ function makeWork(id){
   const w=workOf(id); if(!w) return;
   const lv=lvlOf((ST.skills||{})[id]||0);
   if(lv<WORK_LV){ flash('LV'+WORK_LV+' in '+skillName(id)+' first \u2014 a work is what mastery buys.'); return; }
-  if(ST.works&&ST.works[id]) return;
+  if(ST.works && ST.works[id]!==undefined) return;      /* day 0 stores 0: test by key, not truthiness */
   ST.works=ST.works||{};
   ST.works[id]=ST.day||0;
   ST.cash+=w.adv;
@@ -6365,13 +6391,41 @@ function makeWork(id){
      ['ROYALTY +'+fmt$(workRoyalty(w,lv))+'/MO','plus'],
      ['STRESS +10','minus']]);
 }
+/* ---------- THE BIG BREAK: mastery catches the wind ----------
+   Kiyosaki's promise, playable: at LV5 a skill stops being a wage and becomes an
+   asset (the WORK). Once the work is out there, each new day carries a small
+   chance that the world notices \u2014 a lucky card, a newspaper headline, a windfall,
+   and a large PERMANENT monthly income on top of the royalty. One break per skill.
+   Chance 1.2%/day [PLACEHOLDER \u00B7 expected ~80 in-game days; tune after playtest].
+   prog's monthly add is user-specified ($80k or $100k); other skills are scaled
+   to that anchor by how many people the work can plausibly serve. */
+const BREAK_CHANCE=0.012;
+function masterBreak(){
+  if(Math.random()>=BREAK_CHANCE) return;
+  if(typeof evCard!=='undefined' && evCard.classList.contains('show')) return;   /* never stack cards */
+  const w=WORKS.find(w=>{
+    const id=w.skill;
+    return w.brk && lvlOf((ST.skills||{})[id]||0)>=WORK_LV
+      && ST.works && ST.works[id]!==undefined && !(ST.breaks&&ST.breaks[id]!==undefined);
+  });
+  if(!w) return;
+  ST.breaks=ST.breaks||{};
+  const pay=Array.isArray(w.brk.pay)?w.brk.pay[Math.floor(Math.random()*w.brk.pay.length)]:w.brk.pay;
+  ST.breaks[w.skill]=pay;
+  ST.cash+=w.brk.cash;
+  ST.happy=clamp(ST.happy+15,0,100);
+  const p=showCraftCard(w.ic,'THE BIG BREAK','HEADLINE NEWS',w.brk.body,
+    [[w.brk.tag,'plus'],
+     ['+'+fmt$(pay)+'/MO \u00B7 FOR LIFE','plus'],
+     ['+'+fmt$(w.brk.cash)+' CASH','plus']]);
+  if(p&&p.then) p.then(()=>{ if(started) showPaper(w.brk.paper[0],w.brk.paper[1]); }).catch(()=>{});
+}
 /* ---------- the ladder: a level is a key, this table says which door it opens ----------
    Players were levelling a skill for an abstract number. Everything a level buys — the job
-   tier, the business it lets you run, the work you can sell at LV5, the LV10 ceiling — now
+   tier, the business it lets you run, the work you can sell at LV5, the LV5 ceiling — now
    sits under the skill it belongs to, folded but one tap away, and the folded line always
    names the next door. */
-const SKILL_OPEN={};
-var skillOpenSeeded=false;
+const SKILL_OPEN={};                     /* nothing opens by default: the arrow is the player's lever */
 const KIND_ORDER={job:0,biz:1,work:2,cap:3};
 function skillLadder(id, lv){
   const rows=[];
@@ -6389,7 +6443,7 @@ function skillLadder(id, lv){
                note:fmt$(workRoyalty(w,Math.max(lv,WORK_LV)))+'/mo',
                done:made, ready:!made&&lv>=WORK_LV});
   }
-  rows.push({lv:10, kind:'cap', name:'MAX LEVEL', note:'the ceiling', done:lv>=10});
+  rows.push({lv:5, kind:'cap', name:'MAX LEVEL', note:'mastery \u00B7 the big break', done:lv>=5});
   rows.sort((a,b)=>a.lv-b.lv || KIND_ORDER[a.kind]-KIND_ORDER[b.kind]);
   const nx=rows.find(r=>!r.done && !r.ready);
   if(nx) nx.next=true;
@@ -6409,12 +6463,7 @@ function renderSkills(){
   const keep=panel.scrollTop||0;
   document.getElementById('actIc').textContent='\uD83E\uDDE0';
   document.getElementById('actTitle').textContent='MY SKILLS';
-  document.getElementById('actDesc').textContent='100 XP per level, LV10 is the ceiling. The bar under each skill folds open the whole ladder: the jobs each level unlocks, the business you can run, the WORK you can sell at LV5.';
-  if(!skillOpenSeeded){
-    let top=SKILLS[0], bx=-1;
-    SKILLS.forEach(s=>{ const x=(ST.skills||{})[s.id]||0; if(x>bx){ bx=x; top=s; } });
-    SKILL_OPEN[top.id]=true; skillOpenSeeded=true;
-  }
+  document.getElementById('actDesc').textContent='100 XP per level, LV5 is the ceiling. LV1-4 pay the matching desk +10% per level. At LV5 the skill becomes a WORK \u2014 and the work can land THE BIG BREAK. Tap the small arrow to fold the ladder open.';
   document.getElementById('actBody').innerHTML=SKILLS.map(sk=>{
     const xp=(ST.skills||{})[sk.id]||0, pc=Math.min(100,xp%100), lv=lvlOf(xp);
     const rows=skillLadder(sk.id,lv);
@@ -6837,6 +6886,7 @@ function marketDayShift(){
   ST.day++;
   if(ST.day%30===0) monthlyBill();                          /* rent day: income in, bills out */
   moodTick();                                             /* the day weighs on you */
+  masterBreak();      /* a LV5 work out in the world can catch its one big break today */
   /* being ill costs you a little every morning until it runs its course */
   if(ST.sick){
     ST.sick.days--;
@@ -8125,7 +8175,10 @@ function resumeGame(){
   /* older saves: IT became PROGRAMMING, WRITING is new, and a work can now be owned */
   if(!ST.skills) ST.skills={};
   if(ST.skills.it!==undefined){ ST.skills.prog=Math.max(ST.skills.prog||0, ST.skills.it); delete ST.skills.it; }
-  SKILLS.forEach(k=>{ if(typeof ST.skills[k.id]!=='number') ST.skills[k.id]=0; });
+  /* ENGLISH merged into WRITING; every skill caps at LV5 (400 XP) now */
+  if(ST.skills.eng!==undefined){ ST.skills.write=Math.min(SKILL_XP_CAP,(ST.skills.write||0)+ST.skills.eng); delete ST.skills.eng; }
+  SKILLS.forEach(k=>{ if(typeof ST.skills[k.id]!=='number') ST.skills[k.id]=0; ST.skills[k.id]=Math.min(SKILL_XP_CAP, ST.skills[k.id]); });
+  if(ST.lvSnap){ delete ST.lvSnap.eng; SKILLS.forEach(k=>{ ST.lvSnap[k.id]=Math.min(5, ST.lvSnap[k.id]||1); }); }
   ST.works=ST.works||{}; ST.craftSeen=ST.craftSeen||{};
   (s.stocks||[]).forEach((d,i)=>{ if(STOCKS[i]){ STOCKS[i].v=d.v; STOCKS[i].prev=d.prev; if(d.hist) STOCKS[i].hist=d.hist; } });
   (s.realty||[]).forEach((d,i)=>{ if(REALTY[i]){ REALTY[i].v=d.v; REALTY[i].prev=d.prev; if(d.hist) REALTY[i].hist=d.hist; } });
