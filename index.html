@@ -4785,7 +4785,7 @@ function workDay(){
     s.lastPraiseDay=s.day;
     const line=PRAISE_LINES[Math.floor(s.day/5)%PRAISE_LINES.length];
     s.perfLog={day:s.day,kind:'praise',text:'Day '+s.day+' \u2014 '+s.employed.company+': '+line};
-    toast('\uD83C\uDF1F '+s.employed.company+' noticed ('+s.goodDays+' good days running): '+line);
+    toast('\uD83C\uDF1F '+s.employed.company+' noticed ('+s.goodDays+' good days running): '+line, {ms:5000});
   }
   /* and the desk teaches: today's shift is a little more of the craft */
   jobTrain(s.employed);
