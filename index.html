@@ -6421,30 +6421,30 @@ function masterBreak(){
   if(p&&p.then) p.then(()=>{ if(started) showPaper(w.brk.paper[0],w.brk.paper[1]); }).catch(()=>{});
 }
 /* ---------- the ladder: a level is a key, this table says which door it opens ----------
-   Players were levelling a skill for an abstract number. Everything a level buys — the job
-   tier, the business it lets you run, the work you can sell at LV5, the LV5 ceiling — now
-   sits under the skill it belongs to, folded but one tap away, and the folded line always
-   names the next door. */
+   One row per level, LV1 to LV5: the job tier that level unlocks (or the business, or the
+   standing +10% desk pay), topped by the LV5 MAX LEVEL row — where the WORK and the BIG
+   BREAK wait. The work's make button and royalty line sit just below the ladder, so the
+   ladder itself stays a clean five-rung spine. */
 const SKILL_OPEN={};                     /* nothing opens by default: the arrow is the player's lever */
-const KIND_ORDER={job:0,biz:1,work:2,cap:3};
 function skillLadder(id, lv){
+  /* one row per level, LV1 through LV5 — a ladder reads top to bottom, not sideways.
+     The WORK and the BIG BREAK live under LV5's MAX LEVEL row; the make button sits below. */
   const rows=[];
-  JOBS.filter(j=>j.skill===id).forEach(j=>rows.push(
-    {lv:j.lvl, kind:'job', name:j.title, note:fmt$(j.pay)+'/mo', done:lv>=j.lvl}));
-  BIZ.filter(b=>b.skill===id).forEach(b=>{
-    const own=!!(ST.biz&&ST.biz.id===b.id);
-    rows.push({lv:b.lvl, kind:'biz', name:b.name, note:fmt$(b.cost)+' \u00B7 market',
-               done:own, ready:!own&&lv>=b.lvl});
-  });
-  const w=workOf(id);
-  if(w){
-    const made=!!(ST.works&&ST.works[id]);
-    rows.push({lv:WORK_LV, kind:'work', ic:w.ic, name:w.what,
-               note:fmt$(workRoyalty(w,Math.max(lv,WORK_LV)))+'/mo',
-               done:made, ready:!made&&lv>=WORK_LV});
+  for(let l=1;l<=4;l++){
+    const j=JOBS.filter(x=>x.skill===id&&x.lvl===l)[0];
+    if(j) rows.push({lv:l, kind:'job', name:j.title, note:fmt$(j.pay)+'/mo', done:lv>=l});
+    else{
+      const b=BIZ.filter(x=>x.skill===id&&x.lvl===l)[0];
+      if(b){
+        const own=!!(ST.biz&&ST.biz.id===b.id);
+        rows.push({lv:l, kind:'biz', name:b.name, note:fmt$(b.cost)+' \u00B7 market',
+                   done:own, ready:!own&&lv>=l});
+      }else{
+        rows.push({lv:l, kind:'pay', name:'+10% DESK PAY', note:'every level pays', done:lv>=l});
+      }
+    }
   }
   rows.push({lv:5, kind:'cap', name:'MAX LEVEL', note:'mastery \u00B7 the big break', done:lv>=5});
-  rows.sort((a,b)=>a.lv-b.lv || KIND_ORDER[a.kind]-KIND_ORDER[b.kind]);
   const nx=rows.find(r=>!r.done && !r.ready);
   if(nx) nx.next=true;
   return rows;
@@ -6452,7 +6452,7 @@ function skillLadder(id, lv){
 function ladderHTML(rows){
   return rows.map(r=>{
     const cls=r.done?'done':(r.ready?'ready':(r.next?'next':'lock'));
-    const ic=r.kind==='work'?(r.ic||''):(r.kind==='biz'?'\uD83C\uDFEA':(r.kind==='cap'?'\uD83C\uDFC1':''));
+    const ic=r.kind==='biz'?'\uD83C\uDFEA':(r.kind==='cap'?'\uD83C\uDFC1':(r.kind==='pay'?'\uD83D\uDCB0':''));
     return '<div class="sk-u '+cls+'"><span class="sk-ul">'+(r.done?'\u2713 ':'')+'LV'+r.lv+'</span>'+
       '<span class="sk-un">'+ic+(ic?' ':'')+r.name+'</span>'+
       '<span class="sk-uv">'+r.note+'</span></div>';
