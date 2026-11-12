@@ -6406,21 +6406,27 @@ function makeWork(id){
 /* ---------- THE BIG BREAK: mastery catches the wind ----------
    Kiyosaki's promise, playable: at LV5 a skill stops being a wage and becomes an
    asset (the WORK). Once the work is out there, each new day carries a small
-   chance that the world notices \u2014 a lucky card, a newspaper headline, a windfall,
+   chance that the world notices - a lucky card, a newspaper headline, a windfall,
    and a large PERMANENT monthly income on top of the royalty. One break per skill.
-   Chance 1.2%/day [PLACEHOLDER \u00B7 expected ~80 in-game days; tune after playtest].
-   prog's monthly add is user-specified ($80k or $100k); other skills are scaled
-   to that anchor by how many people the work can plausibly serve. */
-const BREAK_CHANCE=0.012;
+   Formerly 1.2% PER WORK per day: the whole roster broke inside a week, and
+   find() always surfaced PROGRAMMING first. Now ONE global roll per day draws
+   ONE work at random - see BREAK_CHANCE just below. prog's monthly add is
+   user-specified ($80k or $100k); the rest scale to that anchor by reach. */
+/* One global roll per day (BREAK_CHANCE). A hit draws ONE work at random from the
+   pool of published, un-broken LV5 works, so more works mean a slower individual
+   wait, never a faster pile-up. ~2 in-game years for the first; lifetime windfall. */
+const BREAK_CHANCE=0.005;
 function masterBreak(){
-  if(Math.random()>=BREAK_CHANCE) return;
-  if(typeof evCard!=='undefined' && evCard.classList.contains('show')) return;   /* never stack cards */
-  const w=WORKS.find(w=>{
+  /* candidate pool: a published LV5 work that has not caught its break yet */
+  const pool=WORKS.filter(w=>{
     const id=w.skill;
     return w.brk && lvlOf((ST.skills||{})[id]||0)>=WORK_LV
       && ST.works && ST.works[id]!==undefined && !(ST.breaks&&ST.breaks[id]!==undefined);
   });
-  if(!w) return;
+  if(!pool.length) return;
+  if(typeof evCard!=='undefined' && evCard.classList.contains('show')) return;   /* never stack cards */
+  if(Math.random()>=BREAK_CHANCE) return;
+  const w=pool[Math.floor(Math.random()*pool.length)];   /* fair draw, not find-first */
   ST.breaks=ST.breaks||{};
   const pay=Array.isArray(w.brk.pay)?w.brk.pay[Math.floor(Math.random()*w.brk.pay.length)]:w.brk.pay;
   ST.breaks[w.skill]=pay;
