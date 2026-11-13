@@ -1647,6 +1647,7 @@
     <div class="tutRow"><span class="tutIc">&#127922;</span><div><b>SPIN THE GOLD WHEEL</b> (or press SPACE) &mdash; you walk the route. At some junctions you will <b>randomly turn off</b> for a detour, then rejoin. Every street gets visited eventually.</div></div>
     <div class="tutRow"><span class="tutIc">&#127970;</span><div><b>STOP ON A BUILDING CELL</b> to act: find a job, eat, shop, buy stocks &amp; property, take loans. Restaurants feed you once per visit.</div></div>
     <div class="tutRow"><span class="tutIc">&#128200;</span><div><b>THE PANEL</b> (top right) keeps the Rich Dad books: assets pay you, liabilities charge you. A car is a liability. Watch your stress &amp; happiness.</div></div>
+    <div class="tutRow"><span class="tutIc">&#128165;</span><div><b>MOOD IS FATE</b> &mdash; push <b>STRESS</b> past 80 and trouble finds you more often (bad luck &amp; illness rise). Hold <b>HAPPINESS</b> above 80 and good luck comes looking for you. Keep both in check.</div></div>
     <div class="tutRow"><span class="tutIc">&#128663;</span><div><b>HOVER ANY CAR</b> (tap it on a phone) &mdash; the driver hands you a line from Munger, Buffett or the Rich Dad, or a tip about this city.</div></div>
     <div class="tutRow"><span class="tutIc">&#128190;</span><div><b>SAVING</b> &mdash; nothing saves by itself. <b>&#128190;</b> on the dock banks your life; <b>&#9654;</b> (or CONTINUE on the cover) brings it back. Close the tab without saving and the walk is gone. Time speed (&times;1&ndash;&times;8) is the clock, top left.</div></div>
     <button id="tutBtn">GOT IT &mdash; LET'S WALK</button>
@@ -6742,10 +6743,25 @@ function showEventCard(ev){
 }
 let lastEvIdx=-1;
 const EV_CHANCE=0.40;                                  /* luck, both kinds: ~two street stops in five (was 0.27) */
+/* mood tilts the street. high STRESS pulls trouble (bad+sick) toward you; high HAPPINESS draws good luck.
+   80 is the smooth start of the ramp; weight climbs to 2.8x at 100 so there is no jolt at the threshold. */
+function eventWeights(){
+  const s=ST.stress||0, h=ST.happy||0;
+  return EVENTS.map(ev=>{
+    let w=1;
+    if(ev.k==='bad'||ev.k==='sick'){ if(s>=80) w*=1+(s-80)/20*1.8; }
+    else if(ev.k==='good'){ if(h>=80) w*=1+(h-80)/20*1.8; }
+    return w;
+  });
+}
 async function maybeLifeEvent(){
   if(!started) return false;
   if(Math.random()>EV_CHANCE) return false;
-  let i=Math.floor(Math.random()*EVENTS.length);
+  const weights=eventWeights();
+  let total=0; for(const x of weights) total+=x;
+  let r=Math.random()*total, i=0;
+  for(; i<EVENTS.length; i++){ r-=weights[i]; if(r<=0) break; }
+  if(i>=EVENTS.length) i=EVENTS.length-1;
   if(i===lastEvIdx) i=(i+1)%EVENTS.length;             /* never the same thing twice in a row */
   lastEvIdx=i;
   const ev=EVENTS[i];
