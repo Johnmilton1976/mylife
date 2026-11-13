@@ -1498,6 +1498,16 @@
   </div></div>
   <div style="font-size:10px;color:#8a7a5c;line-height:1.5;margin:2px 2px 8px">That slice of income buys an asset BEFORE any bill is paid. The fund throws off cash every month.</div>
 
+  <div class="set-sec">SUPPORT MY LIFE</div>
+  <div id="proLocked" style="font-size:11px;color:#8a7a5c;line-height:1.6;margin:2px 2px 8px">
+    MY LIFE is free. <b style="color:#ffd98a">PRO ($4.99 once)</b> pins a gold badge on your dock, seals your
+    &ldquo;A LIFE, LIVED&rdquo; share card and funds every new feature.
+  </div>
+  <div class="set-row"><span>GO PRO</span><button class="set-btn" id="proOpen" style="text-transform:none">&starf; $4.99 &mdash; OPEN PRO PAGE</button></div>
+  <div class="set-row" style="margin-top:6px"><span>I PAID &mdash; CODE</span><input id="proCodeIn" maxlength="24" placeholder="MLPRO-XXXX-XXXX" spellcheck="false" style="background:#0a0f0c;border:1px solid #3a443a;border-radius:4px;color:#ecdcbc;padding:6px 8px;width:150px;font-family:Georgia,serif;letter-spacing:1px"></div>
+  <div class="set-row"><span>&nbsp;</span><button class="set-btn" id="proUnlock">UNLOCK</button></div>
+  <div id="proActive" style="display:none;font-size:11px;color:#ffd98a;letter-spacing:2px;margin:2px 2px 8px">&#9733; PRO ACTIVE &mdash; THANK YOU. THE CITY SMILES ON YOU.</div>
+
   <div class="set-sec">CREATOR / CONTACT</div>
   <div class="set-row cc-row"><span>GMAIL</span><input id="ccMail" type="email" value="steven.jones.19760904@gmail.com" readonly spellcheck="false" style="opacity:.75;cursor:not-allowed" title="Fixed by the creator"></div>
   <div style="font-size:10px;color:#8a7a5c;line-height:1.5;margin:2px 2px 8px">
@@ -1508,11 +1518,12 @@
 
   <div class="set-sec">LEGAL / ABOUT</div>
   <div style="font-size:10px;color:#8a7a5c;line-height:1.5;margin:2px 2px 8px">
-    A NON-COMMERCIAL game with 100% original, programmatic art. Every company,
+    A free-to-play game with 100% original, programmatic art. Every company,
     publisher and vehicle brand that appears here is invented for the game; any
-    resemblance to real companies is coincidental. Every item is fictional and has
-    no real-world value &mdash; nothing can be bought, sold or won for real money.
-    Place and landmark names are used geographically, nothing more. Your save and
+    resemblance to real companies is coincidental. Every in-game item is fictional and has
+    no real-world value &mdash; nothing inside the game can be bought, sold or won for real money.
+    The only real-money transaction is the optional one-time PRO upgrade, sold on the PRO page
+    through Stripe. Place and landmark names are used geographically, nothing more. Your save and
     your name live only in your own browser (localStorage) and are never uploaded
     to any server.
   </div>
@@ -1535,7 +1546,7 @@
   <div id="gpArt"></div>
   <div id="gpBody"><div id="gpTitle"></div><div id="gpSub"></div>
     <div id="gpNote">FAN-MADE PARODY &#183; ORIGINAL PROGRAMMATIC ART &#183; NO OFFICIAL LOGOS, SCREENS OR CHARACTERS<br>
-    NOT AFFILIATED WITH OR ENDORSED BY ANY PUBLISHER &#183; NO REAL PURCHASE TAKES PLACE IN THIS GAME</div></div>
+    NOT AFFILIATED WITH OR ENDORSED BY ANY PUBLISHER &#183; NO REAL-MONEY TRANSACTIONS INSIDE THE GAME</div></div>
 </div>
 <!-- the finish line: the 14 LIFE goals banked (the fortune rungs above them stay open).
      A life needs a closing card, not just a slot in a list. -->
@@ -1574,6 +1585,7 @@
   <button id="btnSaveNow" class="dockBtn" title="Save now">&#128190;</button>
   <button id="btnLoad" class="dockBtn" title="Load last save">&#9654;</button>
   <button id="btnShare" class="dockBtn" title="Share my life">&#10150;</button>
+  <button id="proDock" class="dockBtn" title="PRO active — thank you!" style="display:none;color:#ffd98a;border-color:#8a6d2f">&#9733;</button>
   <button id="setBtn" class="dockBtn" title="Settings">&#9881;</button>
 </div>
 <div id="hintPop">
@@ -1587,7 +1599,7 @@
   <b>NIGHT</b> windows, street lamps, bridge lights and neon switch on at dusk and off at dawn &nbsp;&#183;&nbsp; toggle CITY LIGHTS in settings<br>
   <b>GAME STORE</b> &#127918; a few shops sell games of our own invention &mdash; NEON COAST &amp; THE LEGEND OF AURELIA &nbsp;&#183;&nbsp; hover a title for original box art &nbsp;&#183;&nbsp; virtual only, no real purchase<br>
   <b>SAVE</b> &#128190; on the dock saves right now &nbsp;&#183;&nbsp; nothing saves by itself &nbsp;&#183;&nbsp; <b>&#9654;</b> on the dock (or CONTINUE on the cover) brings it back<br>
-  <b>LEGAL</b> fan-made &amp; non-commercial parody &nbsp;&#183;&nbsp; not affiliated with any brand or publisher &nbsp;&#183;&nbsp; original art only &nbsp;&#183;&nbsp; virtual items, no real value
+  <b>LEGAL</b> free-to-play &amp; fan-made &nbsp;&#183;&nbsp; not affiliated with any brand or publisher &nbsp;&#183;&nbsp; original art only &nbsp;&#183;&nbsp; in-game items, no real value &nbsp;&#183;&nbsp; optional PRO: <b>/pro/</b>
 </div>
 
 <div id="picker">
@@ -1603,6 +1615,7 @@
     the minds behind <b>Rich Dad Poor Dad</b> and the art of letting money work for you.
   </div>
   <div class="cover-guides">
+    <a href="/pro/">&#9733; GO PRO &mdash; $4.99</a>
     <a href="/how-to-play/">HOW TO PLAY</a>
     <a href="/rich-dad-rules/">RICH DAD RULES</a>
     <a href="/rich-dad-poor-dad-game/">RICH DAD GAME</a>
@@ -1610,11 +1623,14 @@
     <a href="/goals/">18 LIFE GOALS</a>
     <a href="/text-based-life-simulator/">TEXT-BASED SIMS</a>
     <a href="/life-simulator-browser-game/">BROWSER LIFE SIMS</a>
+    <a href="/privacy/">PRIVACY</a>
+    <a href="/terms/">TERMS</a>
+    <a href="/contact/">CONTACT</a>
   </div>
   <div class="cover-legal">
-    A non-commercial game with original art. Not affiliated with, endorsed or sponsored by any brand, publisher or rights holder.
+    A free-to-play game with original art; the optional one-time PRO upgrade supports development. Not affiliated with, endorsed or sponsored by any brand, publisher or rights holder.
     Every company and product name in the game is invented; place and landmark names are used only as geographic,
-    nominative references. 100% original procedural art &middot; every item, price and currency is virtual and has no
+    nominative references. 100% original procedural art &middot; every in-game item, price and currency is virtual and has no
     real-world value &middot; your save stays in your browser (localStorage), never uploaded.
   </div>
   <button id="coverMusicBtn" class="coverMusic">&#9834; MUSIC ON</button>
@@ -7390,6 +7406,49 @@ if(STORE.memoryOnly){
   if(el) el.innerHTML='<span style="color:#e0a868">&#9888; This view blocks browser storage &mdash; saves live in memory for THIS session only.<br>Open the game file directly in Edge for saves that survive closing.</span>';
 }
 
+/* ===================== PRO upgrade =====================
+   Free game stays free. PRO is a one-time $4.99 unlock sold on /pro/ (Stripe Payment Link,
+   no backend). The unlock code is honor-system: shown on the PRO page after payment,
+   entered here once, remembered in localStorage. Rotate the code by editing one line
+   here and the code chip on /pro/. */
+const PRO_CODE='MLPRO-NYC-4999';
+function isPro(){ try{ return STORE.getItem('ml_pro')==='1'; }catch(e){ return false; } }
+function applyProUI(){
+  const on=isPro();
+  const dock=document.getElementById('proDock');
+  const locked=document.getElementById('proLocked');
+  const active=document.getElementById('proActive');
+  if(dock) dock.style.display=on?'flex':'none';
+  if(locked) locked.style.display=on?'none':'block';
+  if(active) active.style.display=on?'block':'none';
+  const openBtn=document.getElementById('proOpen');
+  if(openBtn) openBtn.style.display=on?'none':'';
+  /* gold cover theme: the title glow warms up for supporters */
+  const h1=document.querySelector('#picker h1');
+  if(h1) h1.style.textShadow=on?'0 0 26px rgba(216,180,112,.55),0 2px 6px rgba(0,0,0,.6)':'';
+}
+function unlockPro(code){
+  if((code||'').trim().toUpperCase()===PRO_CODE){
+    try{ STORE.setItem('ml_pro','1'); }catch(e){}
+    applyProUI();
+    const inEl=document.getElementById('proCodeIn');
+    if(inEl) inEl.value='';
+    if(typeof flash==='function') flash('\u2605 PRO UNLOCKED \u2014 thank you for supporting the walk!');
+    return true;
+  }
+  return false;
+}
+document.getElementById('proOpen').addEventListener('click',()=>{ window.open('/pro/','_blank'); });
+document.getElementById('proUnlock').addEventListener('click',()=>{
+  const ok=unlockPro(document.getElementById('proCodeIn').value);
+  if(!ok){ const inEl=document.getElementById('proCodeIn');
+    inEl.style.borderColor='#c06048'; inEl.placeholder='NOT A VALID CODE';
+    setTimeout(()=>{ inEl.style.borderColor='#3a443a'; inEl.placeholder='MLPRO-XXXX-XXXX'; },2500); }
+});
+const proDockBtn=document.getElementById('proDock');
+if(proDockBtn) proDockBtn.addEventListener('click',()=>{ const p=document.getElementById('setPanel'); if(p&&!p.classList.contains('show')){ try{ document.getElementById('setBtn').click(); }catch(e){} } });
+applyProUI();
+
 function startGame(opts){
   opts = (opts && typeof opts.name==='string') ? opts : null;   /* goBtn passes a click event - ignore it */
   mountCity();                          /* paranoia for a sub-60ms click: the board must exist */
@@ -8032,6 +8091,23 @@ function drawShareCard(){
   [[44,44,1,1],[W-44,44,-1,1],[44,H-44,1,-1],[W-44,H-44,-1,-1]].forEach(([px,py,dx,dy])=>{
     c.beginPath(); c.moveTo(px+dx*t,py); c.lineTo(px,py); c.lineTo(px,py+dy*t); c.stroke();
   });
+
+  /* PRO seal — supporters carry the gold stamp on their card */
+  if(typeof isPro==='function' && isPro()){
+    c.save();
+    c.translate(W-170,H-190); c.rotate(-0.16);
+    c.globalAlpha=0.92;
+    c.strokeStyle='#e8c88a'; c.lineWidth=4;
+    c.strokeRect(-92,-34,184,68);
+    c.fillStyle='#0f1512'; c.fillRect(-92,-34,184,68);
+    c.strokeStyle='#e8c88a'; c.lineWidth=4; c.strokeRect(-92,-34,184,68);
+    c.fillStyle='#ffd98a'; c.textAlign='center';
+    c.font='bold 30px Georgia, serif';
+    c.fillText('\u2605 PRO \u2605',0,-2);
+    c.fillStyle='#a8854a'; c.font='13px Georgia, serif';
+    c.fillText('SUPPORTER',0,22);
+    c.restore();
+  }
 }
 
 function openShare(){
