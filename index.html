@@ -5961,7 +5961,7 @@ function closeAct(){ gpPinned=null; if(typeof hideGamePreview==='function') hide
   actPanel.classList.remove('show'); delete actPanel.dataset.npc; if(actResolve){ const r=actResolve; actResolve=null; r(); } }
 document.getElementById('actClose').addEventListener('click',closeAct);
 document.getElementById('actExit').addEventListener('click',closeAct);
-addEventListener('keydown',e=>{ if(e.key==='Escape') closeAct(); });
+addEventListener('keydown',e=>{ if(e.key!=='Escape') return; const up=(typeof actPanel!=='undefined'&&actPanel.classList.contains('show')); closeAct(); if(up) e.stopImmediatePropagation(); });
 
 function sleepUntilMorning(){
   const d=clockNow();
@@ -6729,7 +6729,7 @@ let evResolve=null;
 evReady=true;
 function closeEv(){ evCard.classList.remove('show'); if(evResolve){ const r=evResolve; evResolve=null; r(); } }
 document.getElementById('evOk').addEventListener('click',closeEv);
-addEventListener('keydown',e=>{ if(e.key==='Escape'&&evCard.classList.contains('show')) closeEv(); });
+addEventListener('keydown',e=>{ if(e.key==='Escape'&&typeof evCard!=='undefined'&&evCard.classList.contains('show')){ closeEv(); e.stopImmediatePropagation(); } });
 function showEventCard(ev){
   document.getElementById('evIc').textContent=ev.ic;
   const k=document.getElementById('evKind');
@@ -7799,6 +7799,19 @@ function clearToasts(kind){
   if(kind==='quick'){ [...wrap.querySelectorAll('.tmsg.quick')].forEach(e=>e.remove()); return; }
   wrap.innerHTML='';
 }
+/* ESC dismisses the sticky toasts too (the tap-to-dismiss banners like the city-rank
+   line). The help panel already promises "ESC close all", so we honour it here.
+   A live event card or activity panel claims the key first, then this sweeps the toasts. */
+addEventListener('keydown', e=>{
+  if(e.key!=='Escape') return;
+  if(typeof evCard!=='undefined' && evCard.classList.contains('show')) return;
+  if(typeof actPanel!=='undefined' && actPanel.classList.contains('show')) return;
+  const wrap=document.getElementById('toastWrap');
+  if(!wrap) return;
+  let n=0;
+  wrap.querySelectorAll('.tmsg.stick').forEach(k=>{ if(!k.dataset.out){ dropToast(k); n++; } });
+  if(n) e.preventDefault();
+});
 /* walk one block: axis-aligned only - first horizontally, then vertically, never diagonally */
 /* one cell at a time. every cell is the same size, so every step lands on the same beat */
 async function walkTo(from,to,chk,keep,first){
