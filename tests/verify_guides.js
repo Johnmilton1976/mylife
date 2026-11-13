@@ -41,7 +41,11 @@ const http = require('http');
   await page.goto(base + '/', { waitUntil: 'load' });
   await page.waitForTimeout(1200);
   const coverLinks = await page.$$eval('.cover-guides a', as => as.map(a => a.getAttribute('href')));
-  ok(coverLinks.length === 4, 'cover guides nav has 4 links: ' + coverLinks.join(','));
+  /* 11 links since commercialize (925d582): pro + 7 guides + privacy/terms/contact */
+  ok(coverLinks.length === 11, 'cover guides nav has 11 links: ' + coverLinks.join(','));
+  for (const must of ['/pro/', '/privacy/', '/terms/', '/contact/']) {
+    ok(coverLinks.includes(must), 'cover nav includes ' + must);
+  }
   for (const h of coverLinks) {
     const code = await page.evaluate(async u => (await fetch(u)).status, base + h);
     ok(code === 200, 'cover link ' + h + ' -> ' + code);
