@@ -56,8 +56,11 @@
   html,body{width:100%;height:100%;overflow:hidden;background:#0a1620;font-family:Georgia,'Times New Roman',serif}
   #viewport{position:fixed;inset:0;overflow:hidden;cursor:grab}
   #viewport.drag{cursor:grabbing}
-  #world{position:absolute;left:0;top:0;transform-origin:0 0}
+  #world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform;backface-visibility:hidden}
   #world svg{display:block}
+  /* the walker is the only thing that changes every frame: keep it on its own
+     composited layer so animating him never forces the whole city to re-raster */
+  #me{will-change:transform}
 
   #panel{
     position:fixed;top:12px;right:12px;width:228px;z-index:20;
@@ -3568,36 +3571,42 @@ function character(id,x,y,o){
 
 /* front-view walk: the stepping leg lifts toward the camera (knee shortens),
    the planted leg stays under the hip. Legs never swing across each other. */
+const _poseEls={};                       /* id -> cached limb refs: setPose runs every frame while walking */
 function setPose(id,p,walking){
-  const g=document.getElementById(id); if(!g) return;
-  const thL=document.getElementById(id+'_thighL'), shL=document.getElementById(id+'_shinL');
-  const thR=document.getElementById(id+'_thighR'), shR=document.getElementById(id+'_shinR');
-  const aL=document.getElementById(id+'_armL'), aR=document.getElementById(id+'_armR');
-  const bob=document.getElementById(id+'_bob');
-  if(!thL) return;
+  let e=_poseEls[id];
+  if(!e || !e.thL || !e.thL.isConnected){
+    const thL=document.getElementById(id+'_thighL');
+    if(!thL){ delete _poseEls[id]; return; }
+    e=_poseEls[id]={
+      thL, shL:document.getElementById(id+'_shinL'),
+      thR:document.getElementById(id+'_thighR'), shR:document.getElementById(id+'_shinR'),
+      aL:document.getElementById(id+'_armL'), aR:document.getElementById(id+'_armR'),
+      bob:document.getElementById(id+'_bob')
+    };
+  }
   if(!walking){
-    thL.setAttribute('transform','rotate(0 -18 -176)');
-    thR.setAttribute('transform','rotate(0 18 -176)');
-    shL.setAttribute('transform','rotate(0 -18 -80)');
-    shR.setAttribute('transform','rotate(0 18 -80)');
-    aL.setAttribute('transform','rotate(0 -48 -296)');
-    aR.setAttribute('transform','rotate(0 48 -296)');
-    bob.setAttribute('transform','translate(0,0)');
+    e.thL.setAttribute('transform','rotate(0 -18 -176)');
+    e.thR.setAttribute('transform','rotate(0 18 -176)');
+    e.shL.setAttribute('transform','rotate(0 -18 -80)');
+    e.shR.setAttribute('transform','rotate(0 18 -80)');
+    e.aL.setAttribute('transform','rotate(0 -48 -296)');
+    e.aR.setAttribute('transform','rotate(0 48 -296)');
+    e.bob.setAttribute('transform','translate(0,0)');
     return;
   }
   const s=Math.sin(p), c=Math.cos(p);
   const liftL=Math.max(0,s), liftR=Math.max(0,-s);   /* 0..1, one leg at a time */
   /* thigh rises + opens a few degrees OUTWARD (away from the body centre) */
-  thL.setAttribute('transform',`translate(0,${-liftL*22}) rotate(${liftL*5} -18 -176)`);
-  thR.setAttribute('transform',`translate(0,${-liftR*22}) rotate(${-liftR*5} 18 -176)`);
+  e.thL.setAttribute('transform',`translate(0,${-liftL*22}) rotate(${liftL*5} -18 -176)`);
+  e.thR.setAttribute('transform',`translate(0,${-liftR*22}) rotate(${-liftR*5} 18 -176)`);
   /* shin folds up under the thigh -> the leg looks bent and the foot leaves the ground */
-  shL.setAttribute('transform',`translate(0,${-liftL*32})`);
-  shR.setAttribute('transform',`translate(0,${-liftR*32})`);
+  e.shL.setAttribute('transform',`translate(0,${-liftL*32})`);
+  e.shR.setAttribute('transform',`translate(0,${-liftR*32})`);
   /* arms counter-swing: the arm opposite the lifted leg goes slightly forward */
-  aL.setAttribute('transform',`translate(0,${-liftR*7}) rotate(${liftR*5} -48 -296)`);
-  aR.setAttribute('transform',`translate(0,${-liftL*7}) rotate(${-liftL*5} 48 -296)`);
+  e.aL.setAttribute('transform',`translate(0,${-liftR*7}) rotate(${liftR*5} -48 -296)`);
+  e.aR.setAttribute('transform',`translate(0,${-liftL*7}) rotate(${-liftL*5} 48 -296)`);
   /* body: rises when both feet are planted, tiny side sway with the step */
-  bob.setAttribute('transform',`translate(${2.6*s},${-Math.abs(c)*7}) rotate(${0.9*s} 0 -176)`);
+  e.bob.setAttribute('transform',`translate(${2.6*s},${-Math.abs(c)*7}) rotate(${0.9*s} 0 -176)`);
 }
 
 /* ===================== roster ===================== */
@@ -3734,12 +3743,23 @@ function startTraffic(){
 }
 
 /* the ring under your feet, and the preview of the cells the wheel just bought you */
+let _cellFxKids=null;
 function setCellMark(){
   const fx=document.getElementById('cellFx'); if(!fx) return;
   const p=curCell||PATH[cur]||PATH[0];
-  fx.innerHTML=`<circle cx="${p.x}" cy="${p.y}" r="54" fill="#ffd24a" opacity=".13"/>
-    <circle cx="${p.x}" cy="${p.y}" r="45" fill="none" stroke="#ffd24a" stroke-width="7"/>
-    <circle cx="${p.x}" cy="${p.y}" r="31" fill="none" stroke="#fff8e0" stroke-width="2.5" opacity=".6"/>`;
+  /* build the three rings once and then only move them: rebuilding this with
+     innerHTML on every landing re-parsed markup and forced a layout in the
+     exact frame the next step wanted to start — a visible tick at each cell */
+  let k=_cellFxKids;
+  if(!k || !k.ring.isConnected || k.ring.parentNode!==fx){
+    fx.innerHTML=`<circle class="cmGlow" r="54" fill="#ffd24a" opacity=".13"/>
+      <circle class="cmRing" r="45" fill="none" stroke="#ffd24a" stroke-width="7"/>
+      <circle class="cmIn" r="31" fill="none" stroke="#fff8e0" stroke-width="2.5" opacity=".6"/>`;
+    k=_cellFxKids={glow:fx.querySelector('.cmGlow'),ring:fx.querySelector('.cmRing'),inner:fx.querySelector('.cmIn')};
+  }
+  k.glow.setAttribute('cx',p.x);  k.glow.setAttribute('cy',p.y);
+  k.ring.setAttribute('cx',p.x);  k.ring.setAttribute('cy',p.y);
+  k.inner.setAttribute('cx',p.x); k.inner.setAttribute('cy',p.y);
   if(typeof syncJobBeacon==='function') syncJobBeacon();   /* re-aim the beacon after every landing */
 }
 let camSaved=0;
@@ -7857,7 +7877,9 @@ async function walkTo(from,to,chk,keep,first){
   CHARS['me'].walking=!!keep;          /* keep striding between cells, stop on the last one */
   mePos={x:b.x, y:b.y};
   setCellMark();                       /* the golden ring hops to the cell you stand on */
-  ensureCabNearby();                   /* no driver on screen? one pulls over beside you */
+  /* only the cell you actually come to rest on needs a cab beside you, and its
+     forced-layout scan must not land on the frame the next step starts: defer it */
+  if(!keep) requestAnimationFrame(()=>{ try{ ensureCabNearby(); }catch(e){} });
   advanceMinutes(2 + Math.floor(Math.random()*2));   /* cells are short now: two-ish minutes each */
   /* ONLY the cell you actually stop on can pull you into a building */
   if(chk!==false){
