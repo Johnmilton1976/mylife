@@ -5578,6 +5578,10 @@ const ST={age:AGE_START, cash:CASH_START, bank:0, happy:50, charm:20, health:100
   course:null,                                             /* the ONE skill you are currently studying */
   sick:null,                                               /* {name, days} while ill */
   day:0,                                                   /* in-game days lived; month settles every 30 */
+  sleptDay:-1,                                             /* the day you last woke up out of your own bed.
+                                                              Keyed on ST.day, NOT ST.daily: a night carries
+                                                              the calendar forward, so ST.daily has already
+                                                              been wiped by the time the lock could be set. */
   owned:{},                                                /* purchases you keep forever: suit / painting / book */
   car:null,                                                /* {brand, model, price} — a LIABILITY on the sheet, never an asset */
   goals:{},                                                /* achieved life goals: id -> timestamp */
@@ -6243,10 +6247,19 @@ document.getElementById('actExit').addEventListener('click',closeAct);
 addEventListener('keydown',e=>{ if(e.key!=='Escape') return; const up=(typeof actPanel!=='undefined'&&actPanel.classList.contains('show')); closeAct(); if(up) e.stopImmediatePropagation(); });
 
 function sleepUntilMorning(){
+  /* One night per day, keyed on the calendar and not on ST.daily. Sleeping IS a
+     day shift, and marketDayShift() resets ST.daily on the way through — so a
+     ST.daily.sleep flag would be wiped by the very act it was meant to lock.
+     Guard lives here, not only in the panel, because the exploit was a tap loop. */
+  if(ST.sleptDay===ST.day){
+    flash('You have already slept today. The city is awake until midnight.');
+    return false;
+  }
   const d=clockNow();
   const next=new Date(d); next.setDate(next.getDate()+1); next.setHours(8,0,0,0);
   const rough=ST.stress>=70;                      /* too wound up to actually rest */
   advanceMinutes(Math.round((next-d)/60000));
+  ST.sleptDay=ST.day;                             /* advanceMinutes rolled the calendar: stamp the NEW day */
   ST.health=clamp(ST.health+(rough?2:5),0,100);
   ST.happy=clamp(ST.happy+(rough?1:4),0,100);
   ST.stress=clamp(ST.stress-(rough?14:26),0,100);
@@ -6254,6 +6267,7 @@ function sleepUntilMorning(){
   ST.workStreak=0;                                /* the streak breaks, the body forgives */
   flash(rough ? 'You lay awake most of the night — STRESS is too high to sleep it off.'
               : 'A proper night. A new day begins.');
+  return true;
 }
 function teleport(){
   ateHere=false; showHere=false; playHere=false; restHere=false; treatedHere=false;   /* a new neighbourhood: the appetite resets */
@@ -6532,7 +6546,12 @@ function openAction(b){
         ()=>{fn();restHere=true;},o);
     };
     if(ST.cash<60) REST('PUBLIC SHELTER \u00B7 FREE','a cot for the night \u00B7 health +3 \u00B7 stress -10 \u00B7 happy -6 \u00B7 sleep to 8AM',
-      ()=>{ST.health=clamp(ST.health+3,0,100);ST.stress=clamp(ST.stress-10,0,100);ST.happy=clamp(ST.happy-6,0,100);sleepUntilMorning();flash('You survived the night. Keep moving.');});
+      ()=>{/* the cot is a night's sleep too, so it shares the bed's one-night-per-day
+             gate: without this the shelter would hand out +3/-10/-6 without ever
+             moving the calendar, which is cheaper than a night should be */
+          if(!sleepUntilMorning()){ flash('You have already slept today \u2014 the cot stays empty. Come back after midnight.'); return; }
+          ST.health=clamp(ST.health+3,0,100);ST.stress=clamp(ST.stress-10,0,100);ST.happy=clamp(ST.happy-6,0,100);
+          flash('You survived the night. Keep moving.');});
     REST('TAKE A ROOM \u00B7 $60','health +8 \u00B7 happy +5 \u00B7 6 hours',
       ()=>{ST.cash-=60;ST.health=clamp(ST.health+8,0,100);ST.happy=clamp(ST.happy+5,0,100);advanceMinutes(360);flash('Well rested.');},{dis:()=>ST.cash<60});
     REST('BOOK THE SUITE \u00B7 $180','health +15 \u00B7 happy +10 \u00B7 stress -15 \u00B7 8 hours',
@@ -6601,8 +6620,21 @@ function openAction(b){
     A('TAKE A CAB \u00B7 $60','jump across town and save the walking time',
       ()=>{ST.cash-=60;teleport();flash('The cabbie knows every shortcut.');},{dis:()=>ST.cash<60});
   } else if(kind==='home'){
-    descEl.textContent='Your own bed. The city can wait until morning.';
-    A('SLEEP UNTIL MORNING','health +15 \u00B7 stress -30 \u00B7 next day 8AM',()=>sleepUntilMorning());
+    /* The last unlocked tap in the city. A night carries the calendar forward and
+       pays +5/+4/-26, so without a lock the bed was an unlimited health fountain.
+       The lock is ST.day-keyed (see sleepUntilMorning) because a night IS a day
+       shift, and a day shift wipes ST.daily before the flag could survive.
+       The old subtitle also advertised "+15 health / -30 stress", which the code
+       has never paid — the copy below now reads the real branch. */
+    const sleptToday=ST.sleptDay===ST.day, rough=ST.stress>=70;
+    descEl.textContent = sleptToday
+      ? 'You have already slept here today. The bed is made and the city is awake \u2014 it opens again after midnight.'
+      : 'Your own bed. The city can wait until morning.';
+    A(sleptToday?'\u2713 SLEPT TODAY':'SLEEP UNTIL MORNING',
+      sleptToday ? 'one night per day \u00B7 the bed opens again after midnight'
+      : rough ? 'health +2 \u00B7 happy +1 \u00B7 stress -14 \u00B7 too wound up to sleep it off'
+              : 'health +5 \u00B7 happy +4 \u00B7 stress -26 \u00B7 next day 8AM',
+      ()=>sleepUntilMorning(), {dis:()=>sleptToday});
   } else if(kind==='career'){
     /* one board, every company: the only place in the city where you can compare
        desks side by side and sign without resigning first. */
