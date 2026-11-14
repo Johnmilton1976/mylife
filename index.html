@@ -1768,6 +1768,20 @@ function distToBway(x,y){
   }
   return best;
 }
+const BWAY_PAVE = EDGE + 17;                       /* half the painted width: asphalt + both pavements */
+/* Broadway runs top-to-bottom and never doubles back, so one x per y is enough to
+   know which side of the boulevard a block is on. Anything that has to fit beside
+   Broadway (the wedge lawns, the flatiron) asks this, not the block centre. */
+function bwayXAt(y){
+  for(let i=0;i<BWAY.length-1;i++){
+    const y1=BWAY[i][1], y2=BWAY[i+1][1];
+    if(y>=Math.min(y1,y2) && y<=Math.max(y1,y2)){
+      const t=(y-y1)/(y2-y1);
+      return BWAY[i][0]+(BWAY[i+1][0]-BWAY[i][0])*t;
+    }
+  }
+  return y<BWAY[0][1] ? BWAY[0][0] : BWAY[BWAY.length-1][0];
+}
 const BWAY_PATH=BWAY.map((p,i)=>(i?'L':'M')+p[0]+','+p[1]).join(' ');
 
 /* walkable intersections: the park swallows the ones that fall inside it */
@@ -2652,7 +2666,10 @@ const LANDMARKS = [
   /* road === 'ave' : i = avenue index, rb = block row, side = which side of the avenue */
   {road:'ave', i:0, rb:2, side:'E', name:'HUDSON PIER',      fn:'FUN',     type:'night',  w:420, h:410},
   {road:'ave', i:1, rb:4, side:'W', name:'THE HIGH LINE',    fn:'REST',    type:'house',  w:420, h:400},
-  {road:'ave', i:2, rb:1, side:'E', name:'PORT AUTHORITY',   fn:'TRAVEL',  type:'tower',  w:460, h:560},
+  /* Broadway has already cut this block down to 440 px of frontage, so the terminal
+     takes a slimmer facade and sits at the kerb instead of 200 px back. At its old
+     460 x 200 it stood 118 px out in the traffic. */
+  {road:'ave', i:2, rb:1, side:'E', name:'PORT AUTHORITY',   fn:'TRAVEL',  type:'tower',  w:380, h:560, inset:40},
   {road:'ave', i:3, rb:5, side:'W', name:'CARNEGIE HALL',    fn:'CULTURE', type:'museum', w:450, h:410},
   {road:'ave', i:4, rb:4, side:'E', name:'TIMES SQUARE',     fn:'FUN',     type:'night',  w:470, h:480},
   {road:'ave', i:5, rb:3, side:'W', name:'NY PUBLIC LIBRARY',fn:'STUDY',   type:'museum', w:470, h:420},
@@ -2692,12 +2709,38 @@ function lmBox(lm){
     base = lm.i>0 ? STS_Y[lm.i] - EDGE - 190 : STS_Y[0] + 700;   /* set back from the kerb, and deep enough that even a tall roofline clears the street above */
   } else {
     const xa=AVES_X[lm.i], cy=(STS_Y[lm.rb]+STS_Y[lm.rb+1])/2;
-    x = lm.side==='W' ? xa - EDGE - 200 - w : xa + EDGE + 200;
+    const back=lm.inset===undefined?200:lm.inset;    /* set back from the pavement */
+    x = lm.side==='W' ? xa - EDGE - back - w : xa + EDGE + back;
     base = cy + 280;
   }
   return {x, base, w, h, type:lm.type, name:lm.name};
 }
 const LM_BLOCKS = new Set();
+/* --- nothing may be built in a roadway ---------------------------------------
+   lmBox() proposes a lot from the table, and for years nothing checked that lot
+   against the asphalt: only ONE point (the centre) was ever tested against
+   Broadway. PORT AUTHORITY is the one that broke — 460 px of frontage on a block
+   Broadway had already cut down to 440, so it stood 118 px out in the traffic,
+   its facade hidden behind the cars.
+
+   The check is here, and the FIX is in the table — slimmer facade, smaller setback —
+   because re-siting a landmark to another block changes which blocks get ordinary
+   buildings, which burns a different number of PRNG draws from the shared city
+   stream, which rewrites every tree and shop front on the map. Measured: re-siting
+   this one took the city from 12 parishes to 9, so the lot stays and the table
+   gives way. (Drawing the terminal again does cost one roll — 12 parishes became
+   11 — because the rooftop/neon pass runs per building. That is the honest price
+   of no longer skipping a landmark the table asks for.) */
+function boxFits(b){
+  const xs=[b.x, b.x+b.w*0.25, b.x+b.w*0.5, b.x+b.w*0.75, b.x+b.w];
+  for(let i=0;i<xs.length;i++){
+    const x=xs[i];
+    for(let a=0;a<AVES_X.length;a++) if(Math.abs(x-AVES_X[a])<EDGE+8) return false;
+    for(let s=0;s<STS_Y.length;s++) if(Math.abs(b.base-STS_Y[s])<EDGE+8) return false;
+    if(distToBway(x,b.base)<BWAY_PAVE+8) return false;
+  }
+  return true;
+}
 LANDMARKS.forEach(lm=>{ const b=lmBlockIdx(lm); LM_BLOCKS.add(b.r+','+b.c); });
 
 /* spare ground that later gets its own New York set piece */
@@ -2708,12 +2751,35 @@ for(let r=0;r<STS_Y.length-1;r++){
     const cx=(AVES_X[c]+AVES_X[c+1])/2, cy=(STS_Y[r]+STS_Y[r+1])/2;
     if(!nearPath(cx,cy,3000)) continue;
     if(LM_BLOCKS.has(r+','+c)) continue;   /* the landmark keeps its block to itself */
-    /* Broadway slices through this block: leave a planted wedge instead of a building */
+    /* Broadway slices through this block: leave a planted wedge instead of a building.
+       The lawn used to be centred on the block — and the block's centre IS Broadway
+       here, so 188 of the boulevard's 190 px were covered in grass and the FLATIRON
+       stood in the middle of the traffic. The plot is carved out of the wider half of
+       the block instead, and the lawn shrinks into whatever room that leaves. */
     if(distToBway(cx,cy)<780){
-      WEDGES.push({cx, cy});
-      put(`<path d="M${cx-380} ${cy+310} L${cx+380} ${cy+310} L${cx+240} ${cy-280} L${cx-240} ${cy-280} Z" fill="#5b8a48" stroke="#3d6a30" stroke-width="5"/>`);
-      for(let i=0;i<6;i++) tree(cx-280+rc()*560, cy+200-rc()*420, .7);
-      bench(cx-130,cy+270); bench(cx+140,cy+270);
+      const bx1=AVES_X[c]+EDGE, bx2=AVES_X[c+1]-EDGE;
+      const bxW=Math.min(bwayXAt(STS_Y[r]+EDGE), bwayXAt(STS_Y[r+1]-EDGE))-BWAY_PAVE;
+      const bxE=Math.max(bwayXAt(STS_Y[r]+EDGE), bwayXAt(STS_Y[r+1]-EDGE))+BWAY_PAVE;
+      const westW=bxW-bx1, eastW=bx2-bxE;
+      const west=westW>=eastW;
+      const room=west?westW:eastW;
+      const lw=Math.min(760, Math.max(120, room-24));                 /* lawn base width */
+      const px=west ? bx1+lw/2+12 : bx2-lw/2-12;
+      const hw=lw/2, tw=hw*0.63;
+      /* the six trees are always ROLLED even when the lawn does not fit: the block
+         PRNG stream is shared with every building after it, so skipping the draws
+         would reshuffle the whole city to hide one ugly strip of grass. */
+      const tr=[];
+      for(let i=0;i<6;i++) tr.push([px-(hw-64)+rc()*(lw-128), cy+190-rc()*400]);
+      /* some blocks are all boulevard: there is no lawn that fits, and a lawn that
+         does not fit is what put grass on the asphalt in the first place. Leave the
+         ground bare and let Broadway have it. */
+      if(room>=150){
+        WEDGES.push({cx:px, cy, w:lw});
+        put(`<path d="M${px-hw} ${cy+310} L${px+hw} ${cy+310} L${px+tw} ${cy-280} L${px-tw} ${cy-280} Z" fill="#5b8a48" stroke="#3d6a30" stroke-width="5"/>`);
+        tr.forEach(t=>tree(t[0],t[1],.7));
+        bench(px-hw*0.34,cy+270); bench(px+hw*0.36,cy+270);
+      }
       continue;
     }
     if(rc()<0.12){
@@ -2773,7 +2839,7 @@ LANDMARKS.forEach(lm=>{
   const bi=lmBlockIdx(lm);
   if(inParkBlock(bi.c,bi.r)) return;                  /* nothing is built on the park */
   const b = lmBox(lm);
-  if(distToBway(b.x+b.w/2, b.base-120)<560) return;   /* nor on the Broadway right-of-way */
+  if(!boxFits(b)) return;                             /* not in the road, not on the kerb */
   const meta = FN_META[lm.fn] || {c:'#8a6a2a', t:lm.fn};
   const top = b.base - b.h;
   const road = lm.road==='st' ? ST_NAMES[lm.i] : AVE_NAMES[lm.i];
@@ -3252,30 +3318,47 @@ function ensureCabNearby(){
   </g>`);
 })();
 
+/* the one wedge that carries the flatiron, published so the night pass can light
+   exactly the building that was drawn (it used to guess the plot independently, and
+   the two guesses had already drifted apart once) */
+let FLAT=null;
 (function flatiron(){
   if(!WEDGES.length) return;
-  let best=null, bd=1e18;
-  WEDGES.forEach(W=>{ const d=Math.hypot(W.cx-9600, W.cy-6100); if(d<bd){bd=d;best=W;} });
+  /* It can only stand on a wedge that is wide enough, and a wide plot beats a
+     nearby one: a 420 px footprint on a 495 px plot has 37 px of lawn on each
+     side, which is not a building in a garden, it is a building in a corridor.
+     Ties fall to the plot nearest midtown. */
+  let best=null, bestScore=-1e18;
+  WEDGES.forEach(W=>{
+    const d=Math.hypot(W.cx-9600, W.cy-6100);
+    const score=Math.min(W.w,660)*2 - d*0.14;
+    if(score>bestScore){ bestScore=score; best=W; }
+  });
   if(!best) return;
+  const room=best.w-70;
+  if(room<260) return;                            /* a sliver, not a site */
+  const k=Math.min(1, room/420);                  /* full size on a 490 px plot, smaller in a tighter one */
   const cx=best.cx, base=best.cy+300;
+  FLAT={cx, base, k};
   const rows=7, cols=4;
   let win='';
   for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
-    const t=r/(rows-1), yTop=base-500+t*440;
-    const halfW=58+152*t, ctr=cx+18*(1-t);       /* the wedge widens towards the street */
+    const t=r/(rows-1), yTop=base-(500-440*t)*k;
+    const halfW=(58+152*t)*k, ctr=cx+18*(1-t)*k;  /* the wedge widens towards the street */
     const cellW=2*halfW/cols, ww=Math.min(34, Math.max(12, cellW*0.6));
     const left=ctr-halfW+(c+0.5)*cellW-ww/2;
-    win+=`<rect x="${left.toFixed(0)}" y="${(yTop+16).toFixed(0)}" class="litwin" width="${ww.toFixed(0)}" height="30" fill="${(r+c)%3?'#4f7f9a':'#ffeeb4'}" stroke="#3e6880" stroke-width="2" opacity=".9"/>`;
+    win+=`<rect x="${left.toFixed(0)}" y="${(yTop+16*k).toFixed(0)}" class="litwin" width="${ww.toFixed(0)}" height="${(30*k).toFixed(0)}" fill="${(r+c)%3?'#4f7f9a':'#ffeeb4'}" stroke="#3e6880" stroke-width="2" opacity=".9"/>`;
   }
+  const X=v=>(cx+v*k).toFixed(0), Y=v=>(base+v*k).toFixed(0);
   put(`<g>
-    <ellipse cx="${cx}" cy="${base+8}" rx="230" ry="26" fill="#000" opacity=".3"/>
-    <polygon points="${cx-210},${base} ${cx+210},${base} ${cx+76},${base-520} ${cx-40},${base-520}" fill="#ded4b8" stroke="${INK}" stroke-width="4"/>
-    <polygon points="${cx+60},${base} ${cx+210},${base} ${cx+76},${base-520} ${cx+30},${base-520}" fill="#b9ae90" opacity=".55"/>
+    <ellipse cx="${cx}" cy="${base+8}" rx="${(230*k).toFixed(0)}" ry="${(26*k).toFixed(0)}" fill="#000" opacity=".3"/>
+    <polygon points="${X(-210)},${base} ${X(210)},${base} ${X(76)},${Y(-520)} ${X(-40)},${Y(-520)}" fill="#ded4b8" stroke="${INK}" stroke-width="4"/>
+    <polygon points="${X(60)},${base} ${X(210)},${base} ${X(76)},${Y(-520)} ${X(30)},${Y(-520)}" fill="#b9ae90" opacity=".55"/>
     ${win}
-    <rect x="${cx-46}" y="${base-540}" width="130" height="24" fill="#cfc7ad" stroke="${INK}" stroke-width="3"/>
-    <rect x="${cx-30}" y="${base-566}" width="98" height="28" fill="#ded4b8" stroke="${INK}" stroke-width="2.5"/>
-    <rect x="${cx-38}" y="${base-96}" width="70" height="96" fill="#8fb6c4" stroke="${INK}" stroke-width="3"/>
-    <text x="${cx-14}" y="${base-40}" text-anchor="middle" font-family="Georgia,serif" font-size="17" fill="#3a4a52" transform="rotate(-90 ${cx-14} ${base-40})" letter-spacing="2">FLATIRON</text>
+    <rect x="${X(-46)}" y="${Y(-540)}" width="${(130*k).toFixed(0)}" height="${(24*k).toFixed(0)}" fill="#cfc7ad" stroke="${INK}" stroke-width="3"/>
+    <rect x="${X(-30)}" y="${Y(-566)}" width="${(98*k).toFixed(0)}" height="${(28*k).toFixed(0)}" fill="#ded4b8" stroke="${INK}" stroke-width="2.5"/>
+    <rect x="${X(-38)}" y="${Y(-96)}" width="${(70*k).toFixed(0)}" height="${(96*k).toFixed(0)}" fill="#8fb6c4" stroke="${INK}" stroke-width="3"/>
+    <text x="${X(-14)}" y="${Y(-40)}" text-anchor="middle" font-family="Georgia,serif" font-size="17" fill="#3a4a52" transform="rotate(-90 ${X(-14)} ${Y(-40)})" letter-spacing="2">FLATIRON</text>
   </g>`);
   put(nyLabel(cx, base+86, 'FLATIRON BUILDING', 26));
 })();
@@ -3497,17 +3580,15 @@ put(`<g id="winLights" opacity="0" style="pointer-events:none;transition:opacity
       ${[-250,250].map(dx=>`${H(cx+dx,cy-122,64,.85)}<ellipse cx="${cx+dx}" cy="${cy-122}" rx="8" ry="6" fill="#fff3c4"/>`).join('')}
     </g>`);
   }
-  if(WEDGES.length){
-    let best=WEDGES[0],bd=1e18;
-    WEDGES.forEach(o=>{const d=Math.hypot(o.cx-9600,o.cy-6100);if(d<bd){bd=d;best=o;}});
-    const cx=best.cx, base=best.cy+300;
+  if(FLAT){
+    const cx=FLAT.cx, base=FLAT.base, k=FLAT.k;
     let edge='';
     for(let i=0;i<=10;i++){
       const t=i/10;
-      edge+=`<circle cx="${F(cx-210+170*t)}" cy="${F(base-520*t)}" r="4" fill="#ffe9a8"/>`;
-      edge+=`<circle cx="${F(cx+210-134*t)}" cy="${F(base-520*t)}" r="4" fill="#ffe9a8"/>`;
+      edge+=`<circle cx="${F(cx+(-210+170*t)*k)}" cy="${F(base-520*k*t)}" r="4" fill="#ffe9a8"/>`;
+      edge+=`<circle cx="${F(cx+(210-134*t)*k)}" cy="${F(base-520*k*t)}" r="4" fill="#ffe9a8"/>`;
     }
-    L.push(`<g class="nl-flat">${H(cx,base-260,190,.4)}${P(cx,base+20,220,50,.3)}${edge}</g>`);
+    L.push(`<g class="nl-flat">${H(cx,base-260*k,190*k,.4)}${P(cx,base+20,220*k,50,.3)}${edge}</g>`);
   }
 
   /* 8 — street furniture: subway globes, the hot-dog cart bulb, taxi headlights */

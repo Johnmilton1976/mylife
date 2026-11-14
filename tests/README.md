@@ -11,6 +11,8 @@ node verify_cam.js       # the cinematic camera pull plays exactly once per sess
 node verify_r65.js       # junction roulette + autosave + tutorial + mobile + legal
 node store_test.js       # in-game collectibles store
 node loan_test.js        # good/bad debt lifecycle
+node probe_on_street.js  # NOTHING BUILT IN A ROADWAY: every building, landmark,
+                         # set piece and wedge lawn vs the paved corridors
 node book_test.js / eat_test.js / night_test.js / perf_test.js ...
 ```
 

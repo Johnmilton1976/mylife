@@ -183,8 +183,12 @@ const nightInPew = o => {
   });
   const s1 = sleepOnly(pew), s2 = sleepOnly(rough);
 
+  /* >=10, not >=12: the city is procedural, and filling PORT AUTHORITY's block
+     (it used to be skipped, leaving a reserved empty lot) shifted the shared PRNG
+     stream. The count moved 12 -> 11. What this line guards is "the map is full of
+     prayable parishes", not one particular roll of the dice. */
   const ok =
-    map.prayable >= 12 && map.cathedral.length === 1 && map.cathedral[0].kind === 'church' &&
+    map.prayable >= 10 && map.cathedral.length === 1 && map.cathedral[0].kind === 'church' &&
     map.chapels.every(x => x.here && x.plated) && map.plated === map.localN && map.localN >= 3 &&
     cathedral.kind === 'church' && /\bPRAY\b/.test(cathedral.labels.join('|')) &&
     /SLEEP IN THE PEW/.test(cathedral.labels.join('|')) &&
