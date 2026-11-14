@@ -105,8 +105,18 @@ const NO_WC = process.env.ML_NO_WC === '1';
   const dips = sp.filter(v => v < med * 0.5).length;
   const surges = sp.filter(v => v > med * 1.6).length;
 
+  /* idle frames in the SAME run: absolute fps in a software-rendered VM means nothing,
+     the honest question is "does walking cost more than standing still?" */
+  const idle = s.filter(x => x.x !== null && !x.w);
+  const idleGaps = [];
+  for (let i = 1; i < idle.length; i++) idleGaps.push(idle[i].t - idle[i - 1].t);
+  idleGaps.sort((a, b) => a - b);
+  const idleMed = idleGaps.length ? idleGaps[Math.floor(idleGaps.length / 2)] : 0;
+
   const out = {
     page: PAGE,
+    idleMedianMs: +idleMed.toFixed(1),
+    walkOverIdle: idleMed ? +((gaps.length ? gaps[Math.floor(gaps.length / 2)] : 0) / idleMed).toFixed(2) : 0,
     speedMedianPxMs: +med.toFixed(3),
     speedMin: +Math.min(...sp).toFixed(3),
     speedMax: +Math.max(...sp).toFixed(3),
