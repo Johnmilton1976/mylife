@@ -3890,7 +3890,13 @@ function mountCity(){
   mMe=document.getElementById('mMe');
   layerChars=document.getElementById('layerChars');
   wireNpcHover();
-  buildCullUnits();                     /* measure every top-level group once */
+  /* Measuring ~3900 group bboxes is the one heavy step of mounting, and it has
+     no business blocking the cover animation: arm the cull table once the page
+     is idle. Until then cullCity() is a no-op and the whole city is simply
+     visible, which is exactly what the title screen wants anyway. */
+  const armCull=()=>{ buildCullUnits(); cullCity(); };
+  if(window.requestIdleCallback) requestIdleCallback(armCull,{timeout:1200});
+  else setTimeout(armCull,60);
   applyCam();                           /* re-assert the camera onto the fresh DOM */
 }
 /* scheduled at the END of the script: the main script itself can take longer
