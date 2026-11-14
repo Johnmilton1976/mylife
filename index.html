@@ -824,6 +824,9 @@
   .act-btn.cur b{color:#c8f0b8}
   .act-btn.danger{background:linear-gradient(180deg,rgba(200,80,60,.14),rgba(200,80,60,.05));border-color:rgba(220,120,100,.5)}
   .act-btn.danger b{color:#ff9a86}
+  /* a promotion is not a purchase: it gets the one green the city already uses for "cur" */
+  .act-btn.hire{background:linear-gradient(180deg,rgba(120,220,150,.18),rgba(120,220,150,.05));border-color:rgba(130,225,160,.6)}
+  .act-btn.hire b{color:#b7f0c4}
   #actTitle{font-size:16px;letter-spacing:2.4px;color:#ffe9b0}
   #actIc{font-size:17px}
 
@@ -2605,10 +2608,11 @@ const TYPE_ACT = {
   fire:'fire', police:'police', dealer:'dealer'
 };
 const FN_ACT = { STUDY:'study', CULTURE:'art', FUN:'fun', FOOD:'food', REST:'rest',
-  SPORT:'gym', SHOP:'shop', WORK:'office', SOCIAL:'social', TRAVEL:'travel', HOME:'home', DEALER:'dealer' };
+  SPORT:'gym', SHOP:'shop', WORK:'office', SOCIAL:'social', TRAVEL:'travel', HOME:'home', DEALER:'dealer',
+  CAREER:'career' };
 const KIND_ICON = { bank:'🏦', study:'🎓', office:'🏢', church:'⛪', hospital:'🏥', gym:'🏋️',
   fun:'🎬', food:'🍽️', art:'🎨', shop:'🛍️', rest:'🛏️', social:'💬', travel:'🚆',
-  home:'🏠', casino:'🎰', books:'📚', museum:'🖼️', fire:'🚒', police:'🚓', dealer:'🚗' };
+  home:'🏠', casino:'🎰', books:'📚', museum:'🖼️', fire:'🚒', police:'🚓', dealer:'🚗', career:'🧭' };
 
 /* ===================== landmarks: one signature building on every road ===================== */
 /* Function tags are placeholders — the actual gameplay is wired up later. */
@@ -2624,6 +2628,7 @@ const FN_META = {
   CULTURE:{c:'#b0483a', t:'CULTURE'},
   SPORT:  {c:'#2f8a52', t:'SPORT'},
   WORK:   {c:'#46668a', t:'CAREER'},
+  CAREER: {c:'#1f7a4d', t:'JOB BOARD'},
   DEALER: {c:'#26547c', t:'DEALERSHIP'}
 };
 const LANDMARKS = [
@@ -2660,7 +2665,10 @@ const LANDMARKS = [
   {road:'ave', i:2, rb:4, side:'W', name:'POLICE PCT 10', fn:'WORK',    type:'police',  w:380, h:330},
   {road:'ave', i:6, rb:2, side:'W', name:'RIVOLI CINEMA', fn:'FUN',     type:'cinema',  w:400, h:340},
   {road:'ave', i:4, rb:5, side:'E', name:'PLAZA HOTEL',   fn:'REST',    type:'hotel',   w:440, h:460},
-  {road:'ave', i:0, rb:6, side:'E', name:'PIER GALLERY',  fn:'CULTURE', type:'gallery', w:380, h:340}
+  {road:'ave', i:0, rb:6, side:'E', name:'PIER GALLERY',  fn:'CULTURE', type:'gallery', w:380, h:340},
+  /* the labour exchange: one door that lists every desk in the city.
+     Midtown, between 5th and 6th, because that is where the walker turns most often. */
+  {road:'ave', i:6, rb:3, side:'W', name:'CAREER CENTER', fn:'CAREER',  type:'tower',   w:470, h:560}
 ];
 function lmBlockIdx(lm){
   if(lm.road==='st') return {r: lm.i>0 ? lm.i-1 : 0, c: lm.cb};
@@ -2787,6 +2795,9 @@ function fitsIn(b){
 LANDMARKS.forEach(lm=>{
   const lb=lmBox(lm), bi=lmBlockIdx(lm);
   if(inParkBlock(bi.c,bi.r)) return;
+  /* the job centre keeps its block to itself: building spare houses beside it
+     would consume two city PRNG draws and reshuffle every tree on the map */
+  if(lm.fn==='CAREER') return;
   const cx=(AVES_X[bi.c]+AVES_X[bi.c+1])/2;
   [cx-520, cx+520].forEach(bx=>{
     if(distToBway(bx, lb.base-180)<360) return;
@@ -2839,7 +2850,18 @@ function nycLandmark(lm,b){
   const cx=b.x+b.w/2, top=b.base-b.h, w=b.w, s='';
   const G='url(#glassG)';
   let out='';
-  if(lm.name==='EMPIRE STATE'){
+  if(lm.name==='CAREER CENTER'){
+    /* the one building that wears its business on its face: a hiring hall
+       needs a board, not a spire */
+    out=`<g>
+      <rect x="${cx-118}" y="${top+96}" width="236" height="110" rx="9" fill="#12301c" stroke="#6fd08a" stroke-width="3.5"/>
+      <rect x="${cx-104}" y="${top+110}" width="208" height="82" rx="5" fill="#1b4529"/>
+      <text x="${cx}" y="${top+147}" text-anchor="middle" font-family="Verdana,sans-serif" font-weight="bold"
+        font-size="27" fill="#b7f0c4" letter-spacing="2.5">NOW HIRING</text>
+      <text x="${cx}" y="${top+177}" text-anchor="middle" font-family="Verdana,sans-serif"
+        font-size="15" fill="#8fd0a0" letter-spacing="1.5">ALL LEVELS \u00B7 ALL TRADES</text>
+    </g>`;
+  } else if(lm.name==='EMPIRE STATE'){
     out=`<g>
       <rect x="${cx-53}" y="${top-128}" width="106" height="42" fill="${G}" stroke="${INK}" stroke-width="3.5"/>
       <rect x="${cx-53}" y="${top-128}" width="106" height="8" fill="#d8d2c0" stroke="#8a8474" stroke-width="2"/>
@@ -3745,6 +3767,7 @@ var started=false;    /* declared early: background loops read it the moment the
   /* the first-job beacon: a pulsing gold column over the nearest hiring building.
      Painted above traffic so nothing in the city can cover it. */
   put(`<g id="jobBeacon" style="pointer-events:none"></g>`);
+  put(`<g id="hireMarks" style="pointer-events:none"></g>`);
 })();
 function startTraffic(){
   const g=document.getElementById('traffic'); if(!g||!TRAFFIC.length) return;
@@ -4158,7 +4181,7 @@ function buildCullUnits(){
   if(cullBuilt) return;
   const svg=document.querySelector('#world>svg'); if(!svg) return;
   /* layers that are driven by other code, or move on their own */
-  const SKIP=new Set(['defs','cityLights','winLights','traffic','layerChars','cellFx','jobBeacon','me','nightSky']);
+  const SKIP=new Set(['defs','cityLights','winLights','traffic','layerChars','cellFx','jobBeacon','hireMarks','me','nightSky']);
   CULL=[];
   for(const el of [...svg.children]){
     const tag=el.tagName.toLowerCase();
@@ -5798,22 +5821,106 @@ function salaryOf(j){
   const tenure=Math.min(0.24, (ST.jobMonths||0)*0.02);
   return Math.round(j.pay*(1+over*0.10+tenure+(ST.rep||0))/50)*50;
 }
-/* what a job would pay YOU today, before you even apply */
-function payAt(j){
+/* what a desk would pay YOU on day one \u2014 the figure the player is promised.
+   Deliberately tenure-free: seniority is earned at one desk, and a move resets it,
+   so a preview that carried your OLD tenure across would promise money you never get. */
+function payIfHired(j){
   const lv=lvlOf(ST.skills[j.skill]||0);
-  return lv>=j.lvl ? salaryOf(j) : j.pay;
+  const over=Math.min(8, Math.max(0, lv-j.lvl));
+  return Math.round(j.pay*(1+over*0.10+(ST.rep||0))/50)*50;
 }
+/* what a job would pay YOU today, before you even apply */
+function payAt(j){ return payIfHired(j); }
+
+/* ===================== the job board on the street =====================
+   A skill level is worth nothing if the player cannot see which door it opens.
+   `openDesks()` answers one question: where could I sign today for more money than
+   I earn now? Every desk above your current salary, one entry per JOB (the nearest
+   building that runs it), sorted by the raise. Both the map plates and the career
+   centre read from this single list, so they can never disagree. */
+const HIRE_PLATE_CAP = 8;            /* a skyline full of green plates is noise, not a sign */
+function openDesks(){
+  const cur = ST.employed ? salaryOf(ST.employed) : 0;
+  const best = new Map();
+  for(const b of BUILT){
+    if(!b.kind) continue;
+    const js = jobsHere(b.kind);
+    if(!js.length) continue;
+    const d = rectDist(mePos.x, mePos.y, b);
+    for(const j of js){
+      if(lvlOf((ST.skills||{})[j.skill]||0) < j.lvl) continue;
+      if(ST.employed && ST.employed.id === j.id) continue;
+      const pay = payIfHired(j);
+      if(pay <= cur) continue;                    /* a sideways move is not an opening */
+      const prev = best.get(j.id);
+      if(!prev || d < prev.d) best.set(j.id, {j, b, pay, gain: pay - cur, d});
+    }
+  }
+  return [...best.values()].sort((a,b)=> b.gain - a.gain);
+}
+/* the rung above you: the cheapest level-up that would actually raise your pay.
+   Shown when the board is empty, so "nothing today" never reads as "nothing ever". */
+function nextDeskUp(){
+  const cur = ST.employed ? salaryOf(ST.employed) : 0;
+  let best=null;
+  for(const j of JOBS){
+    const lv = lvlOf((ST.skills||{})[j.skill]||0);
+    if(lv >= j.lvl) continue;                                  /* already open: not "next" */
+    const at = Math.round(j.pay*(1+(ST.rep||0))/50)*50;         /* pay on the day it unlocks */
+    if(at <= cur) continue;                                    /* a rung that pays less is no rung */
+    const need = j.lvl - lv;
+    if(!best || need < best.need || (need === best.need && j.pay > best.j.pay)) best={j, lv, need, at};
+  }
+  return best;
+}
+/* redrawn only when the answer can change: hire, quit, a level-up, a save loaded.
+   Never per frame, never per cell landing. */
+function refreshHireMarks(){
+  const g = document.getElementById('hireMarks');
+  if(!g) return;
+  if(!started){ if(g.firstChild) g.innerHTML=''; return; }   /* nothing signed yet: the title screen stays clean */
+  const list = openDesks().slice(0, HIRE_PLATE_CAP);
+  if(!list.length){ if(g.firstChild) g.innerHTML=''; return; }
+  let h='';
+  for(const {b,j,pay} of list){
+    const cx=b.x+b.w/2, top=b.base-b.h;
+    const label='LV'+j.lvl+' \u00B7 '+fmt$(pay)+'/mo';
+    const w=Math.max(132, label.length*8.4+30);
+    h+=`<g transform="translate(${cx},${top-52})">
+      <rect x="${(-w/2).toFixed(1)}" y="3" width="${w.toFixed(1)}" height="22" rx="4"
+        fill="#12301c" stroke="#6fd08a" stroke-width="2"/>
+      <text x="0" y="18" text-anchor="middle" font-family="Verdana,sans-serif" font-weight="bold"
+        font-size="12.5" fill="#b7f0c4" letter-spacing=".6">${label}</text>
+    </g>`;
+  }
+  g.innerHTML=h;
+}
+/* Signing a new desk. Works from unemployment AND from a current job: the whole
+   point of a skill level is that it lets you walk out of a cheap desk and into a
+   better one on the same afternoon. What a move costs is the only thing it should
+   cost \u2014 the seniority you built where you were (tenure resets to month zero, and
+   the +2%/month is gone) plus half a day. No fee, no penalty, no interview roulette. */
 function applyJob(j){
+  const prev = ST.employed;
+  const fromPay = prev ? salaryOf(prev) : 0;
+  const fromMonths = ST.jobMonths||0;
   ST.employed=j; ST.jobMonths=0; advanceMinutes(120);
   ST.perf=70; ST.burnDays=0; ST.goodDays=0; ST.perfMonth=0; ST.perfDays=0; ST.payStub=null;
   syncJobBeacon();                     /* the beacon's whole job is done */
-  toast('\uD83D\uDCBC HIRED: '+j.title+' \u00B7 '+fmt$(salaryOf(j))+'/mo');
+  refreshHireMarks();                  /* the plates just changed their answer */
+  updatePanel();
+  if(prev && prev.id !== j.id){
+    toast('\u2197 MOVED: '+j.title+' \u00B7 '+fmt$(fromPay)+' \u2192 '+fmt$(salaryOf(j))+'/mo'
+      +(fromMonths? ' \u00B7 '+fromMonths+' mo of seniority left behind':''));
+  } else {
+    toast('\uD83D\uDCBC HIRED: '+j.title+' \u00B7 '+fmt$(salaryOf(j))+'/mo');
+  }
 }
 function quitJob(){
   const t=ST.employed?ST.employed.title:'your job';
   ST.employed=null; ST.jobMonths=0; advanceMinutes(60);
   ST.perf=70; ST.burnDays=0; ST.goodDays=0; ST.perfMonth=0; ST.perfDays=0; ST.payStub=null;
-  toast('You resigned from '+t);
+  refreshHireMarks(); toast('You resigned from '+t);
 }
 
 /* one class: XP, a little strain, and the door closes until you walk somewhere new.
@@ -6084,12 +6191,23 @@ function updatePanel(){
 
   /* every level is a career event: a new door opens and the same desk pays more */
   if(!ST.lvSnap) ST.lvSnap={};
+  let leveled=false;
   SKILLS.forEach(k=>{
     const lv=Math.max(1,lvlOf(ST.skills[k.id])), prev=ST.lvSnap[k.id]||1;
     if(lv<=prev) return;
-    ST.lvSnap[k.id]=lv;
+    ST.lvSnap[k.id]=lv; leveled=true;
     const opened=JOBS.filter(j=>j.skill===k.id&&j.lvl===lv)[0];
-    toast('\uD83C\uDF93 '+k.name+' LV'+lv+(opened?' \u2014 '+opened.title+' is hiring':''));
+    /* the announcement has to name the money, or "X is hiring" is trivia */
+    if(opened){
+      const cur=ST.employed?salaryOf(ST.employed):0;
+      const pay=payIfHired(opened), up=pay-cur;
+      toast('\uD83C\uDF93 '+k.name+' LV'+lv+' \u2014 '+opened.title+' ('+opened.company+') needs LV'+opened.lvl
+        +' \u00B7 '+fmt$(pay)+'/mo'
+        +(up>0?' \u00B7 +'+fmt$(up)+' on your '+fmt$(cur)+' \u00B7 look for the green plate':'')
+        ,{ms:9000});
+    } else {
+      toast('\uD83C\uDF93 '+k.name+' LV'+lv);
+    }
     if(ST.employed && ST.employed.skill===k.id)
       toast('\uD83D\uDCB0 Pay rise: '+fmt$(salaryOf(ST.employed))+'/mo at '+ST.employed.title);
     /* LV5: the skill can now be sold as a work. Announce it once, when no card is up. */
@@ -6103,6 +6221,7 @@ function updatePanel(){
         [[w.what+' UNLOCKED \u00B7 MY SKILLS','plus']]);
     }
   });
+  if(leveled) refreshHireMarks();   /* the plates answer a new question now */
   /* life goals: check, celebrate, and keep the HUD count fresh */
   const nDone=checkGoals();
   document.getElementById('vGoals').textContent=nDone+' / '+GOALS.length;
@@ -6115,6 +6234,7 @@ const actPanel=document.getElementById('actPanel');
 let actResolve=null;
 let studyStop=false;          /* true once you have studied at THIS stop */
 let ateHere=false, showHere=false, playHere=false;   /* one plate / one ticket / one session per visit */
+let restHere=false;           /* one bed per visit: a room you can re-book is an infinite health tap */
 let treatedHere=false;        /* one clinic appointment per visit: pick ONE service, walk on for another */
 function closeAct(){ gpPinned=null; if(typeof hideGamePreview==='function') hideGamePreview(true);
   actPanel.classList.remove('show'); delete actPanel.dataset.npc; if(actResolve){ const r=actResolve; actResolve=null; r(); } }
@@ -6136,7 +6256,7 @@ function sleepUntilMorning(){
               : 'A proper night. A new day begins.');
 }
 function teleport(){
-  ateHere=false; showHere=false; playHere=false; treatedHere=false;   /* a new neighbourhood: the appetite resets */
+  ateHere=false; showHere=false; playHere=false; restHere=false; treatedHere=false;   /* a new neighbourhood: the appetite resets */
   const i=Math.floor(Math.random()*PATH.length), p=PATH[i];
   cur=i; curCell=p; pendingDetour.length=0;
   const g=document.getElementById('me');
@@ -6399,12 +6519,23 @@ function openAction(b){
               toast('Sold. The liability is off your sheet.'); openAction(b); });
     }
   } else if(kind==='rest'){
-    descEl.textContent='A soft bed and room service.';
-    if(ST.cash<60) A('PUBLIC SHELTER \u00B7 FREE','a cot for the night \u00B7 health +3 \u00B7 stress -10 \u00B7 happy -6 \u00B7 sleep to 8AM',
+    /* One bed per visit. Without this lock three buttons — shelter, room, suite —
+       were an unlimited HEALTH/HAPPY tap: stand still and re-book until the bars
+       were full. A hotel that can be re-entered is not a hotel, it is a bug. */
+    descEl.textContent = restHere
+      ? 'You have already checked in here. Walk on before you take another room.'
+      : 'A soft bed and room service. One stay per visit.';
+    const REST=(l,s,fn,opt)=>{
+      const o=Object.assign({},opt||{}), prev=o.dis;
+      o.dis=()=>!!restHere||(prev?prev():false);
+      A((restHere?'\u2713 ':'')+l, restHere?'one stay per visit \u00B7 walk on for another':s,
+        ()=>{fn();restHere=true;},o);
+    };
+    if(ST.cash<60) REST('PUBLIC SHELTER \u00B7 FREE','a cot for the night \u00B7 health +3 \u00B7 stress -10 \u00B7 happy -6 \u00B7 sleep to 8AM',
       ()=>{ST.health=clamp(ST.health+3,0,100);ST.stress=clamp(ST.stress-10,0,100);ST.happy=clamp(ST.happy-6,0,100);sleepUntilMorning();flash('You survived the night. Keep moving.');});
-    A('TAKE A ROOM \u00B7 $60','health +8 \u00B7 happy +5 \u00B7 6 hours',
+    REST('TAKE A ROOM \u00B7 $60','health +8 \u00B7 happy +5 \u00B7 6 hours',
       ()=>{ST.cash-=60;ST.health=clamp(ST.health+8,0,100);ST.happy=clamp(ST.happy+5,0,100);advanceMinutes(360);flash('Well rested.');},{dis:()=>ST.cash<60});
-    A('BOOK THE SUITE \u00B7 $180','health +15 \u00B7 happy +10 \u00B7 stress -15 \u00B7 8 hours',
+    REST('BOOK THE SUITE \u00B7 $180','health +15 \u00B7 happy +10 \u00B7 stress -15 \u00B7 8 hours',
       ()=>{ST.cash-=180;ST.health=clamp(ST.health+15,0,100);ST.happy=clamp(ST.happy+10,0,100);const sfx=relax('suite',15);advanceMinutes(480);flash('Room service and silence.'+sfx);},{dis:()=>ST.cash<180});
   } else if(kind==='social'){
     descEl.textContent=ateHere
@@ -6472,11 +6603,39 @@ function openAction(b){
   } else if(kind==='home'){
     descEl.textContent='Your own bed. The city can wait until morning.';
     A('SLEEP UNTIL MORNING','health +15 \u00B7 stress -30 \u00B7 next day 8AM',()=>sleepUntilMorning());
+  } else if(kind==='career'){
+    /* one board, every company: the only place in the city where you can compare
+       desks side by side and sign without resigning first. */
+    const cur=ST.employed?salaryOf(ST.employed):0;
+    const desks=openDesks();
+    descEl.textContent = ST.employed
+      ? ('The city\u2019s job board. You are on '+fmt$(cur)+'/mo as '+ST.employed.title
+         +' \u2014 every desk below pays more than that today. Signing one moves you immediately; '
+         +'the months you served where you are do not travel with you.')
+      : 'The city\u2019s job board. Every desk that will take you today, at the level you have actually earned.';
+    desks.slice(0,10).forEach(({j,pay,gain})=>{
+      A((ST.employed?'\u2197 MOVE: ':'TAKE: ')+j.title,
+        (ST.employed?('+'+fmt$(gain)+' on your desk \u00B7 '):'')
+        +j.company+' \u00B7 needs '+skillName(j.skill)+' LV'+j.lvl+' \u00B7 '+fmt$(pay)+'/mo',
+        ()=>applyJob(j), {cls:'hire'});
+    });
+    if(!desks.length){
+      const up=nextDeskUp();
+      A('NO DESK ABOVE YOURS TODAY','nothing on the board beats '+fmt$(cur)+'/mo at your level',
+        ()=>{},{dis:()=>true});
+      if(up) A('NEXT RUNG \u00B7 '+up.j.title,
+        skillName(up.j.skill)+' LV'+up.j.lvl+' unlocks it \u00B7 '+fmt$(up.at)+' starting pay \u00B7 study at a school or library',
+        ()=>{},{dis:()=>true});
+      else A('TOP OF THE LADDER','you already out-earn every desk the city has',()=>{},{dis:()=>true});
+    }
+    if(ST.employed) A('RESIGN FROM '+ST.employed.title,'walk out today with nothing lined up',()=>quitJob(),{cls:'danger'});
   } else {
     descEl.textContent='Just a quiet block. Nothing to do here.';
   }
 
-  /* job openings wherever work is offered */
+  /* job openings wherever work is offered.
+     The button used to be dead the moment you HAD a job, which quietly broke the
+     whole ladder: you could level up, but the rung above you was unclickable. */
   const offers=jobsHere(kind);
   if(offers.length){
     offers.forEach(j=>{
@@ -6487,13 +6646,21 @@ function openAction(b){
       const skShort=((SKILLS.find(k=>k.id===j.skill)||{}).abbr || skillName(j.skill).split(' ')[0]);
       const learn=' \u00B7 trains '+skShort+' +'+jobXpDay(j)+'/day to LV'+jobTeachCap(j);
       const trainTag=(lv>=jobTeachCap(j)) ? ' \u00B7 already past what this desk teaches' : learn;
+      const move=!!ST.employed && !curJob && lv>=j.lvl;
+      const diff=lv>=j.lvl ? payIfHired(j) - (ST.employed?salaryOf(ST.employed):0) : 0;
       const tag=curJob ? ('current job \u00B7 '+fmt$(salaryOf(j))+'/mo \u00B7 '+ST.jobMonths+' mo served'+repTag)
-              : lv>=j.lvl ? (fmt$(payAt(j))+'/mo at your LV'+lv+' \u00B7 needs '+need+repTag)
+              : lv>=j.lvl ? (fmt$(payIfHired(j))+'/mo from day one \u00B7 needs '+need+repTag)
               : ('opens at '+need);
-      const tagFull=tag+trainTag;
-      A((curJob?'\u2713 ':'APPLY: ')+j.title, j.company+' \u00B7 '+tagFull,
+      /* a sideways or downward move is legal, but it must never LOOK like a raise */
+      const head=curJob?'\u2713 '
+        : move ? (diff>0?'\u2197 MOVE TO ':diff<0?'\u2198 DEMOTE TO ':'\u2192 MOVE TO ')
+        : 'APPLY: ';
+      const lead=move?(diff>0?'+'+fmt$(diff)+' on your desk \u00B7 ':diff<0?'\u2212'+fmt$(-diff)+' on your desk \u00B7 ':'same pay \u00B7 ')
+        +(ST.employed?('leaves '+ST.employed.title+' \u00B7 seniority resets \u00B7 '):'')
+        :'';
+      A(head+j.title, lead+j.company+' \u00B7 '+tag+trainTag,
         ()=>applyJob(j),
-        {dis:()=>curJob||lv<j.lvl||!!ST.employed, cls:curJob?'cur':''});
+        {dis:()=>curJob||lv<j.lvl, cls:curJob?'cur':(move&&diff>0?'hire':'')});
     });
   }
   if(ST.employed && (kind==='office'||kind==='fire'||kind==='police'||kind==='bank'||kind==='food'||kind==='study')){
@@ -7702,6 +7869,7 @@ function startGame(opts){
   updatePanel();
   setMusic(musicOn);                          /* keep whatever the player chose in settings */
   syncJobBeacon();                     /* minute one has a destination, not just a hint card */
+  refreshHireMarks();                  /* every open desk wears its level and its money */
   flash(`Welcome to New York, ${typed}. Spin the disc to walk.`);
   /* first visit? the tutorial card explains the loop in three beats */
   let tutSeen=null; try{ tutSeen=STORE.getItem(TUT_KEY); }catch(e){}
@@ -8121,7 +8289,7 @@ async function walkRoute(n, chkLast){
     newsStreak++;                            /* every stop counts toward the next city beat */
     const due = newsDue();                   /* forced on the 4th stop, likely on the 3rd */
     studyStop=false;                         /* a new stop: a fresh chance to learn one thing */
-    ateHere=false; showHere=false; playHere=false; treatedHere=false;  /* fresh appetite, ticket, session, clinic slot */
+    ateHere=false; showHere=false; playHere=false; restHere=false; treatedHere=false;  /* fresh appetite, ticket, session, bed, clinic slot */
     const zb=maybeZone();
     if(zb) await openActionFor(zb);          /* buildings keep the count running */
     else await maybeLifeEvent();
@@ -8606,6 +8774,7 @@ function resumeGame(){
   toast('Welcome back, '+typed+'. Month '+(Math.floor(ST.day/30)+1)+' \u00B7 your city kept turning while you were away.', {ms:5000});
   saveGame(true);
   syncJobBeacon();                     /* a saved-but-jobless life still gets the pointer */
+  refreshHireMarks();                  /* the desk you saved is not the only one hiring */
 }
 
 /* ===================== FIRST-RUN TUTORIAL · three beats, once ===================== */
