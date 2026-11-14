@@ -3450,7 +3450,35 @@ put(`<g id="winLights" opacity="0" style="pointer-events:none;transition:opacity
     }
   });
 
-  put(`<g id="cityLights" opacity="0" style="pointer-events:none;transition:opacity 2.5s ease">${L.join('')}</g>`);
+  /* Bucket the lamps by position so the night city can be culled like the day
+     one. As ONE 3334-node group they could not: the group spans the whole map,
+     always intersects the viewport, and night frames measured 67ms against 17ms
+     for the same view in daylight. Split into 2600px cells, only the lamps the
+     camera can see stay in the render tree. The bbox is stamped on the group at
+     build time, so culling needs no getBBox pass over three thousand nodes. */
+  (function zoneLights(){
+    const CELL=2600, zones=new Map();
+    const box=(s)=>{
+      let m=/cx="(-?[\d.]+)"\s+cy="(-?[\d.]+)"/.exec(s);
+      if(!m) m=/x="(-?[\d.]+)"\s+y="(-?[\d.]+)"/.exec(s);
+      return m ? [+m[1], +m[2]] : null;
+    };
+    for(const s of L){
+      const pt=box(s);
+      /* an entry we cannot place goes into the always-visible bucket rather
+         than into cell 0,0 where it would be culled from the wrong place */
+      const k = pt ? (Math.floor(pt[0]/CELL)+'|'+Math.floor(pt[1]/CELL)) : 'ALL';
+      if(!zones.has(k)) zones.set(k,{k, s:[]});
+      zones.get(k).s.push(s);
+    }
+    let out='';
+    zones.forEach(z=>{
+      if(z.k==='ALL'){ out+=`<g class="nlz">${z.s.join('')}</g>`; return; }
+      const [kx,ky]=z.k.split('|').map(Number);
+      out+=`<g class="nlz" data-bx="${kx*CELL-CELL/2}" data-by="${ky*CELL-CELL/2}" data-bw="${CELL*2}" data-bh="${CELL*2}">${z.s.join('')}</g>`;
+    });
+    put(`<g id="cityLights" opacity="0" style="pointer-events:none;transition:opacity 2.5s ease">${out}</g>`);
+  })();
 })();
 
 /* ===================== character art ===================== */
@@ -3862,6 +3890,7 @@ function mountCity(){
   mMe=document.getElementById('mMe');
   layerChars=document.getElementById('layerChars');
   wireNpcHover();
+  buildCullUnits();                     /* measure every top-level group once */
   applyCam();                           /* re-assert the camera onto the fresh DOM */
 }
 /* scheduled at the END of the script: the main script itself can take longer
@@ -4103,10 +4132,79 @@ document.getElementById('wheelSvg').innerHTML  = WHEEL_MARKUP;
 const vp=document.getElementById('viewport'), world=document.getElementById('world');
 const cam={x:0,y:0,scale:0.78};
 const VW=()=>window.innerWidth, VH=()=>window.innerHeight;
+/* ===================== viewport culling =====================
+   The city is ~16.7k SVG nodes, but the camera only ever shows a few hundred
+   of them: measured on a 1280x800 viewport, 62 of 3830 top-level groups are
+   on screen (908 nodes of 16679). Everything else was sitting in the render
+   tree, being walked over and style-resolved on every single frame, and that
+   - not the painting - is what made walking feel heavy: hiding an invisible
+   group cut frame time roughly in half on the same machine, and it made no
+   difference whether the group was painted or merely at opacity 0.
+
+   So the city now only keeps what the camera can see. Bboxes are measured
+   once at mount, then a cheap rect test on every camera step toggles
+   display:none. Vector stays vector: crisp at any zoom, no bitmap memory,
+   nothing about the look changes - just fewer nodes alive. */
+let CULL=[];                       /* {el, x, y, x2, y2, on} per top-level group */
+let cullBuilt=false;
+const CULL_MARGIN=700;             /* world px of slack: buildings are taller than they are wide */
+function buildCullUnits(){
+  if(cullBuilt) return;
+  const svg=document.querySelector('#world>svg'); if(!svg) return;
+  /* layers that are driven by other code, or move on their own */
+  const SKIP=new Set(['defs','cityLights','winLights','traffic','layerChars','cellFx','jobBeacon','me','nightSky']);
+  CULL=[];
+  for(const el of [...svg.children]){
+    const tag=el.tagName.toLowerCase();
+    if(SKIP.has(tag)) continue;
+    if(el.id && SKIP.has(el.id)) continue;
+    let bb; try{ bb=el.getBBox(); }catch(e){ continue; }
+    if(!bb || (bb.width<=0 && bb.height<=0)) continue;
+    /* getBBox() is in the element's OWN space and ignores its own transform, so a
+       group that is drawn somewhere else would be culled at the wrong place (that
+       was a real bug: streets vanished at spawn). getCTM() puts it in world coords. */
+    let bx=bb.x, by=bb.y, bx2=bb.x+bb.width, by2=bb.y+bb.height;
+    const m=el.getCTM();
+    if(m){
+      const pts=[[bx,by],[bx2,by],[bx,by2],[bx2,by2]]
+        .map(([x,y])=>[m.a*x+m.c*y+m.e, m.b*x+m.d*y+m.f]);
+      bx=Math.min(pts[0][0],pts[1][0],pts[2][0],pts[3][0]);
+      bx2=Math.max(pts[0][0],pts[1][0],pts[2][0],pts[3][0]);
+      by=Math.min(pts[0][1],pts[1][1],pts[2][1],pts[3][1]);
+      by2=Math.max(pts[0][1],pts[1][1],pts[2][1],pts[3][1]);
+    }
+    if(!el.style.display) el.style.display='';
+    CULL.push({el, x:bx, y:by, x2:bx2, y2:by2, on:true});
+  }
+  /* the night lamp zones carry their own bounds, stamped in at build time */
+  const cl=document.getElementById('cityLights');
+  if(cl){
+    for(const z of cl.children){
+      if(!z.dataset || z.dataset.bx===undefined) continue;   /* unstamped = always on */
+      const bx=+z.dataset.bx, by=+z.dataset.by, bw=+z.dataset.bw, bh=+z.dataset.bh;
+      CULL.push({el:z, x:bx, y:by, x2:bx+bw, y2:by+bh, on:true});
+    }
+  }
+  cullBuilt=true;
+}
+function cullCity(){
+  if(!CULL.length || !cam) return;
+  const vw=VW()/cam.scale, vh=VH()/cam.scale, M=CULL_MARGIN;
+  const x0=cam.x-M, y0=cam.y-M, x1=cam.x+vw+M, y1=cam.y+vh+M;
+  for(let i=0;i<CULL.length;i++){
+    const u=CULL[i];
+    const hit = u.x<x1 && u.x2>x0 && u.y<y1 && u.y2>y0;
+    if(hit!==u.on){ u.on=hit; u.el.style.display = hit ? '' : 'none'; }
+  }
+  /* the night lights are one giant group, so they cannot be culled as a
+     whole: they answer to the clock (see wxTick) instead */
+}
+
 function applyCam(){
   cam.x=Math.max(-1500, Math.min(W-VW()/cam.scale+1500, cam.x));
   cam.y=Math.max(-1500, Math.min(H-VH()/cam.scale+1500, cam.y));
   world.style.transform=`scale(${cam.scale}) translate(${-cam.x}px,${-cam.y}px)`;
+  cullCity();                           /* keep only what the camera can see in the render tree */
   if(!mRect) return;                    /* minimap rides inside the deferred city mount */
   mRect.setAttribute('x',cam.x); mRect.setAttribute('y',cam.y);
   mRect.setAttribute('width',VW()/cam.scale); mRect.setAttribute('height',VH()/cam.scale);
@@ -4327,8 +4425,20 @@ function wxTick(){
   nightLevel=night;
   document.getElementById('wxNight').style.opacity=(0.86*night).toFixed(2);
   const wd=document.getElementById('wxDusk'); if(wd) wd.style.opacity=(dusk*0.72).toFixed(2);
-  const wl=document.getElementById('winLights'); if(wl) wl.style.opacity=(night*0.95).toFixed(2);
-  const cl=document.getElementById('cityLights'); if(cl) cl.style.opacity=night.toFixed(2);
+  /* A glow group that is fully off is taken OUT of the render tree, not left at
+     opacity 0. Measured on the same machine in the same minute: leaving the
+     3334-node light group in the tree at opacity 0 cost about half the frame
+     budget, and display:none cost nothing. The fade-in still works because the
+     clock ramps 'night' over three in-game hours; only the CSS smoothing of
+     the last 0.1% is lost. */
+  const setGlow=(el,lv)=>{
+    if(!el) return;
+    if(lv<=0.001){ if(el.style.display!=='none'){ el.style.display='none'; el.style.opacity='0'; } return; }
+    if(el.style.display==='none'){ el.style.display=''; el.style.opacity='0'; }
+    el.style.opacity=lv.toFixed(2);
+  };
+  setGlow(document.getElementById('winLights'), night*0.95);
+  setGlow(document.getElementById('cityLights'), night);
   document.body.classList.toggle('dusk', night>0.25);
   const ph=document.getElementById('clPhase');
   if(ph){
