@@ -26,7 +26,7 @@ const FILE = 'file:///C:/Users/Johnmilton/WorkBuddy/2026-11-08-10-33-18/my-life-
 
     const reset = () => {
       ST.age = 18; ST.cash = 1000; ST.bank = 0; ST.happy = 50; ST.charm = 20;
-      ST.health = 100; ST.stress = 20; ST.employed = null; ST.biz = null; ST.loan = null;
+      ST.health = 100; ST.stress = 20; ST.employed = null; ST.biz = null; ST.bizs = {}; ST.loan = null;
       ST.freshStart = false; ST.fund = 0; ST.paySelf = 0.10; ST.paySelfMonths = 0;
       ST.skills = { it: 0, proj: 0, drive: 0, cook: 0, art: 0, fin: 0, fit: 0, eng: 0 };
       ST.stocks = {}; ST.realty = {}; ST.course = null; ST.sick = null; ST.day = 0;
@@ -76,10 +76,10 @@ const FILE = 'file:///C:/Users/Johnmilton/WorkBuddy/2026-11-08-10-33-18/my-life-
       job(); ST.cash += 200000;
       ST.stocks.KO = { qty: 800, cost: 63.8 };
       ST.realty['Queens Duplex'] = { cost: 152000 };
-      ST.biz = { id: 'store', months: 0 };
+      ST.bizs = { store: { months: 0 } };
     }, 365));
-    results.push(run('GRINDER / job + biz + daily study', () => { job(); ST.biz = { id: 'cart', months: 0 }; },
-      365, i => { studySession('it'); }));
+    results.push(run('GRINDER / job + biz + daily study', () => { job(); ST.bizs = { cart: { months: 0 } }; },
+      365, i => { studySession('prog'); }));
     results.push(run('RICH / passive 3000 target', () => {
       job(); ST.cash += 400000; ST.fund = 360000;
     }, 365));

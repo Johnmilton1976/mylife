@@ -1377,8 +1377,8 @@
   <div class="row" data-fin><span class="ic">&#128176;</span><span class="lab">CASH</span><span class="val" id="vCash">$1,000</span></div>
   <div class="row" id="rowBank" data-fin title="What you have saved, and what you owe the bank. Tap for the full sheet."><span class="ic">&#127974;</span><span class="lab">BANK</span><span class="val"><span id="vBank">$0</span><small id="vBankSub"></small></span></div>
   <div class="row" data-fin><span class="ic">&#127962;</span><span class="lab">ESTATE</span><span class="val" id="vEstate">$0</span></div>
-  <div class="row" id="rowJob"><span class="ic">&#128188;</span><span class="lab">JOB</span><span class="val" id="vJob">UNEMPLOYED</span></div>
-  <div class="row" id="rowPerf" title="Your standing at work" style="display:none"><span class="ic">&#128202;</span><span class="lab">WORK</span><span class="val" id="vPerf">&mdash;</span></div>
+  <div class="row" id="rowJob" title="What you OWN: your ventures, and what they pay you"><span class="ic">&#127970;</span><span class="lab">BUSINESS</span><span class="val" id="vJob">NONE</span></div>
+  <div class="row" id="rowPerf" title="Who you WORK FOR: the desk you sit at, and your standing there"><span class="ic">&#128188;</span><span class="lab">JOB</span><span class="val" id="vPerf">UNEMPLOYED</span></div>
   <div class="row" id="rowSkills" title="Tap: all 8 skills, each ladder LV1-LV5, and the works you own"><span class="ic">&#129504;</span><span class="lab">SKILLS</span><span class="val" id="vSkills">LV 1</span></div>
   <div class="row" id="rowFree" title="Passive income vs monthly bills"><span class="ic">&#127793;</span><span class="lab">FREE</span><span class="val" id="vFree">0%</span></div>
   <!-- GOALS and RANK moved to the left icon rail. These rows stay in the DOM (display:none)
@@ -2609,10 +2609,11 @@ const TYPE_ACT = {
 };
 const FN_ACT = { STUDY:'study', CULTURE:'art', FUN:'fun', FOOD:'food', REST:'rest',
   SPORT:'gym', SHOP:'shop', WORK:'office', SOCIAL:'social', TRAVEL:'travel', HOME:'home', DEALER:'dealer',
-  CAREER:'career' };
+  CAREER:'career', VENTURE:'venture' };
 const KIND_ICON = { bank:'🏦', study:'🎓', office:'🏢', church:'⛪', hospital:'🏥', gym:'🏋️',
   fun:'🎬', food:'🍽️', art:'🎨', shop:'🛍️', rest:'🛏️', social:'💬', travel:'🚆',
-  home:'🏠', casino:'🎰', books:'📚', museum:'🖼️', fire:'🚒', police:'🚓', dealer:'🚗', career:'🧭' };
+  home:'🏠', casino:'🎰', books:'📚', museum:'🖼️', fire:'🚒', police:'🚓', dealer:'🚗',
+  career:'🧭', venture:'🚀' };
 
 /* ===================== landmarks: one signature building on every road ===================== */
 /* Function tags are placeholders — the actual gameplay is wired up later. */
@@ -2629,6 +2630,7 @@ const FN_META = {
   SPORT:  {c:'#2f8a52', t:'SPORT'},
   WORK:   {c:'#46668a', t:'CAREER'},
   CAREER: {c:'#1f7a4d', t:'JOB BOARD'},
+  VENTURE:{c:'#b8892a', t:'VENTURES'},
   DEALER: {c:'#26547c', t:'DEALERSHIP'}
 };
 const LANDMARKS = [
@@ -2668,7 +2670,9 @@ const LANDMARKS = [
   {road:'ave', i:0, rb:6, side:'E', name:'PIER GALLERY',  fn:'CULTURE', type:'gallery', w:380, h:340},
   /* the labour exchange: one door that lists every desk in the city.
      Midtown, between 5th and 6th, because that is where the walker turns most often. */
-  {road:'ave', i:6, rb:3, side:'W', name:'CAREER CENTER', fn:'CAREER',  type:'tower',   w:470, h:560}
+  {road:'ave', i:6, rb:3, side:'W', name:'CAREER CENTER', fn:'CAREER',  type:'tower',   w:470, h:560},
+  /* the twin of the job board, pointed at ownership instead of wages */
+  {road:'st',  i:3, cb:1,           name:'VENTURE LAB',   fn:'VENTURE', type:'tower',   w:470, h:560}
 ];
 function lmBlockIdx(lm){
   if(lm.road==='st') return {r: lm.i>0 ? lm.i-1 : 0, c: lm.cb};
@@ -2795,9 +2799,10 @@ function fitsIn(b){
 LANDMARKS.forEach(lm=>{
   const lb=lmBox(lm), bi=lmBlockIdx(lm);
   if(inParkBlock(bi.c,bi.r)) return;
-  /* the job centre keeps its block to itself: building spare houses beside it
-     would consume two city PRNG draws and reshuffle every tree on the map */
-  if(lm.fn==='CAREER') return;
+  /* the job centre and the venture lab keep their blocks to themselves: building
+     spare houses beside them would consume two city PRNG draws and reshuffle every
+     tree on the map */
+  if(lm.fn==='CAREER' || lm.fn==='VENTURE') return;
   const cx=(AVES_X[bi.c]+AVES_X[bi.c+1])/2;
   [cx-520, cx+520].forEach(bx=>{
     if(distToBway(bx, lb.base-180)<360) return;
@@ -2860,6 +2865,18 @@ function nycLandmark(lm,b){
         font-size="27" fill="#b7f0c4" letter-spacing="2.5">NOW HIRING</text>
       <text x="${cx}" y="${top+177}" text-anchor="middle" font-family="Verdana,sans-serif"
         font-size="15" fill="#8fd0a0" letter-spacing="1.5">ALL LEVELS \u00B7 ALL TRADES</text>
+    </g>`;
+  } else if(lm.name==='VENTURE LAB'){
+    /* the twin of the job board: same idea, pointed at ownership instead of wages */
+    out=`<g>
+      <rect x="${cx-126}" y="${top+92}" width="252" height="122" rx="9" fill="#141a34" stroke="#f0c96a" stroke-width="3.5"/>
+      <rect x="${cx-112}" y="${top+106}" width="224" height="94" rx="5" fill="#1e2750"/>
+      <text x="${cx}" y="${top+139}" text-anchor="middle" font-family="Verdana,sans-serif" font-weight="bold"
+        font-size="23" fill="#ffe6a8" letter-spacing="1.6">VENTURE LAB</text>
+      <text x="${cx}" y="${top+164}" text-anchor="middle" font-family="Verdana,sans-serif"
+        font-size="13" fill="#b9c6ee" letter-spacing="1.4">BUILD \u00B7 SCALE \u00B7 SELL</text>
+      <text x="${cx}" y="${top+186}" text-anchor="middle" font-family="Verdana,sans-serif"
+        font-size="11.5" fill="#8fa0d8" letter-spacing="1.2">LV2 OPENS YOUR TRADE</text>
     </g>`;
   } else if(lm.name==='EMPIRE STATE'){
     out=`<g>
@@ -5043,23 +5060,38 @@ function monthlyReview(){
 
 /* month-end settlement: income lands in cash, bills get paid from cash then bank */
 function monthlyBill(){
-  /* --- your business has a month of trading first: profit wobbles, risk can kill it --- */
+  /* --- the ventures trade a month first: profit is your condition x your skill, risk can kill one --- */
   let bizNote='', bizCashPaid=0;
-  if(ST.biz){
-    const b=BIZ.find(x=>x.id===ST.biz.id);
-    ST.biz.months++;
-    if(Math.random()<b.risk){
-      bizNote=`\uD83D\uDC80 ${b.name} went under this month. The ${fmt$(b.cost)} is gone.`;
-      ST.biz=null; ST.happy=clamp(ST.happy-10,0,100); ST.stress=clamp(ST.stress+12,0,100);
-      ST.freshStart=true;                                  /* the bank heard about it — a door reopens */
+  const mine=bizList();
+  if(mine.length){
+    const n=mine.length, q=opsQuality();
+    /* the daily weight lives in moodTick; this is only the month's paperwork, so it
+       stays small or it double-taxes the same venture twice */
+    const load=2+(n-1);
+    const dead=[];
+    mine.forEach(({b,st})=>{
+      st.months=(st.months||0)+1;
+      /* a wound-up owner is how ventures die: STRESS multiplies the failure roll */
+      const riskNow=b.risk*(1+ST.stress/60)*(1+0.15*(n-1));
+      if(b.risk>0 && Math.random()<riskNow){ dead.push(b); return; }
+      const profit=Math.max(-500, Math.round(b.inc*q*bizMastery(b)*bizAge(st)+(Math.random()*2-1)*b.vr));
+      ST.cash+=profit; bizCashPaid+=profit;               /* paid straight to cash, before bills */
+      st.lastProfit=profit;                              /* the sheet shows the REAL month, not the estimate */
+    });
+    if(dead.length){
+      dead.forEach(b=>{ delete ST.bizs[b.id]; });
+      const lost=dead.reduce((a,b)=>a+b.cost,0);
+      bizNote=`\uD83D\uDC80 ${dead.map(b=>b.name).join(' & ')} went under this month. The ${fmt$(lost)} is gone.`;
+      ST.happy=clamp(ST.happy-10*dead.length,0,100); ST.stress=clamp(ST.stress+12*dead.length,0,100);
+      ST.freshStart=true;                                /* the bank heard about it — a door reopens */
       toast('\uD83C\uDFE6 The bank offers a FRESH START LOAN. Visit any branch.');
-    }else{
-      const profit=Math.max(-500, Math.round(b.inc+(Math.random()*2-1)*b.vr));
-      ST.cash+=profit; bizCashPaid=profit;                 /* paid straight to cash, before bills */
-      ST.biz.lastProfit=profit;                           /* the sheet shows the REAL month, not the estimate */
-      bizNote=`\uD83D\uDE80 ${b.name} earned ${fmt$(profit)} this month.`;
-      ST.stress=clamp(ST.stress+(ST.employed?6:4),0,100);  /* running a venture is heavy, moonlighting heavier */
-      ST.happy=clamp(ST.happy+3,0,100);                    /* but it is YOURS */
+    }
+    const alive=mine.length-dead.length;
+    if(alive){
+      ST.stress=clamp(ST.stress+alive*load+(ST.employed?1:0),0,100);  /* running a venture is heavy, moonlighting heavier */
+      ST.happy=clamp(ST.happy+3,0,100);                  /* but it is YOURS */
+      if(!dead.length) bizNote='\uD83D\uDE80 '+(alive===1?mine[0].b.name:alive+' ventures')
+        +' netted '+fmt$(bizCashPaid)+' this month.';
     }
   }
   if(ST.employed) ST.jobMonths=(ST.jobMonths||0)+1;   /* another month served: the pay scale moves */
@@ -5175,7 +5207,10 @@ function moodTick(){
   /* A week has a day off. Without this, a salaried player worked 365 straight
      days, so the "5+ days without a break" penalty never stopped compounding. */
   const sunday=((s.day||0)%7===0);
-  const shifts=(s.employed?1:0)+(s.biz?1:0);
+  /* one shift however many ventures you own: running five shops is still one day at
+     work. The live portfolio replaced the single ST.biz slot, so count both. */
+  const nBiz=(s.bizs?Object.keys(s.bizs).length:0)+(s.biz?1:0);
+  const shifts=(s.employed?1:0)+(nBiz?1:0);
   if(shifts && !sunday) { s.workDays=(s.workDays||0)+1; s.workStreak=(s.workStreak||0)+1; }
   else if(sunday || !shifts){ s.workStreak=0; if(sunday) why.stress.push({label:'a day off',val:-3}); }
 
@@ -5245,7 +5280,10 @@ function moodTick(){
   if(s.course) push('stress','an evening course',1.5);
   if(s.loan) push('stress', s.loan.kind==='good'?'good debt \u00B7 the asset pays it':'bad debt \u00B7 consumption',
                   s.loan.kind==='good'?0:3);
-  if(s.biz) push('stress','a business',4);
+  /* a venture is daily weight, not a monthly invoice. The second one costs less than
+     the first because you learn to delegate — and the cap stops a portfolio from
+     simply pinning every owner at 100 and making ownership pointless. */
+  if(nBiz) push('stress', nBiz===1?'a business':(nBiz+' businesses'), Math.min(7, 4+0.8*(nBiz-1)));
   if(sunday && s.employed) push('stress','a day off the job',-1);
   else push('stress', s.employed?'the job':'no work', s.employed?2.5:4);
   /* ---- cash on hand: the most immediate pressure there is ---- */
@@ -5257,7 +5295,7 @@ function moodTick(){
   /* Payday changes the arithmetic. Someone with a job and $99 left is waiting for
      Friday; someone with no job and $99 left is out of moves. Same wallet,
      different night - so every tier below lands at 60% when wages are in sight. */
-  const cashW=(s.employed||s.biz)?0.6:1;
+  const cashW=(s.employed||nBiz)?0.6:1;
   if(s.cash<0){
     push('stress','the account is in the red', Math.round(10*cashW));
     push('happy','overdrawn \u00B7 every purchase is a decision', -Math.round(6*cashW));
@@ -5300,7 +5338,7 @@ function moodTick(){
      30-point gap in ~6 days; a good evening still buys a real (temporary) lift. */
   const moodPull = Math.round((50 - before.happy) * 0.12);
   push('happy', moodPull >= 0 ? 'life settling back to normal' : 'good things fade', moodPull);
-  if(!s.employed && !s.biz) push('happy','no work, no direction',-1);
+  if(!s.employed && !nBiz) push('happy','no work, no direction',-1);
   if(s.employed && before.stress>=60) push('happy','a grinding job',-1);
   if(s.workStreak>=6) push('happy','no day off',-1);
   if(before.health<=35) push('happy','feeling run down',-2);
@@ -5569,7 +5607,7 @@ const worksIncome = () => Object.keys(ST.works||{}).reduce((a,id)=>{
 /* ---- a fresh start: 18 years old, $1,000 in the pocket, nothing else ---- */
 const AGE_START = 18;
 const CASH_START = 1000;
-const ST={age:AGE_START, cash:CASH_START, bank:0, happy:50, charm:20, health:100, stress:20, employed:null, biz:null, loan:null, freshStart:false,
+const ST={age:AGE_START, cash:CASH_START, bank:0, happy:50, charm:20, health:100, stress:20, employed:null, biz:null, bizs:{}, loan:null, freshStart:false,
   fund:0, paySelf:0.10, paySelfMonths:0,                    /* pay yourself first: the asset fund */
   skills:{prog:0, write:0, proj:0, drive:0, cook:0, art:0, fin:0, fit:0, eng:0},
   works:{},                                                /* skill id -> day the work went on sale */
@@ -5634,7 +5672,10 @@ const GOALS=[
   {id:'freedom25', label:'Passive income covers 25% of your bills',      check:s=>freedomPct()>=25,
                    prog:s=>freedomPct()+'% / 25%'},
   {id:'gooddebt',  label:'Use GOOD DEBT to buy a cash-flowing asset',    check:s=>!!(s.flags&&s.flags.goodDebt)},
-  {id:'biz',       label:'Own a business that runs without you (B)',      check:s=>!!s.biz},
+  /* the portfolio lives in bizs now; the legacy single slot still counts, because a
+     save that has not been touched since the refactor is still a business you own */
+  {id:'biz',       label:'Own a business that runs without you (B)',
+                   check:s=>!!(s.biz || (s.bizs && Object.keys(s.bizs).length))},
   {id:'champ',     label:'Hold #1 on the city rankings for '+CHAMP_MONTHS+' straight months',
                    check:s=>(s.champMonths||0)>=CHAMP_MONTHS,
                    prog:s=>s.rank ? ((s.champMonths||0)+' / '+CHAMP_MONTHS) : 'from week 1'},
@@ -5954,31 +5995,107 @@ function studySession(id){
     +(cram?' \u00B7 cramming costs you':''));
 }
 
-/* ===================== entrepreneurship: build something of your own ===================== */
-/* income = expected monthly profit ± var; risk = chance per month the whole venture dies */
+/* ===================== entrepreneurship: build something of your own =====================
+   Rich Dad's B quadrant, and the only asset that scales past your own hours: a venture
+   earns while you sleep AND sells for a multiple of what it pays. Every skill taken to
+   LV2 opens one, and each trade opens at the kind of place it belongs to (venue = the
+   panel kinds where the offer appears).
+
+   inc is what the business clears for a PERFECT operator: healthy, calm, charming and
+   cheerful. Nobody is perfect — opsQuality() below turns your actual body and mood into
+   the multiplier that decides what the month really pays. */
 const BIZ=[
-  {id:'cart',  name:'COFFEE CART',  cost:1500,  skill:null,  lvl:0, inc:350,  vr:150,  risk:0,    note:'a corner hustle'},
-  {id:'store', name:'ONLINE STORE', cost:5000,  skill:'write', lvl:1, inc:800,  vr:400,  risk:0.01, note:'e-commerce from your room'},
-  {id:'truck', name:'FOOD TRUCK',   cost:12000, skill:'cook',lvl:2, inc:1900, vr:800,  risk:0.02, note:'wheels, grease, profit'},
-  {id:'app',   name:'APP STARTUP',  cost:30000, skill:'prog',lvl:3, inc:5200, vr:2600, risk:0.05, note:'high risk, high ceiling'},
-  {id:'franch',name:'FRANCHISE',    cost:60000, skill:'fin', lvl:2, inc:9000, vr:1500, risk:0.005,note:'a proven playbook'}
+  {id:'cart',    name:'COFFEE CART',     cost:1500,  skill:null,   lvl:0, inc:350,  vr:150,  risk:0.000,
+   venue:['food','shop'],            note:'a corner hustle \u00B7 no experience needed'},
+  {id:'store',   name:'ONLINE STORE',    cost:6000,  skill:'write',lvl:2, inc:1100, vr:400,  risk:0.010,
+   venue:['books','study','office'], note:'e-commerce run from your room'},
+  {id:'studio',  name:'PRINT STUDIO',    cost:7000,  skill:'art',  lvl:2, inc:1300, vr:500,  risk:0.010,
+   venue:['art'],                    note:'editions, framing, your own wall'},
+  {id:'kitchen', name:'BAKERY',          cost:9000,  skill:'cook', lvl:2, inc:1800, vr:700,  risk:0.020,
+   venue:['food'],                   note:'flour, ovens, a queue by seven'},
+  {id:'gymco',   name:'TRAINING STUDIO', cost:10000, skill:'fit',  lvl:2, inc:2000, vr:800,  risk:0.020,
+   venue:['gym'],                    note:'members, classes, your name on the door'},
+  {id:'agency',  name:'CONSULTANCY',     cost:12000, skill:'proj', lvl:2, inc:2400, vr:900,  risk:0.020,
+   venue:['office'],                 note:'you, a laptop, other people\u2019s chaos'},
+  {id:'garage',  name:'LOGISTICS CO',    cost:14000, skill:'drive',lvl:2, inc:2900, vr:1100, risk:0.020,
+   venue:['travel'],                 note:'vans, routes, standing contracts'},
+  {id:'advisory',name:'ADVISORY',        cost:18000, skill:'fin',  lvl:2, inc:3700, vr:1200, risk:0.015,
+   venue:['bank'],                   note:'other people\u2019s money, your fee'},
+  {id:'software',name:'SOFTWARE STUDIO', cost:20000, skill:'prog', lvl:2, inc:4200, vr:1800, risk:0.040,
+   venue:['office'],                 note:'a product that runs without you'},
+  {id:'app',     name:'APP STARTUP',     cost:45000, skill:'prog', lvl:4, inc:9000, vr:3600, risk:0.060,
+   venue:['office'],                 note:'high risk, high ceiling'},
+  {id:'franch',  name:'FRANCHISE GROUP', cost:80000, skill:'fin',  lvl:4, inc:15000,vr:2500, risk:0.006,
+   venue:['office','bank'],          note:'a proven playbook, bought in bulk'}
 ];
-function bizSellPrice(){
-  if(!ST.biz) return 0;
-  const b=BIZ.find(x=>x.id===ST.biz.id);
-  return Math.round(b.cost*Math.min(2.5, 1+ST.biz.months*0.03));  /* equity grows 3%/mo you keep it running */
+
+/* where a trade can be opened, said the way a person would say it */
+const VENUE_NAME = { office:'an office tower', bank:'a bank', food:'a market or bakery',
+  art:'a gallery', gym:'a gym', books:'a bookstore', study:'a library or school',
+  shop:'a shop', travel:'Grand Central', venture:'the VENTURE LAB' };
+const bizVenueLabel = b => (b.venue||[]).map(v=>VENUE_NAME[v]||v).slice(0,2).join(' or ');
+
+/* ---- the portfolio -------------------------------------------------------------
+   ST.bizs maps id -> {months, lastProfit}. Older saves carried ONE business in
+   ST.biz; bizList() folds that in on first touch so no venture survives the
+   refactor as a ghost (and so the legacy field can never double-count). */
+function bizList(){
+  if(!ST.bizs) ST.bizs={};
+  if(ST.biz){
+    if(!ST.bizs[ST.biz.id]) ST.bizs[ST.biz.id]={months:ST.biz.months||0, lastProfit:ST.biz.lastProfit};
+    ST.biz=null;
+  }
+  return Object.keys(ST.bizs)
+    .map(id=>({b:BIZ.find(x=>x.id===id), st:ST.bizs[id]}))
+    .filter(x=>x.b && x.st);
 }
+const ownsBiz  = id => bizList().some(x=>x.b.id===id);
+
+/* What you bring to the desk on the morning the month closes. Each factor is 0..1 and
+   the four are AVERAGED, not multiplied: a crossed multiplication turns one bad week
+   into a death spiral (health down -> profit down -> stress up -> health down), and a
+   venture you cannot rescue is not a game, it is a punishment. Averaging keeps every
+   stat genuinely wired to the money — 1.00 perfect, 0.45 for a wreck — while leaving
+   the player a way back. The panel prints these same numbers, because a game must
+   never quote a profit it will not pay (the rule that fixed payIfHired and the bed). */
+function opsFactors(){
+  return [
+    {n:'HEALTH', w:0.32, v:ST.health/100,   why:'showing up at all'},
+    {n:'CALM',   w:0.32, v:1-ST.stress/100, why:'clear head, clean calls'},
+    {n:'CHARM',  w:0.18, v:ST.charm/100,    why:'deals and word of mouth'},
+    {n:'MOOD',   w:0.18, v:ST.happy/100,    why:'momentum and nerve'}
+  ];
+}
+function opsQuality(){
+  let s=0; opsFactors().forEach(f=>{ s+=f.v*f.w; });
+  return 0.45+0.55*s;                       /* 1.00 for a well-run life, 0.45 for a wreck */
+}
+/* the only two ways UP: the skill above the requirement, and the months you kept at it */
+function bizMastery(b){
+  const lv=lvlOf((ST.skills&&ST.skills[b.skill||'prog'])||0);
+  return 1+Math.min(0.24, 0.08*Math.max(0, lv-(b.lvl||0)));
+}
+const bizAge = st => 1+Math.min(0.25, ((st&&st.months)||0)*0.01);
+/* the number the panel quotes: what this venture pays YOU today, not what the sign says */
+const bizExpected = (b,st) => Math.round(b.inc*opsQuality()*bizMastery(b)*bizAge(st));
+const bizSellPrice = (b,st) => Math.round(b.cost*Math.min(2.5, 1+((st&&st.months)||0)*0.03));
+const bizNow = (b,st) => (st.lastProfit!==undefined ? st.lastProfit : bizExpected(b,st));
+
 function startBiz(b){
+  if(!ST.bizs) ST.bizs={};
+  if(ownsBiz(b.id)) return;
   ST.cash-=b.cost;
-  ST.biz={id:b.id, months:0};
+  ST.bizs[b.id]={months:0};
   advanceMinutes(180);
-  toast('\uD83D\uDE80 LAUNCHED: '+b.name+' \u00B7 '+fmt$(b.cost)+' invested');
+  toast('\uD83D\uDE80 LAUNCHED: '+b.name+' \u00B7 '+fmt$(b.cost)+' in \u00B7 first receipts in a month');
 }
-function closeBiz(sell){
-  const b=BIZ.find(x=>x.id===ST.biz.id), name=b.name;
-  if(sell){ const p=bizSellPrice(); ST.cash+=p; toast('SOLD '+name+' for '+fmt$(p)); }
-  else toast('You shut down '+name+'.');
-  ST.biz=null; advanceMinutes(120);
+function closeBiz(id, sell){
+  const rec=ST.bizs && ST.bizs[id]; if(!rec) return;
+  const b=BIZ.find(x=>x.id===id); if(!b) return;
+  if(sell){ const p=bizSellPrice(b,rec); ST.cash+=p; toast('SOLD '+b.name+' for '+fmt$(p)); }
+  else toast('You shut down '+b.name+'.');
+  delete ST.bizs[id];
+  advanceMinutes(120);
 }
 
 /* ===================== Rich Dad's two columns =====================
@@ -6004,8 +6121,7 @@ const netRent    = () => grossRent()-propUpkeep();
 const divIncome  = () => Math.round(Object.keys(ST.stocks||{}).reduce((a,n)=>{const h=ST.stocks[n]||{}, q=STOCKS.find(x=>x.n===n);return a+(q?q.v*(h.qty||0)*divYield(n):0);},0)/12);
 const fundIncome = () => Math.round((ST.fund||0)*FUND_YIELD/12);
 const bankIncome = () => Math.round(ST.bank*SAVINGS_APR/12);
-const bizIncome  = () => ST.biz ? (ST.biz.lastProfit!==undefined ? ST.biz.lastProfit
-                                        : (BIZ.find(x=>x.id===ST.biz.id)||{inc:0}).inc) : 0;
+const bizIncome  = () => Math.round(bizList().reduce((s,x)=>s+bizNow(x.b,x.st), 0));
 const carUpkeep  = () => ST.car ? Math.round(ST.car.price*CAR_UPKEEP) : 0;
 /* what a dealer hands you today: 55% of the sticker — the SAME number the trade-in pays,
    so the sheet never promises a value the game will not honour */
@@ -6059,8 +6175,8 @@ function syncFin(){
                  note:divIncome()? 'dividends +'+fmt$(divIncome())+'/mo' : 'no dividends \u00B7 a price bet, not an asset'});
   REALTY.forEach(r=>{ if(ST.realty[r.n]) h.push({ic:'🏢', n:r.n, v:r.v, side:'asset',
                  note:'net rent +'+fmt$(Math.round(r.v*(PROP_RENT-PROP_UPKEEP)))+'/mo'}); });
-  if(ST.biz){ const b=BIZ.find(x=>x.id===ST.biz.id); h.push({ic:'🚀', n:b.name, v:bizSellPrice(), side:'asset',
-                 note:'B quadrant \u00B7 +'+fmt$(bizIncome())+'/mo'}); }
+  bizList().forEach(({b,st})=>h.push({ic:'🚀', n:b.name, v:bizSellPrice(b,st), side:'asset',
+                 note:'B quadrant \u00B7 '+fmt$(bizNow(b,st))+'/mo'}));
   if(gameValue()) h.push({ic:'\uD83C\uDFAE', n:'Game collectibles', v:gameValue(), side:'asset',
                  note:'no cash flow \u00B7 a price bet, not an asset'});
   if(ST.fund) h.push({ic:'\uD83C\uDF31', n:'Asset fund', v:Math.round(ST.fund), side:'asset',
@@ -6096,7 +6212,7 @@ function syncFin(){
                                   +(ST.payStub&&ST.payStub.month===Math.floor(ST.day/30)&&ST.payStub.tag.indexOf('RAISE')!==0?' \u00B7 '+ST.payStub.tag:''),
                                   v:salaryOf(ST.employed), per:'/mo', kind:'active'}
                               : {n:'Unemployed \u00B7 no E income', v:0, per:'/mo', kind:'active'});
-  if(ST.biz){ const b=BIZ.find(x=>x.id===ST.biz.id); FIN.income.push({n:'Business \u00B7 '+b.name, v:bizIncome(), per:'/mo', kind:'passive'}); }
+  bizList().forEach(({b,st})=>FIN.income.push({n:'Business \u00B7 '+b.name, v:bizNow(b,st), per:'/mo', kind:'passive'}));
   if(netRent()>0)  FIN.income.push({n:'Net rent \u00B7 after tax & upkeep', v:netRent(), per:'/mo', kind:'passive'});
   if(divIncome())  FIN.income.push({n:'Stock dividends', v:divIncome(), per:'/mo', kind:'passive'});
   if(fundIncome()) FIN.income.push({n:'Asset fund distributions', v:fundIncome(), per:'/mo', kind:'passive'});
@@ -6112,7 +6228,11 @@ const debtValue  = () => ST.loan ? Math.max(0, ST.loan.payment*ST.loan.left) : 0
    A car is deliberately worth zero here: it never pays you, it only costs you. */
 function myWorth(){
   return Math.round(ST.cash + ST.bank + estateValue() + stockValue() + gameValue()
-                    + (ST.fund||0) + (ST.biz?bizSellPrice():0) - debtValue());
+                    + (ST.fund||0) + bizWorth() - debtValue());
+}
+/* every venture at its equity value: the number a buyer would sign for today */
+function bizWorth(){
+  return bizList().reduce((s,x)=>s+bizSellPrice(x.b,x.st), 0);
 }
 /* the HUD skills chip: best skill + how many other skills are above LV1.
    Called from updatePanel AND straight from grantXp — XP lands mid-walk, and a
@@ -6150,15 +6270,30 @@ function updatePanel(){
     rf.title='An asset puts money IN your pocket. Passive '+fmt$(pas)+'/mo vs bills '+fmt$(out)+'/mo. Cover 100% and the job becomes optional.';
   }
   updateSkillsHud();
-  document.getElementById('vJob').textContent=ST.biz?('\uD83D\uDE80 '+BIZ.find(x=>x.id===ST.biz.id).name):(ST.employed?ST.employed.title:'UNEMPLOYED');
+  /* Two different things, two different rows. BUSINESS is what you own; JOB is who
+     you work for. They used to share one row, which made a coffee cart look like a
+     career and hid the fact that the two ladders run on different rules. */
+  const own=bizList();
+  const vj=document.getElementById('vJob');
+  vj.textContent = !own.length ? 'NONE'
+    : own.length===1 ? ('\uD83D\uDE80 '+own[0].b.name)
+    : (own.length+' OWNED');        /* 'N VENTURES' is a single unbreakable word and
+                                       punches out of the row on a narrow HUD */
+  document.getElementById('rowJob').title = own.length
+    ? ('B quadrant \u00B7 '+own.length+' venture'+(own.length>1?'s':'')+' \u00B7 '+fmt$(bizIncome())+'/mo'
+       +' \u00B7 your condition pays '+Math.round(opsQuality()*100)+'% of the sign price. Tap for the books.')
+    : 'No business yet. Every skill taken to LV2 opens one \u2014 or start a coffee cart today. Tap to see the board.';
   const rp=document.getElementById('rowPerf');
   if(rp){
     const pv=ST.perf||70;
-    rp.style.display=ST.employed?'':'none';
-    document.getElementById('vPerf').textContent=PERF_LABEL(pv)+' \u00B7 '+pv;
+    document.getElementById('vPerf').textContent = ST.employed
+      ? (ST.employed.title+' \u00B7 '+pv)
+      : 'UNEMPLOYED';
     rp.classList.remove('good','mid','bad');
-    rp.classList.add(pv>=72?'good':(pv>=44?'mid':'bad'));
-    rp.title='Work standing '+pv+'/100 \u00B7 '+(ST.burnDays||0)+' rough days / '+(ST.goodDays||0)+' good days in a row \u00B7 reputation +'+Math.round((ST.rep||0)*100)+'%';
+    if(ST.employed) rp.classList.add(pv>=72?'good':(pv>=44?'mid':'bad'));
+    rp.title = ST.employed
+      ? ('Work standing '+pv+'/100 \u00B7 '+(ST.burnDays||0)+' rough days / '+(ST.goodDays||0)+' good days in a row \u00B7 reputation +'+Math.round((ST.rep||0)*100)+'%')
+      : 'No job. Offices, banks, fire & police houses and markets all hire.';
   }
   document.getElementById('cHappy').textContent=ST.happy;
   document.getElementById('cCharm').textContent=ST.charm;
@@ -6214,6 +6349,11 @@ function updatePanel(){
     }
     if(ST.employed && ST.employed.skill===k.id)
       toast('\uD83D\uDCB0 Pay rise: '+fmt$(salaryOf(ST.employed))+'/mo at '+ST.employed.title);
+    /* the B quadrant announces itself too: a wage is one door, ownership is the other */
+    const vent=BIZ.filter(b=>b.skill===k.id&&b.lvl===lv)[0];
+    if(vent && !ownsBiz(vent.id))
+      toast('\u{1F680} '+vent.name+' is open to you \u00B7 '+fmt$(vent.cost)+' to launch at '
+        +bizVenueLabel(vent)+' \u00B7 ~'+fmt$(bizExpected(vent,{months:0}))+'/mo at your condition',{ms:9000});
     /* LV5: the skill can now be sold as a work. Announce it once, when no card is up. */
     const w=workOf(k.id);
     if(w && lv>=WORK_LV && evReady
@@ -6383,9 +6523,13 @@ function openAction(b){
     A(ST.owned.firstEdition?'\u2713 FIRST EDITION OWNED':'BUY A FIRST EDITION \u00B7 $400','+20 WRITING XP \u00B7 happy +6 \u00B7 yours forever',
       ()=>{ST.cash-=400;ST.owned.firstEdition=true;const g=grantXp('write',20);ST.happy=clamp(ST.happy+6,0,100);advanceMinutes(60);flash('A collector piece. +'+g+' WRITING XP');},
       {dis:()=>ST.owned.firstEdition||ST.cash<400});
+  } else if(kind==='venture'){
+    descEl.textContent='The city\u2019s venture board \u2014 the B quadrant in one room. Every trade you have taken to '
+      +'LV2 can be launched from here, and what it pays depends on the shape you are in, not on the sign.';
   } else if(kind==='office'||kind==='fire'||kind==='police'){
-    descEl.textContent=ST.biz?('You run '+BIZ.find(x=>x.id===ST.biz.id).name+' from this floor.')
-      : ST.employed?('You work as '+ST.employed.title+'. An office is also where a venture begins.')
+    const own=bizList().filter(x=>(x.b.venue||[]).includes('office'));
+    descEl.textContent = own.length ? ('You run '+own.map(x=>x.b.name).join(' and ')+' from this floor.')
+      : ST.employed ? ('You work as '+ST.employed.title+'. An office is also where a venture begins.')
       : 'A place to build a career. Apply with the right skills \u2014 or launch something of your own.';
   } else if(kind==='church'){
     descEl.textContent='Quiet candlelight. Lay your worries down.';
@@ -6699,23 +6843,56 @@ function openAction(b){
     A('RESIGN FROM '+ST.employed.title,'quit your job',()=>quitJob(),{cls:'danger'});
   }
 
-  /* --- entrepreneurship: offices double as incubators --- */
-  if(kind==='office'){
-    if(ST.biz){
-      const b=BIZ.find(x=>x.id===ST.biz.id);
-      const p=bizSellPrice();
-      A('YOUR BUSINESS \u00B7 '+b.name, fmt$(b.inc)+'/mo expected \u00B7 '+ST.biz.months+' mo old \u00B7 worth '+fmt$(p), ()=>{},{cls:'cur',dis:()=>true});
-      A('SELL THE BUSINESS \u00B7 '+fmt$(p),'cash out your equity',()=>closeBiz(true));
-      A('SHUT IT DOWN','walk away, salvage nothing',()=>closeBiz(false),{cls:'danger'});
-    }else{
-      A('\u{1F680} START A BUSINESS','be your own boss \u00B7 pick a venture below',()=>{},{dis:()=>true});
-      BIZ.forEach(b=>{
-        const need=b.skill?(skillName(b.skill)+' LV'+b.lvl):'no experience';
-        const can=lvlOf(ST.skills[b.skill||'prog'])>=(b.skill?b.lvl:0);
-        A('LAUNCH '+b.name+' \u00B7 '+fmt$(b.cost), b.note+' \u00B7 ~'+fmt$(b.inc)+'/mo \u00B7 needs '+need,
-          ()=>startBiz(b),
-          {dis:()=>ST.cash<b.cost||!can});
+  /* --- entrepreneurship: the B quadrant. Every trade opens at its own kind of place
+         (a print studio at the gallery, a bakery in the market, an advisory at the
+         bank), and LV2 in that skill is the price of admission. The VENTURE LAB is
+         the one board that lists every trade at once, the way CAREER CENTER does
+         for wages. --- */
+  const here = kind==='venture' ? BIZ : BIZ.filter(b=>(b.venue||[]).includes(kind));
+  if(here.length){
+    const mine=bizList();
+    const q=opsQuality();
+    const ownedHere = kind==='venture' ? mine : mine.filter(x=>(x.b.venue||[]).includes(kind));
+    if(kind==='venture'){
+      const afford=BIZ.some(b=>{
+        const lv=b.skill?lvlOf(ST.skills[b.skill]||0):99;
+        return (!b.skill||lv>=b.lvl) && ST.cash>=b.cost && !ownsBiz(b.id);
       });
+      A('\uD83D\uDE80 YOUR VENTURES \u00B7 '+mine.length,
+        mine.length ? ('paying '+fmt$(bizIncome())+'/mo \u00B7 your condition is worth '+Math.round(q*100)+'% of the sign price')
+        : afford ? 'you own nothing yet \u00B7 at least one trade below is within reach today'
+                 : 'you own nothing yet \u00B7 LV2 in a trade, plus the cash to launch it, is all it takes',
+        ()=>{},{dis:()=>true, cls:mine.length?'cur':''});
+    }
+    ownedHere.forEach(({b,st})=>{
+      const p=bizSellPrice(b,st);
+      A('\u{1F680} '+b.name,
+        fmt$(bizNow(b,st))+'/mo \u00B7 '+st.months+' mo trading \u00B7 worth '+fmt$(p)
+          +' \u00B7 mastery \u00D7'+bizMastery(b).toFixed(2),
+        ()=>{},{cls:'cur',dis:()=>true});
+      A('SELL '+b.name+' \u00B7 '+fmt$(p),'cash out the equity, keep the months you served',()=>closeBiz(b.id,true));
+      A('SHUT DOWN '+b.name,'walk away, salvage nothing',()=>closeBiz(b.id,false),{cls:'danger'});
+    });
+    const openable=here.filter(b=>!ownsBiz(b.id));
+    const canOpen=openable.slice(0,10);
+    canOpen.forEach(b=>{
+      const lv=b.skill?lvlOf(ST.skills[b.skill]||0):99;
+      const ok=!b.skill || lv>=b.lvl;
+      const est=bizExpected(b,{months:0});
+      A('LAUNCH '+b.name+' \u00B7 '+fmt$(b.cost),
+        (ok ? ('~'+fmt$(est)+'/mo at your condition \u00B7 ') : ('LOCKED \u00B7 '))
+          +b.note
+          +(b.skill ? (' \u00B7 needs '+skillName(b.skill)+' LV'+b.lvl+(ok?'':(' (you are LV'+lv+')'))) : ' \u00B7 no experience needed'),
+        ()=>startBiz(b),
+        {dis:()=>ST.cash<b.cost||!ok, cls:ok&&ST.cash>=b.cost?'hire':''});
+    });
+    /* never let a truncation look like the whole board: say what was left off */
+    if(openable.length>canOpen.length)
+      A('+ '+(openable.length-canOpen.length)+' MORE TRADE'+(openable.length-canOpen.length>1?'S':'')+' ON THE BOARD',
+        'the list is capped at ten \u00B7 own or launch the ones above and the rest comes up',
+        ()=>{},{dis:()=>true});
+    if(!canOpen.length && !ownedHere.length){
+      A('NOTHING ON THE BOARD HERE TODAY','come back with a bigger skill or a different address',()=>{},{dis:()=>true});
     }
   }
 
@@ -6840,24 +7017,25 @@ function masterBreak(){
 const SKILL_OPEN={};                     /* nothing opens by default: the arrow is the player's lever */
 function skillLadder(id, lv){
   /* one row per level, LV1 through LV5 — a ladder reads top to bottom, not sideways.
-     The WORK and the BIG BREAK live under LV5's MAX LEVEL row; the make button sits below. */
+     A level can hold BOTH: a desk to apply for and a venture to own. The venture keeps
+     its own row (tagged OWN) instead of being crowded out by the wage, because the two
+     ladders run on different rules and LV2 is where the second one opens. */
   const rows=[];
   for(let l=1;l<=4;l++){
     const j=JOBS.filter(x=>x.skill===id&&x.lvl===l)[0];
+    const b=BIZ.filter(x=>x.skill===id&&x.lvl===l)[0];
     if(j) rows.push({lv:l, kind:'job', name:j.title, note:fmt$(j.pay)+'/mo', done:lv>=l});
-    else{
-      const b=BIZ.filter(x=>x.skill===id&&x.lvl===l)[0];
-      if(b){
-        const own=!!(ST.biz&&ST.biz.id===b.id);
-        rows.push({lv:l, kind:'biz', name:b.name, note:fmt$(b.cost)+' \u00B7 market',
-                   done:own, ready:!own&&lv>=l});
-      }else{
-        rows.push({lv:l, kind:'pay', name:'+10% DESK PAY', note:'every level pays', done:lv>=l});
-      }
+    if(b){
+      const own=ownsBiz(b.id);
+      rows.push({lv:l, kind:'biz', tag:j?'OWN':null, name:b.name, note:fmt$(b.cost)+' \u00B7 your own',
+                 done:own, ready:!own&&lv>=l});
     }
+    if(!j && !b) rows.push({lv:l, kind:'pay', name:'+10% DESK PAY', note:'every level pays', done:lv>=l});
   }
   rows.push({lv:5, kind:'cap', name:'MAX LEVEL', note:'mastery \u00B7 the big break', done:lv>=5});
-  const nx=rows.find(r=>!r.done && !r.ready);
+  /* the spine's NEXT marker stays on wages: a venture you can already afford is not
+     "the next rung", it is an option you are choosing not to take */
+  const nx=rows.find(r=>!r.done && r.kind!=='biz') || rows.find(r=>r.ready && r.kind==='biz');
   if(nx) nx.next=true;
   return rows;
 }
@@ -6865,7 +7043,7 @@ function ladderHTML(rows){
   return rows.map(r=>{
     const cls=r.done?'done':(r.ready?'ready':(r.next?'next':'lock'));
     const ic=r.kind==='biz'?'\uD83C\uDFEA':(r.kind==='cap'?'\uD83C\uDFC1':(r.kind==='pay'?'\uD83D\uDCB0':''));
-    return '<div class="sk-u '+cls+'"><span class="sk-ul">'+(r.done?'\u2713 ':'')+'LV'+r.lv+'</span>'+
+    return '<div class="sk-u '+cls+'"><span class="sk-ul">'+(r.done?'\u2713 ':'')+(r.tag||('LV'+r.lv))+'</span>'+
       '<span class="sk-un">'+ic+(ic?' ':'')+r.name+'</span>'+
       '<span class="sk-uv">'+r.note+'</span></div>';
   }).join('');
@@ -6930,7 +7108,42 @@ function renderSkills(){
   actPanel.classList.add('show');
 }
 document.getElementById('rowSkills').addEventListener('click',()=>renderSkills());
+
+/* BUSINESS row: what you OWN. The books, in one place — with the multiplier that
+   decides the month printed honestly, next to the assets it is being applied to. */
 document.getElementById('rowJob').addEventListener('click',()=>{
+  document.getElementById('actIc').textContent='\uD83C\uDFE2';
+  document.getElementById('actTitle').textContent='BUSINESS';
+  const mine=bizList();
+  const q=opsQuality();
+  document.getElementById('actDesc').textContent = mine.length
+    ?       ('You own '+mine.length+' venture'+(mine.length>1?'s':'')+', paying '+fmt$(bizIncome())+'/mo. '
+       +'Your condition is worth '+Math.round(q*100)+'% of the sign price \u2014 '
+       +opsFactors().map(f=>f.n+' '+Math.round(f.v*100)).join(' \u00B7 ')+'. '
+       +'Every venture past the first also adds stress when the month closes.')
+    : ('No business yet. Every skill taken to LV2 opens one: art at a gallery, cooking in a market, '
+       +'finance at a bank, code or consultancy in an office tower. The VENTURE LAB on 42nd Street '
+       +'lists every trade you qualify for.');
+  const body=document.getElementById('actBody');
+  body.innerHTML='';
+  mine.forEach(({b,st})=>{
+    const el=document.createElement('button');
+    el.className='act-btn';
+    el.innerHTML='<b>\u{1F680} '+b.name+'</b><span>'+fmt$(bizNow(b,st))+'/mo \u00B7 '+st.months
+      +' mo trading \u00B7 worth '+fmt$(bizSellPrice(b,st))+' \u00B7 mastery \u00D7'+bizMastery(b).toFixed(2)+'</span>';
+    body.appendChild(el);
+  });
+  if(!mine.length){
+    const el=document.createElement('button');
+    el.className='act-btn';
+    el.innerHTML='<b>FIND THE VENTURE LAB</b><span>42nd Street, between 5th and 6th \u00B7 every trade on one board</span>';
+    body.appendChild(el);
+  }
+  actPanel.classList.add('show');
+  updatePanel();
+});
+
+document.getElementById('rowPerf').addEventListener('click',()=>{
   document.getElementById('actIc').textContent='\uD83D\uDCBC';
   document.getElementById('actTitle').textContent='CAREER';
   document.getElementById('actDesc').textContent=ST.employed
@@ -7283,7 +7496,7 @@ function renderRank(){
     ['BANK', Math.round(ST.bank)],
     ['STOCKS', Math.round(stockValue())],
     ['PROPERTY', Math.round(estateValue())],
-    ['BUSINESS', ST.biz?bizSellPrice():0]
+    ['BUSINESS', Math.round(bizWorth())]
   ];
   if(ST.fund) parts.push(['FUND', Math.round(ST.fund)]);
   if(gameValue()) parts.push(['COLLECTION', gameValue()]);

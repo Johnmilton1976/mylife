@@ -110,7 +110,7 @@ const check = (ok, msg) => { console.log((ok ? 'PASS  ' : 'FAIL  ') + msg); if (
   }
   const after = await p.evaluate(() => ({
     id: ST.employed.id, pay: salaryOf(ST.employed), months: ST.jobMonths,
-    panelJob: document.getElementById('vJob').textContent,
+    panelJob: document.getElementById('vPerf').textContent,
   }));
   console.log('3 before/after :', JSON.stringify(before), '->', JSON.stringify(after));
   check(after.id === 'data', 'signing the board moved the player to DATA ENGINEER');

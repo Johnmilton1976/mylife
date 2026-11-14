@@ -120,7 +120,7 @@ const PAGE = 'file://' + path.resolve(__dirname, '../index.html').replace(/\\/g,
       line: d ? d.textContent.replace(/\s+/g, ' ').trim() : '(missing)',
       hasDesk: !!d,
       career: (() => { document.getElementById('actPanel').classList.remove('show');
-        document.getElementById('rowJob').click();
+        document.getElementById('rowPerf').click();
         return document.getElementById('actDesc').textContent.replace(/\s+/g, ' ').trim(); })(),
     };
   });
