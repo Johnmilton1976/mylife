@@ -41,8 +41,10 @@ const http = require('http');
   await page.goto(base + '/', { waitUntil: 'load' });
   await page.waitForTimeout(1200);
   const coverLinks = await page.$$eval('.cover-guides a', as => as.map(a => a.getAttribute('href')));
-  /* 11 links since commercialize (925d582): pro + 7 guides + privacy/terms/contact */
-  ok(coverLinks.length === 11, 'cover guides nav has 11 links: ' + coverLinks.join(','));
+  /* 15 links since the footer-nav fix (764bd5c): pro + 11 guides + privacy/terms/contact.
+     The old hard-coded 11 went stale when 4 orphaned guides were added to the
+     shared footer; count the real set and keep the must-link checks below. */
+  ok(coverLinks.length === 15, 'cover guides nav has 15 links: ' + coverLinks.join(','));
   for (const must of ['/pro/', '/privacy/', '/terms/', '/contact/']) {
     ok(coverLinks.includes(must), 'cover nav includes ' + must);
   }
