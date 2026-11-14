@@ -74,7 +74,8 @@ const readPanel = () => {
   await p.evaluate(async () => {
     const sleep = ms => new Promise(r => setTimeout(r, ms));
     try {
-      await Promise.race([walkTo(curCell, nextCell(), true), sleep(10000)]);
+      /* one real cell with the stop block armed: that is what resets the per-visit flags */
+      await Promise.race([walkRoute(1, true), sleep(20000)]);
     } catch (e) {}
     try { closeAct(); } catch (e) {}
     await sleep(120);

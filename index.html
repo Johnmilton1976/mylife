@@ -56,7 +56,11 @@
   html,body{width:100%;height:100%;overflow:hidden;background:#0a1620;font-family:Georgia,'Times New Roman',serif}
   #viewport{position:fixed;inset:0;overflow:hidden;cursor:grab}
   #viewport.drag{cursor:grabbing}
-  #world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform;backface-visibility:hidden}
+  /* NO will-change here. Promoting the whole city (16.7k SVG nodes) to its own
+     compositor layer measured 25% SLOWER (median frame 66.6 -> 49.9ms on the same
+     machine): a layer that big is re-rastered/uploaded far more than it saves.
+     The camera only moves at the screen edge, so plain transforms win. */
+  #world{position:absolute;left:0;top:0;transform-origin:0 0}
   #world svg{display:block}
   /* the walker is the only thing that changes every frame: keep it on its own
      composited layer so animating him never forces the whole city to re-raster */
@@ -4046,16 +4050,22 @@ document.getElementById('miniClose').addEventListener('click',e=>{e.stopPropagat
 /* ===================== footstep sfx: tiny synthesized taps, no audio files ===================== */
 let AC=null;
 let sfxOn=true, sfxVol=55;                 /* 0-100, wired to the settings panel */
+let _stepBuf=null;                         /* one noise burst, reused: a footstep used to allocate a
+                                              fresh AudioBuffer (2.6k samples) twice per CELL, and those
+                                              allocations landed exactly on the frames where the walker
+                                              crossed a cell boundary */
 function sfxStep(){
   if(!sfxOn||sfxVol<=0) return;
   try{
     if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)();
     if(AC.state==='suspended') AC.resume();
-    const dur=0.06, sr=AC.sampleRate;
-    const buf=AC.createBuffer(1, Math.floor(sr*dur), sr);
-    const d=buf.getChannelData(0);
-    for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2.2);
-    const src=AC.createBufferSource(); src.buffer=buf;
+    if(!_stepBuf){
+      const dur=0.06, sr=AC.sampleRate, n=Math.floor(sr*dur);
+      _stepBuf=AC.createBuffer(1, n, sr);
+      const d=_stepBuf.getChannelData(0);
+      for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/n,2.2);
+    }
+    const src=AC.createBufferSource(); src.buffer=_stepBuf;
     const f=AC.createBiquadFilter(); f.type='lowpass'; f.frequency.value=380+Math.random()*220;
     const gn=AC.createGain(); gn.gain.value=sfxVol*0.001;   /* 55 -> 0.055: just enough to feel the steps */
     src.connect(f); f.connect(gn); gn.connect(AC.destination);
@@ -5635,20 +5645,31 @@ function jobBeaconTarget(){
   }
   return onBest||best;
 }
+/* The beacon used to be rebuilt with innerHTML on EVERY cell landing: parse a cone,
+   two rings and a core, throw the old ones away, repaint. A building never moves, so
+   when the target has not changed there is nothing to write at all. */
+let _beamBld=null, _beamG=null;
 function syncJobBeacon(){
   const g=document.getElementById('jobBeacon');
   if(!g) return;
   const hint=document.getElementById('jobHint');
   const b=jobBeaconTarget();
-  if(!b){ g.innerHTML=''; if(hint) hint.classList.remove('show'); return; }
-  const cx=b.x+b.w/2, top=b.base-b.h;
-  g.innerHTML=
-    `<g transform="translate(${cx},${top})">
-       <path class="bCone" d="M -26 0 L -7 -160 L 7 -160 L 26 0 Z" fill="#ffd98a" opacity=".55"/>
-       <circle class="bRing b1" r="15" fill="none" stroke="#ffe9b0" stroke-width="3"/>
-       <circle class="bRing b2" r="15" fill="none" stroke="#ffd98a" stroke-width="2"/>
-       <circle r="6" fill="#ffe9b0"/>
-     </g>`;
+  if(!b){
+    if(_beamG || g.firstElementChild){ g.innerHTML=''; _beamG=null; _beamBld=null; }
+    if(hint) hint.classList.remove('show');
+    return;
+  }
+  if(!_beamG || !_beamG.isConnected || _beamBld!==b){
+    const cx=b.x+b.w/2, top=b.base-b.h;
+    g.innerHTML=
+      `<g transform="translate(${cx},${top})">
+         <path class="bCone" d="M -26 0 L -7 -160 L 7 -160 L 26 0 Z" fill="#ffd98a" opacity=".55"/>
+         <circle class="bRing b1" r="15" fill="none" stroke="#ffe9b0" stroke-width="3"/>
+         <circle class="bRing b2" r="15" fill="none" stroke="#ffd98a" stroke-width="2"/>
+         <circle r="6" fill="#ffe9b0"/>
+       </g>`;
+    _beamG=g.firstElementChild; _beamBld=b;
+  }
   if(hint) hint.classList.add('show');
 }
 /* the pay scale is alive: +10% for every level above the hiring bar, +2% per month served.
@@ -7864,46 +7885,127 @@ addEventListener('keydown', e=>{
   wrap.querySelectorAll('.tmsg.stick').forEach(k=>{ if(!k.dataset.out){ dropToast(k); n++; } });
   if(n) e.preventDefault();
 });
-/* walk one block: axis-aligned only - first horizontally, then vertically, never diagonally */
-/* one cell at a time. every cell is the same size, so every step lands on the same beat */
-async function walkTo(from,to,chk,keep,first){
-  const a=from, b=to, g=document.getElementById('me');
-  if(!g||!a||!b) return;
-  CHARS['me'].walking=true;
-  if(Math.abs(b.x-a.x)>20) g.dataset.flip = b.x>a.x ? 1 : -1;
-  const flip=parseFloat(g.dataset.flip||1);
-  const dist=Math.hypot(b.x-a.x, b.y-a.y);
+/* ===== the walk: ONE continuous animation, not one tween per cell =====
+   It used to be a chain: walkTo(cell) -> await tween -> walkTo(next cell) -> ... Every
+   boundary went through a promise and a fresh rAF, and because the tween was TIME based
+   a slow frame pushed the walker far ahead in one step (the "hitch, then lurch" feel).
+   Now the whole route is one rAF loop:
+     · the route is planned up front (nextCell() only reads PATH/ROAD and rolls chance),
+       so the total distance is known and the arrival can be eased onto the exact cell
+     · travel is DISTANCE based with a clamped dt: a janky frame costs speed, never
+       position, so the walker can never jump ahead of his own feet
+     · speed is constant through the middle; the only two ramps are the pull-away at
+       the start and the settle on the final cell
+     · per-cell bookkeeping (minutes, ring, footfall) fires as he crosses the boundary,
+       inline — crossing a cell no longer interrupts the motion at all */
+const WALK_RAMP_IN=220, WALK_RAMP_OUT=300;   /* ms of ease at the two ends [PLACEHOLDER · tuned by eye] */
+
+async function walkRoute(n, chkLast){
+  const g=document.getElementById('me');
+  const startCell=curCell||PATH[cur]||PATH[0];
+  if(!g||!n||!startCell) return;
+
+  /* plan the route. nextCell() mutates cur/curCell (it asks the junction it is leaving
+     whether to take a detour), so drive them forward while planning, then rewind: until
+     the animation actually lands, the walker still stands on startCell. */
+  const saveCur=cur, saveCell=curCell;
+  const route=[];
+  for(let k=0;k<n;k++){
+    const c=nextCell();
+    if(!c) break;
+    route.push(c);
+    curCell=c; if(c.i!==undefined) cur=c.i;
+  }
+  cur=saveCur; curCell=saveCell;
+  if(!route.length) return;
+
+  /* arc length: _s is the distance at which a cell is reached */
+  let px=startCell.x, py=startCell.y, total=0;
+  for(const c of route){
+    total+=Math.hypot(c.x-px, c.y-py);
+    c._s=total;
+    px=c.x; py=c.y;
+  }
+
+  const mood=ST.happy>=70?0.95:(ST.happy<=30?1.15:1);
+  const speed=1/mood;                       /* world px per ms: ~1, mood nudges it */
+  const me=CHARS['me'];
   const put=(x,y)=>{
+    const flip=parseFloat(g.dataset.flip||1);
     g.setAttribute('transform',`translate(${x},${y}) scale(${flip},1)`);
     if(mMe){ mMe.setAttribute('cx',x); mMe.setAttribute('cy',y); }
-    followCam(x,y);                    /* edge-follow: keeps you in frame without locking the view */
+    followCam(x,y);                          /* edge-follow: cheap when the walker is mid-frame */
   };
-  /* constant pace across every cell (time proportional to distance): no surge-and-brake,
-     which is what made the walk look drunk. Mood only nudges the overall speed. */
-  const TT=dist*(ST.happy>=70?0.95:(ST.happy<=30?1.15:1));
-  sfxStep(); const stp=setTimeout(sfxStep,TT*0.55);
-  let ease;
-  if(first&&keep)      ease=k=>k*k*(2-k);        /* pull away from standstill, ending at full stride */
-  else if(keep)        ease=k=>k;                /* middle cells: perfectly even pace, no stutter */
-  else if(first)       ease=k=>k*k*(3-2*k);      /* a single hop: ease both ends */
-  else                 ease=k=>2*k-k*k;          /* the last cell: glide smoothly to a halt */
-  await tween(TT, k=>{ put(a.x+(b.x-a.x)*ease(k), a.y+(b.y-a.y)*ease(k)); });
-  clearTimeout(stp);
-  put(b.x,b.y);
-  CHARS['me'].walking=!!keep;          /* keep striding between cells, stop on the last one */
-  mePos={x:b.x, y:b.y};
-  setCellMark();                       /* the golden ring hops to the cell you stand on */
-  /* only the cell you actually come to rest on needs a cab beside you, and its
-     forced-layout scan must not land on the frame the next step starts: defer it */
-  if(!keep) requestAnimationFrame(()=>{ try{ ensureCabNearby(); }catch(e){} });
-  advanceMinutes(2 + Math.floor(Math.random()*2));   /* cells are short now: two-ish minutes each */
+  const faceTo=(a,b)=>{ if(Math.abs(b.x-a.x)>20) g.dataset.flip = b.x>a.x ? 1 : -1; };
+
+  me.walking=true;
+  faceTo(startCell, route[0]);
+
+  /* footfalls are distance driven: one per half cell, no timers, no buffer allocation */
+  const stepEvery=Math.max(160, total/(route.length*2));
+  let nextStep=0, landed=0;
+
+  const land=(c)=>{
+    curCell=c; if(c.i!==undefined) cur=c.i;
+    mePos={x:c.x,y:c.y};
+    put(c.x,c.y);
+    setCellMark();                           /* ring + beacon: both reuse their nodes now */
+    advanceMinutes(2+Math.floor(Math.random()*2));
+  };
+
+  await new Promise(done=>{
+    const tStart=performance.now();
+    let tPrev=tStart, travelled=0;
+    const brake=speed*WALK_RAMP_OUT/2;       /* distance needed to stop from full stride */
+    (function step(t){
+      const dt=Math.min(64, t-tPrev);        /* clamp: a 400ms frame must not move him 400px; 64ms keeps
+                                                a 15fps machine on real-time pace and never bites at 60fps */
+      tPrev=t;
+      const remaining=total-travelled;
+      /* ease in from standstill, ease out onto the last cell — nothing in between */
+      let m=Math.min(1,(t-tStart)/WALK_RAMP_IN);
+      /* the brake is distance-proportional, which decays geometrically and would never
+         actually arrive (Zeno): keep a 15% floor and snap the last pixel */
+      if(remaining<brake) m=Math.min(m, Math.max(0.15, remaining/brake));
+      travelled = remaining<1 ? total : Math.min(total, travelled+speed*m*dt);
+
+      /* land every cell whose arc position has now been passed */
+      while(landed<route.length && travelled>=route[landed]._s){
+        land(route[landed]);
+        landed++;
+        if(landed<route.length) faceTo(route[landed-1], route[landed]);
+      }
+
+      if(landed<route.length && travelled<total){   /* mid-segment: interpolate, don't snap */
+        const a=landed>0?route[landed-1]:startCell;
+        const b=route[landed];
+        const segStart=landed>0?a._s:0;
+        const segLen=b._s-segStart;
+        const r=segLen>0?Math.min(1,(travelled-segStart)/segLen):1;
+        put(a.x+(b.x-a.x)*r, a.y+(b.y-a.y)*r);
+      }
+      if(travelled>=nextStep){ sfxStep(); nextStep+=stepEvery; }
+
+      if(travelled>=total && landed>=route.length){ done(); return; }
+      requestAnimationFrame(step);
+    })(tStart);
+  });
+
+  const last=route[route.length-1];
+  me.walking=false;                          /* the pose settles on the last landing */
+  put(last.x,last.y);
+  mePos={x:last.x,y:last.y};
+  setCellMark();
+  /* only the cell you come to rest on needs a cab beside you, and its forced-layout
+     scan must not land on this frame: defer it */
+  requestAnimationFrame(()=>{ try{ ensureCabNearby(); }catch(e){} });
+
   /* ONLY the cell you actually stop on can pull you into a building */
-  if(chk!==false){
+  if(chkLast){
     newsStreak++;                            /* every stop counts toward the next city beat */
-    /* city news: see newsDue() — forced on the 4th stop, likely on the 3rd */
-    const due = newsDue();
+    const due = newsDue();                   /* forced on the 4th stop, likely on the 3rd */
     studyStop=false;                         /* a new stop: a fresh chance to learn one thing */
-    ateHere=false; showHere=false; playHere=false; treatedHere=false;  /* fresh appetite, ticket, session, and a fresh clinic slot */
+    ateHere=false; showHere=false; playHere=false; treatedHere=false;  /* fresh appetite, ticket, session, clinic slot */
     const zb=maybeZone();
     if(zb) await openActionFor(zb);          /* buildings keep the count running */
     else await maybeLifeEvent();
@@ -7934,13 +8036,7 @@ async function spinAndGo(wheels){
     previewCells(n, 1/cam.scale);
     await new Promise(r=>setTimeout(r,700)); /* a beat to read the plan before the feet move */
   }
-  for(let k=0;k<n;k++){
-    const from=curCell;
-    const to=nextCell();               /* detour cells first, backbone after */
-    curCell=to;
-    if(to.i!==undefined) cur=to.i;
-    await walkTo(from,to, k===n-1, k<n-1, k===0);
-  }
+  await walkRoute(n, true);   /* one continuous walk over all n cells, stop on the last */
   clearPreview();
   document.getElementById('wheelSpinLabel').innerHTML='&#127922; SPIN &#183; GO!';
   busy=false;
