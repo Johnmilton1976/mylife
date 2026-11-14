@@ -163,9 +163,14 @@
   #finClose:hover{background:#e2d0a0}
   .fin-h{font-size:12.5px;letter-spacing:2px;color:#f0d9a2;font-weight:bold;background:#3a2513;border-radius:5px;padding:5px 9px;margin-top:10px}
   .fin-i{display:flex;align-items:baseline;gap:7px;margin-top:7px;font-size:14px;color:#4a3210;padding:0 3px}
-  .fin-i .fn{font-weight:bold;white-space:nowrap}
+  /* the money column is a column: the value never shrinks, the label yields first.
+     Without min-width:0 a nowrap label grows past the sheet and shoves the number
+     off the right edge (that is what clipped "Salary - CREATIVE DIRECTOR +$9,6...") */
+  .fin-i .fn{font-weight:bold;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
   .fin-i .note{font-size:11.5px;color:#8a6a3a;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .fin-i .fv{margin-left:auto;font-weight:bold;font-size:14px;color:#143a6b;white-space:nowrap}
+  .fin-i .fv{margin-left:auto;font-weight:bold;font-size:14px;color:#143a6b;white-space:nowrap;flex:0 0 auto}
+  /* a row that hides something behind a hover says so, quietly */
+  .fin-i.has-tip .fn{border-bottom:1px dotted currentColor;cursor:help}
   .fin-i .fv.neg{color:#a03020}
   .fin-net{margin-top:11px;background:linear-gradient(180deg,#3a2513,#231508);border:2px solid #6b4a26;border-radius:8px;padding:7px 10px;color:#ffe9b0;font-size:12px;font-weight:bold;display:flex;align-items:baseline}
   .fin-net span:last-child{margin-left:auto;font-size:17px;color:#8fd07a}
@@ -5458,18 +5463,24 @@ function openFin(){
   html+=`<div class="fin-net"><span>NET WORTH</span><span style="color:${worth>=0?'#8fd07a':'#ff9a8a'}">${fmt$(worth)}</span></div>`;
   html+='<div class="fin-i"><span class="fn">Price tags do not decide.</span><span class="note">cash direction does \u2014 Rich Dad</span></div>';
 
+  /* one money line: the amount always sits in the same right-hand column, and anything
+     the label used to spell out rides along as a hover tip instead of widening the row */
+  const money = (i, cls) => {
+    const tip = i.tip ? ' title="'+String(i.tip).replace(/"/g,'&quot;')+'"' : '';
+    return `<div class="fin-i${cls?' '+cls:''}${i.tip?' has-tip':''}"${tip}><span class="fn">${i.n}</span><span class="fv">${i.v>0?'+':''}${fmt$(i.v)}${i.per}</span></div>`;
+  };
   html+='<div class="fin-h">E / S \u00B7 YOU WORK</div>';
-  FIN.income.filter(i=>i.kind==='active').forEach(i=>{ html+=`<div class="fin-i"><span class="fn">${i.n}</span><span class="fv">+${fmt$(i.v)}${i.per}</span></div>`; });
+  FIN.income.filter(i=>i.kind==='active').forEach(i=>{ html+=money(i); });
   html+='<div class="fin-h">B / I \u00B7 MONEY WORKS</div>';
   const pas=FIN.income.filter(i=>i.kind==='passive');
   if(!pas.length) html+='<div class="fin-i"><span class="fn">No passive income yet</span><span class="note">buy assets, not liabilities</span></div>';
-  pas.forEach(i=>{ html+=`<div class="fin-i"><span class="fn">${i.n}</span><span class="fv">+${fmt$(i.v)}${i.per}</span></div>`; });
+  pas.forEach(i=>{ html+=money(i); });
 
   html+='<div class="fin-h">EXPENSES \u00B7 MONEY OUT</div>';
-  FIN.expenses.forEach(i=>{ html+=`<div class="fin-i"><span class="fn">${i.n}</span><span class="fv neg">${fmt$(i.v)}${i.per}</span></div>`; });
+  FIN.expenses.forEach(i=>{ html+=money(i,'neg'); });
   if(FIN.debtService.length){
     html+='<div class="fin-h">DEBT SERVICE \u00B7 NOT AN EXPENSE</div>';
-    FIN.debtService.forEach(i=>{ html+=`<div class="fin-i"><span class="fn">${i.n}</span><span class="fv neg">${fmt$(i.v)}${i.per}</span></div>`; });
+    FIN.debtService.forEach(i=>{ html+=money(i,'neg'); });
     html+='<div class="fin-i"><span class="fn">Principal shrinks the liability</span><span class="note">it is not money you spent</span></div>';
   }
   html+=`<div class="fin-net"><span>NET CASH FLOW / MONTH</span><span style="color:${inc+exp+ds>=0?'#8fd07a':'#ff9a8a'}">${fmt$(inc+exp+ds)}</span></div>`;
@@ -6207,12 +6218,20 @@ function syncFin(){
                                     v:-loanPrincipalPart(ST.loan), per:'/mo'});
 
   FIN.income.length=0;
-  FIN.income.push(ST.employed ? {n:'Salary \u00B7 '+ST.employed.title
+  /* the sheet names the money, not the desk: "as a CREATIVE DIRECTOR" rides on the
+     row as a hover tip so a long title can never push the amount out of its column */
+  FIN.income.push(ST.employed ? {n:'Salary', tip:'as a '+ST.employed.title
                                   +(ST.rep?' \u00B7 +'+Math.round(ST.rep*100)+'% reputation':'')
                                   +(ST.payStub&&ST.payStub.month===Math.floor(ST.day/30)&&ST.payStub.tag.indexOf('RAISE')!==0?' \u00B7 '+ST.payStub.tag:''),
                                   v:salaryOf(ST.employed), per:'/mo', kind:'active'}
-                              : {n:'Unemployed \u00B7 no E income', v:0, per:'/mo', kind:'active'});
-  bizList().forEach(({b,st})=>FIN.income.push({n:'Business \u00B7 '+b.name, v:bizNow(b,st), per:'/mo', kind:'passive'}));
+                              : {n:'Unemployed', tip:'no E income \u2014 nothing lands in the salary column until you are hired',
+                                 v:0, per:'/mo', kind:'active'});
+  /* the venture's own name is the label: "Business - " in front of it only ate the
+     column and pushed the amount out on a narrow panel (the trade is obvious under
+     B / I · MONEY WORKS). The hover carries the age and the equity instead. */
+  bizList().forEach(({b,st})=>FIN.income.push({n:b.name,
+    tip:'your business \u00B7 '+(st.months||0)+' month'+((st.months||0)===1?'':'s')+' trading \u00B7 equity '+fmt$(bizSellPrice(b,st)),
+    v:bizNow(b,st), per:'/mo', kind:'passive'}));
   if(netRent()>0)  FIN.income.push({n:'Net rent \u00B7 after tax & upkeep', v:netRent(), per:'/mo', kind:'passive'});
   if(divIncome())  FIN.income.push({n:'Stock dividends', v:divIncome(), per:'/mo', kind:'passive'});
   if(fundIncome()) FIN.income.push({n:'Asset fund distributions', v:fundIncome(), per:'/mo', kind:'passive'});

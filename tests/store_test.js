@@ -61,7 +61,7 @@ const QA = 'C:/Users/Johnmilton/WorkBuddy/2026-11-08-10-33-18/my-life-game/qa/';
   R.shop = opened;
   R.buttons = await page.evaluate(() => [...document.querySelectorAll('#actBody .act-btn')]
     .map(b => ({ t: b.querySelector('b').textContent.trim(), sub: b.querySelector('span').textContent.trim(), off: b.disabled, hover: b.dataset.hover || null })));
-  ck('two titles on the shelf', R.buttons.some(b => b.t.includes('GTA VI')) && R.buttons.some(b => b.t.includes('ZELDA')));
+  ck('two titles on the shelf', R.buttons.some(b => b.t.includes('NEON COAST')) && R.buttons.some(b => b.t.includes('AURELIA')));
   ck('every title has a hover hook', R.buttons.filter(b => b.hover).length === 2);
   ck('no real purchase wording', await page.evaluate(() => document.getElementById('actDesc').textContent.toLowerCase().includes('no real purchase')));
 
@@ -103,7 +103,7 @@ const QA = 'C:/Users/Johnmilton/WorkBuddy/2026-11-08-10-33-18/my-life-game/qa/';
   /* ---------- buy / worth / happy / play lock ---------- */
   R.buy = await page.evaluate(() => {
     const before = { cash: ST.cash, happy: ST.happy, worth: myWorth() };
-    const b = [...document.querySelectorAll('#actBody .act-btn')].find(e => e.querySelector('b').textContent.includes('BUY · GTA VI'));
+    const b = [...document.querySelectorAll('#actBody .act-btn')].find(e => e.querySelector('b').textContent.includes('BUY · NEON COAST'));
     b.click();
     return { before, after: { cash: ST.cash, happy: ST.happy, worth: myWorth() }, held: ST.games.gta6, price: GAMES[0].v };
   });
@@ -123,13 +123,18 @@ const QA = 'C:/Users/Johnmilton/WorkBuddy/2026-11-08-10-33-18/my-life-game/qa/';
   ck('play raises happy / lowers stress', R.play.after.happy === R.play.before.happy + 5 && R.play.after.stress === R.play.before.stress - 2);
   ck('one session per visit', R.play.disabled === true);
 
-  R.sell = await page.evaluate(() => {
-    const before = ST.cash;
-    const b = [...document.querySelectorAll('#actBody .act-btn')].find(e => e.querySelector('b').textContent.includes('SELL 1 COPY · GTA VI'));
-    b.click();
-    return { before, after: ST.cash, held: ST.games.gta6 || null, price: GAMES[0].v };
+  /* the shelf is a collection, not a hedge fund: one copy per title, and it cannot be
+     flipped back. The old "SELL 1 COPY" expectation died with that design. */
+  R.hold = await page.evaluate(() => {
+    const b = [...document.querySelectorAll('#actBody .act-btn')].find(e => e.querySelector('b').textContent.includes('NEON COAST'));
+    return {
+      label: b ? b.querySelector('b').textContent.trim() : null,
+      dis: b ? b.disabled : null,
+      sellButton: [...document.querySelectorAll('#actBody .act-btn')].some(e => /SELL/.test(e.querySelector('b').textContent)),
+      held: (ST.games.gta6 || {}).qty || 0,
+    };
   });
-  ck('sell returns cash and clears holding', R.sell.after === R.sell.before + R.sell.price && !R.sell.held);
+  ck('one copy per title, no resale', R.hold.dis === true && R.hold.sellButton === false && R.hold.held === 1, JSON.stringify(R.hold));
 
   /* ---------- prices drift, financial sheet, net worth agreement ---------- */
   R.econ = await page.evaluate(() => {
@@ -146,7 +151,7 @@ const QA = 'C:/Users/Johnmilton/WorkBuddy/2026-11-08-10-33-18/my-life-game/qa/';
       p0, p1, drifted: p0.some((v, i) => v !== p1[i]),
       gameValue: gameValue(), myWorth: myWorth(),
       holdingsRow: FIN.holdings.some(h => h.n === 'Game collectibles'),
-      finMentionsGames: txt.includes('GTA VI') && txt.includes('ZELDA'),
+      finMentionsGames: txt.includes('NEON COAST') && txt.includes('AURELIA'),
       noCashFlowNote: FIN.holdings.some(h => h.n === 'Game collectibles' && h.note.includes('no cash flow'))
     };
   });
