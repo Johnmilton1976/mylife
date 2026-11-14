@@ -5978,6 +5978,7 @@ const actPanel=document.getElementById('actPanel');
 let actResolve=null;
 let studyStop=false;          /* true once you have studied at THIS stop */
 let ateHere=false, showHere=false, playHere=false;   /* one plate / one ticket / one session per visit */
+let treatedHere=false;        /* one clinic appointment per visit: pick ONE service, walk on for another */
 function closeAct(){ gpPinned=null; if(typeof hideGamePreview==='function') hideGamePreview(true);
   actPanel.classList.remove('show'); delete actPanel.dataset.npc; if(actResolve){ const r=actResolve; actResolve=null; r(); } }
 document.getElementById('actClose').addEventListener('click',closeAct);
@@ -5998,7 +5999,7 @@ function sleepUntilMorning(){
               : 'A proper night. A new day begins.');
 }
 function teleport(){
-  ateHere=false; showHere=false; playHere=false;   /* a new neighbourhood: the appetite resets */
+  ateHere=false; showHere=false; playHere=false; treatedHere=false;   /* a new neighbourhood: the appetite resets */
   const i=Math.floor(Math.random()*PATH.length), p=PATH[i];
   cur=i; curCell=p; pendingDetour.length=0;
   const g=document.getElementById('me');
@@ -6130,14 +6131,29 @@ function openAction(b){
       ()=>{ST.cash-=100;ST.daily.donate=true;ST.happy=clamp(ST.happy+10,0,100);ST.charm=clamp(ST.charm+4,0,100);advanceMinutes(20);flash('Giving feels good.');},
       {dis:()=>!!ST.daily.donate||ST.cash<100});
   } else if(kind==='hospital'){
-    descEl.textContent=ST.sick
-      ? 'St. Vincent ER. You are down with '+ST.sick.name.toLowerCase()+' \u2014 a doctor can end this today.'
-      : 'St. Vincent ER. They can patch you up \u2014 for a price.';
-    A('FULL CHECK-UP \u00B7 $200',(ST.sick?'cures '+ST.sick.name.toLowerCase()+' \u00B7 ':'')+'restore health to 100',
+    /* ONE appointment per visit. All three services buy the body back, so leaving them
+       unlocked let a player stack check-up + rest + dental in a single stop: health 100,
+       charm +6, and the visit stopped being a decision. Pick one service; walk on for the
+       next chance. Same semantics as a school's one-class-per-visit. */
+    const sickName = ST.sick ? ST.sick.name.toLowerCase() : '';
+    descEl.textContent = treatedHere
+      ? b.name+' has seen you already. One appointment per visit \u2014 walk to another block and come back for anything else.'
+      : (ST.sick
+          ? b.name+'. You are down with '+sickName+' \u2014 a doctor can end this today. One appointment per visit.'
+          : b.name+'. They can patch you up \u2014 for a price. One appointment per visit.');
+    const TREAT=(l,s2,fn,opt)=>{
+      const o=Object.assign({},opt||{}), prev=o.dis;
+      o.dis=()=>!!treatedHere||(prev?prev():false);
+      A((treatedHere?'\u2713 ':'')+l, treatedHere?'one appointment per visit \u00B7 walk on for more':s2,
+        ()=>{fn();treatedHere=true;},o);
+    };
+    TREAT('FULL CHECK-UP \u00B7 $200',(ST.sick?'cures '+sickName+' \u00B7 ':'')+'restore health to 100',
       ()=>{ST.cash-=200;ST.health=100;if(ST.sick){ST.sick=null;flash('Treated. You are healthy again.');}else flash('Patched up. HEALTH 100');advanceMinutes(180);},{dis:()=>ST.cash<200});
-    A('REST & RECOVER \u00B7 $80','health +20',
+    /* A rest does not cure an illness, and after one appointment you cannot come back
+       today to fix it — say so on the button instead of letting the player find out. */
+    TREAT('REST & RECOVER \u00B7 $80','health +20'+(ST.sick?' \u00B7 does not cure '+sickName:''),
       ()=>{ST.cash-=80;ST.health=clamp(ST.health+20,0,100);advanceMinutes(120);flash('Resting helps. HEALTH +20');},{dis:()=>ST.cash<80});
-    A('DENTAL WORK \u00B7 $350','health +8 \u00B7 charm +6',
+    TREAT('DENTAL WORK \u00B7 $350','health +8 \u00B7 charm +6'+(ST.sick?' \u00B7 does not cure '+sickName:''),
       ()=>{ST.cash-=350;ST.health=clamp(ST.health+8,0,100);ST.charm=clamp(ST.charm+6,0,100);advanceMinutes(120);flash('A new smile. CHARM +6');},{dis:()=>ST.cash<350});
   } else if(kind==='gym'){
     descEl.textContent='Iron paradise. Sweat now, shine later.';
@@ -7887,7 +7903,7 @@ async function walkTo(from,to,chk,keep,first){
     /* city news: see newsDue() — forced on the 4th stop, likely on the 3rd */
     const due = newsDue();
     studyStop=false;                         /* a new stop: a fresh chance to learn one thing */
-    ateHere=false; showHere=false; playHere=false;   /* fresh appetite, fresh ticket, fresh session */
+    ateHere=false; showHere=false; playHere=false; treatedHere=false;  /* fresh appetite, ticket, session, and a fresh clinic slot */
     const zb=maybeZone();
     if(zb) await openActionFor(zb);          /* buildings keep the count running */
     else await maybeLifeEvent();
