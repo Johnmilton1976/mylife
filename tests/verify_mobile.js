@@ -61,7 +61,9 @@ const ok = (c, msg) => { if (c) { pass++; console.log('  PASS', msg); } else { f
         face: !!i.querySelector('#pAvatar2 svg'),
         box: [Math.round(r.left), Math.round(r.right), Math.round(r.top), Math.round(r.bottom)],
         hp: i.style.getPropertyValue('--hp'),
-        saved: (() => { try { return STORE.getItem('mylife.hudoff.v1'); } catch (e) { return 'x'; } })()
+        /* folding is a session-only choice now: the panel ALWAYS boots open, and the
+           old persisted key is cleared on load. This used to assert saved==='1'. */
+        legacyKey: (() => { try { return STORE.getItem('mylife.hudoff.v1'); } catch (e) { return 'x'; } })()
       };
     });
     ok(off.off && off.panelGone, 'tapping - folds the whole panel away');
@@ -69,7 +71,7 @@ const ok = (c, msg) => { if (c) { pass++; console.log('  PASS', msg); } else { f
     ok(off.box[0] >= 0 && off.box[1] <= 390 && off.box[2] >= 0 && off.box[3] <= 844,
       `badge fully inside 390x844 (${off.box.join(',')})`);
     ok(/%/.test(off.hp || ''), `badge carries the health ring (${off.hp})`);
-    ok(off.saved === '1', 'folded state is remembered across reloads');
+    ok(off.legacyKey === null, 'no fold state is persisted (folding is session-only)');
     await page.click('#hudIcon'); await page.waitForTimeout(250);
     ok(await page.evaluate(() => !document.body.classList.contains('hud-off') &&
         getComputedStyle(document.getElementById('panel')).display !== 'none'),

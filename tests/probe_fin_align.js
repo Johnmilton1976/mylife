@@ -73,7 +73,7 @@ const readSheet = () => {
     ST.jobMonths = 20; ST.perf = 70; ST.perfMonth = 0; ST.perfDays = 0;
     ST.rep = 0; ST.payStub = null;
     ST.cash = 33043; ST.bank = 3000;
-    ST.health = 82; ST.happy = 70; ST.charm = 40; ST.stress = 30;
+    ST.health = 82; ST.happy = 70; ST.credit = 40; ST.stress = 30;
     ST.skills.write = 150;
     ST.bizs = { store: { months: 4, lastProfit: 1048 } };
     ST.stocks = { KO: { qty: 100, cost: 63.8 } };

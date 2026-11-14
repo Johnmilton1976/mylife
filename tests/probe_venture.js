@@ -4,7 +4,7 @@
    1. every skill has a LV2 venture, and the VENTURE LAB is built as kind === 'venture'
    2. a gallery offers the print studio and NOT the bakery (venue gating)
    3. LV1 in art leaves the studio LOCKED; LV2 opens it
-   4. opsQuality() moves with health/stress/charm/happy, and the quoted number is the
+   4. opsQuality() moves with health/stress/credit/happy, and the quoted number is the
       number the settlement will actually pay (no lying previews)
    5. launching charges the cash, adds to the portfolio and lands on the BUSINESS row
    6. a second venue adds a second venture: the HUD says N VENTURES
@@ -79,7 +79,7 @@ const findRow = (p, re) => p.rows.find(r => re.test(r.label));
 
   /* ---- 2 + 3. venue gating and the LV2 door ---- */
   const gallery = await p.evaluate(() => {
-    ST.cash = 60000; ST.health = 100; ST.stress = 10; ST.charm = 50; ST.happy = 70;
+    ST.cash = 60000; ST.health = 100; ST.stress = 10; ST.credit = 50; ST.happy = 70;
     ST.skills.art = 0; ST.bizs = {};                       /* ART is LV1 */
     const g = BUILT.find(x => x.kind === 'art');
     if (!g) throw new Error('no gallery in this city');
@@ -100,8 +100,8 @@ const findRow = (p, re) => p.rows.find(r => re.test(r.label));
   /* ---- 4. your condition decides the money, and the panel says so ---- */
   const ops = await p.evaluate(() => {
     const q = () => opsQuality();
-    ST.health = 100; ST.stress = 0; ST.charm = 100; ST.happy = 100; const good = q();
-    ST.health = 30;  ST.stress = 90; ST.charm = 10; ST.happy = 10; const bad = q();
+    ST.health = 100; ST.stress = 0; ST.credit = 100; ST.happy = 100; const good = q();
+    ST.health = 30;  ST.stress = 90; ST.credit = 10; ST.happy = 10; const bad = q();
     return { good, bad };
   });
   const quoted = await p.evaluate(() => {
@@ -112,7 +112,7 @@ const findRow = (p, re) => p.rows.find(r => re.test(r.label));
 
   /* ---- 5. launch it ---- */
   await p.evaluate(() => {
-    ST.health = 100; ST.stress = 10; ST.charm = 50; ST.happy = 70;
+    ST.health = 100; ST.stress = 10; ST.credit = 50; ST.happy = 70;
     closeAct(); openAction(BUILT.find(x => x.kind === 'art'));
   });
   await p.waitForTimeout(200);
@@ -159,7 +159,7 @@ const findRow = (p, re) => p.rows.find(r => re.test(r.label));
   /* ---- 8. spreading thin costs stress (deterministic month: no death rolls) ---- */
   const load = await p.evaluate(() => {
     const base = () => {
-      ST.health = 100; ST.stress = 20; ST.happy = 50; ST.charm = 20; ST.cash = 100000;
+      ST.health = 100; ST.stress = 20; ST.happy = 50; ST.credit = 20; ST.cash = 100000;
       ST.bank = 0; ST.employed = null; ST.loan = null; ST.sick = null; ST.day = 0;
       ST.calmDays = 0; ST.workStreak = 0; ST.workDays = 0; ST.daily = {}; ST.bizs = {};
       ST.fund = 0; ST.stocks = {}; ST.realty = {}; ST.car = null;

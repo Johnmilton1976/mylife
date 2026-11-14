@@ -25,7 +25,7 @@ const FILE = 'file:///C:/Users/Johnmilton/WorkBuddy/2026-11-08-10-33-18/my-life-
     });
 
     const reset = () => {
-      ST.age = 18; ST.cash = 1000; ST.bank = 0; ST.happy = 50; ST.charm = 20;
+      ST.age = 18; ST.cash = 1000; ST.bank = 0; ST.happy = 50; ST.credit = 35;
       ST.health = 100; ST.stress = 20; ST.employed = null; ST.biz = null; ST.bizs = {}; ST.loan = null;
       ST.freshStart = false; ST.fund = 0; ST.paySelf = 0.10; ST.paySelfMonths = 0;
       ST.skills = { it: 0, proj: 0, drive: 0, cook: 0, art: 0, fin: 0, fit: 0, eng: 0 };

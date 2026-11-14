@@ -1393,7 +1393,7 @@
   <div class="sub" id="moodRow" title="Tap to see why the numbers moved">
     <div class="chip">AGE<b id="cAge">18</b></div>
     <div class="chip">HAPPY<b id="cHappy">50</b></div>
-    <div class="chip">CHARM<b id="cCharm">20</b></div>
+    <div class="chip" title="CREDIT &#8212; a record of promises kept, not a personality. Bills paid in full at month&#8217;s end raise it; an overdraft or a missed loan instalment lowers it. Landlords and banks read it before they hand over keys or money. Nothing you can buy raises it.">CREDIT<b id="cCredit">35</b></div>
     <div class="chip">STRESS<b id="cStress">20</b></div>
   </div>
   <div class="finHint">&#9654; TAP CASH / BANK / ESTATE &middot; SKILLS FOR LADDERS &middot; SEE WHAT PAYS YOU vs WHAT COSTS YOU</div>
@@ -2858,7 +2858,12 @@ LANDMARKS.forEach(lm=>{
      end of the world build, above every light layer. */
   const lmNames=new Set(LANDMARKS.map(l=>l.name));
   const pool=BUILT.filter(b=>b.type==='shop' && !lmNames.has(b.name));
-  const TARGET=6, KEEP=3;
+  /* KEEP is the number of ordinary shops the city must still have after the games
+     move in. It was 3 while the pool held six; once the parishes took their blocks
+     the pool is five, and 6-3=3 promotions no longer fit inside 5-3=2. Two ordinary
+     shops plus three game shops is the same contract on a smaller street, and the
+     shop panel is still reachable on foot from anywhere. */
+  const TARGET=6, KEEP=2;
   let have=pool.filter(b=>b.gameStore).length;
   const rest=pool.filter(b=>!b.gameStore);
   const need=Math.min(TARGET-have, Math.max(0, pool.length-KEEP-have));
@@ -4774,15 +4779,16 @@ const bestSkill  =()=>SKILLS.reduce((a,k)=>((ST.skills[k.id]||0)>(ST.skills[a.id
      living costs are ~$1,450/mo = ~$48 for one day of survival.
      a gig pays $48 base, ±20%: exactly one day of living, not two.
      the cap is 2 gigs/day, so the ceiling is ~$115/day ≈ a $3.4k/mo job — below
-     every LV1 job on the board ($3.6k-$4.8k). Skills and charm add a little,
-     STRESS takes a lot: a wrecked head works slow, same as at a desk. */
+     every LV1 job on the board ($3.6k-$4.8k). Skills add a little,
+     STRESS takes a lot: a wrecked head works slow, same as at a desk. Charm used to
+     add here too — a gig is cash in hand, nobody checks your credit for it. */
 const ODD_DAILY_CAP=2;
 /* Two hours on your feet: the body pays (HEALTH -1), the mind barely notices.
    Kept in one place so the button label can never drift from the effect. */
 function gigStrain(where){ return where==='the dish pit' ? 2 : 1; }
 function oddJobPay(s, preview){
   const best=lvlOf(s.skills[bestSkill().id]||0);
-  const base=44 + Math.max(0,best-2)*5 + Math.round((s.charm||0)*0.2);
+  const base=44 + Math.max(0,best-2)*5;
   const focus=Math.max(0.55, 1-Math.max(0,(s.stress||0)-50)/110);   /* -45% at STRESS 100 */
   const jitter=preview?1:(0.9+Math.random()*0.2);
   return {pay:Math.max(15, Math.round(base*focus*jitter)), focus};
@@ -5121,7 +5127,8 @@ function monthlyBill(){
       bizNote=`\uD83D\uDC80 ${dead.map(b=>b.name).join(' & ')} went under this month. The ${fmt$(lost)} is gone.`;
       ST.happy=clamp(ST.happy-10*dead.length,0,100); ST.stress=clamp(ST.stress+12*dead.length,0,100);
       ST.freshStart=true;                                /* the bank heard about it — a door reopens */
-      toast('\uD83C\uDFE6 The bank offers a FRESH START LOAN. Visit any branch.');
+      creditAdd(-6,'a venture you owned went under');
+      toast('\uD83C\uDFE6 The bank offers a FRESH START LOAN. Visit any branch. \u26A0 CREDIT -6.');
     }
     const alive=mine.length-dead.length;
     if(alive){
@@ -5156,11 +5163,23 @@ function monthlyBill(){
   const fromCash = Math.min(Math.max(ST.cash,0), due);
   ST.cash -= fromCash; due -= fromCash;
   if(due>0){ const fromBank=Math.min(ST.bank,due); ST.bank-=fromBank; due-=fromBank; }
-  if(due>0){
-    ST.cash -= due;                                      /* overdraft: cash goes negative */
-    toast(`\uD83D\uDCC9 Month ${Math.floor(ST.day/30)}: bills ${fmt$(-exp)}${ds?' + '+fmt$(-ds)+' debt repaid':''} but you had ${fmt$(inc+exp+due)}. Overdraft ${fmt$(ST.cash)} \u2014 find work!${selfNote}${loanNote}${reviewNote}`);
+  /* --- the record: a month is a promise, and this one was either kept or it was not.
+         The bank never sees your mood, your suit or your friends — only this. --- */
+  const short = due>0;
+  let creditNote='';
+  if(short){
+    const c1=creditAdd(-8, 'month '+Math.floor(ST.day/30)+' closed short');
+    const c2=ST.loan?creditAdd(-6, 'a loan instalment went unpaid'):0;
+    creditNote=' \u26A0 CREDIT '+(c1+c2)+'.';
   } else {
-    toast(`\uD83D\uDCC5 Month ${Math.floor(ST.day/30)} settled: +${fmt$(inc)} income, ${fmt$(exp)} bills${ds?', '+fmt$(-ds)+' debt repaid':''}.${selfNote}${loanNote}${bizNote?' '+bizNote:''}${reviewNote}`);
+    const c1=creditAdd(ST.loan?3:2, ST.loan?'every bill and instalment paid':'every bill paid on time');
+    creditNote=' CREDIT +'+c1+'.';
+  }
+  if(short){
+    ST.cash -= due;                                      /* overdraft: cash goes negative */
+    toast(`\uD83D\uDCC9 Month ${Math.floor(ST.day/30)}: bills ${fmt$(-exp)}${ds?' + '+fmt$(-ds)+' debt repaid':''} but you had ${fmt$(inc+exp+due)}. Overdraft ${fmt$(ST.cash)} \u2014 find work!${selfNote}${loanNote}${reviewNote}${creditNote}`);
+  } else {
+    toast(`\uD83D\uDCC5 Month ${Math.floor(ST.day/30)} settled: +${fmt$(inc)} income, ${fmt$(exp)} bills${ds?', '+fmt$(-ds)+' debt repaid':''}.${selfNote}${loanNote}${bizNote?' '+bizNote:''}${reviewNote}${creditNote}`);
   }
   /* --- royalties land with the income above (fixed, every month).
          Once in a while a statement carries a bonus on top of the cheque. --- */
@@ -5176,7 +5195,8 @@ function monthlyBill(){
     ST.loan.left--;
     if(ST.loan.left<=0){
       ST.loan=null; ST.flags=ST.flags||{}; ST.flags.debtFree=true;
-      toast('\uD83C\uDFE6 Loan paid off in full. You paid '+fmt$(totalInterest)+' in interest. Your record is clean.');
+      creditAdd(8,'twelve instalments paid in full');
+      toast('\uD83C\uDFE6 Loan paid off in full. You paid '+fmt$(totalInterest)+' in interest. Your record is clean. CREDIT +8.');
     }
   }
   /* --- the American safety net: broke means SNAP & welfare step in --- */
@@ -5194,8 +5214,9 @@ function monthlyBill(){
     ST.fund=(ST.fund||0)-lost;
     ST.cash=0; ST.flags.bailouts=(ST.flags.bailouts||0)+1;
     ST.stress=clamp(ST.stress+8,0,100); ST.happy=clamp(ST.happy-4,0,100);
+    creditAdd(-15,'the court had to clear your debts');
     toast('\uD83D\uDCCB DEBT RESTRUCTURE \u2014 the court cleared '+fmt$(2000)+'+ of red ink. '
-      +(lost?'Half your asset fund is gone ('+fmt$(-lost)+'). ':'')+'A clean slate, not a free one.');
+      +(lost?'Half your asset fund is gone ('+fmt$(-lost)+'). ':'')+'A clean slate, not a free one. \u26A0 CREDIT -15.');
   }
   /* --- the crown: are you still #1 now that the month has closed? --- */
   if(ST.rank){
@@ -5650,7 +5671,11 @@ const worksIncome = () => Object.keys(ST.works||{}).reduce((a,id)=>{
 /* ---- a fresh start: 18 years old, $1,000 in the pocket, nothing else ---- */
 const AGE_START = 18;
 const CASH_START = 1000;
-const ST={age:AGE_START, cash:CASH_START, bank:0, happy:50, charm:20, health:100, stress:20, employed:null, biz:null, bizs:{}, loan:null, freshStart:false,
+/* CREDIT is a record of promises kept, not a personality. It opens with a thin
+   file (no history, no defaults), climbs only when a month's bills are actually
+   paid, and falls when they are not. Nothing you can BUY raises it. */
+const CREDIT_START = 35;
+const ST={age:AGE_START, cash:CASH_START, bank:0, happy:50, credit:CREDIT_START, health:100, stress:20, employed:null, biz:null, bizs:{}, loan:null, freshStart:false,
   fund:0, paySelf:0.10, paySelfMonths:0,                    /* pay yourself first: the asset fund */
   skills:{prog:0, write:0, proj:0, drive:0, cook:0, art:0, fin:0, fit:0, eng:0},
   works:{},                                                /* skill id -> day the work went on sale */
@@ -6044,31 +6069,35 @@ function studySession(id){
    LV2 opens one, and each trade opens at the kind of place it belongs to (venue = the
    panel kinds where the offer appears).
 
-   inc is what the business clears for a PERFECT operator: healthy, calm, charming and
-   cheerful. Nobody is perfect — opsQuality() below turns your actual body and mood into
-   the multiplier that decides what the month really pays. */
+   inc is what the business clears for a PERFECT operator: healthy, calm, cheerful and
+   worth trusting. Nobody is perfect — opsQuality() below turns your actual body, mood
+   and credit file into the multiplier that decides what the month really pays. */
+/* cr = the CREDIT a landlord, a supplier and a bank will want to see before they
+   hand over keys. It climbs the ladder with the money: a cart needs nobody's
+   permission, a franchise group needs a record. LV2 in the trade is the skill to
+   do the work; CREDIT is the name on the lease. */
 const BIZ=[
-  {id:'cart',    name:'COFFEE CART',     cost:1500,  skill:null,   lvl:0, inc:350,  vr:150,  risk:0.000,
+  {id:'cart',    name:'COFFEE CART',     cost:1500,  skill:null,   lvl:0, inc:350,  vr:150,  risk:0.000, cr:0,
    venue:['food','shop'],            note:'a corner hustle \u00B7 no experience needed'},
-  {id:'store',   name:'ONLINE STORE',    cost:6000,  skill:'write',lvl:2, inc:1100, vr:400,  risk:0.010,
+  {id:'store',   name:'ONLINE STORE',    cost:6000,  skill:'write',lvl:2, inc:1100, vr:400,  risk:0.010, cr:30,
    venue:['books','study','office'], note:'e-commerce run from your room'},
-  {id:'studio',  name:'PRINT STUDIO',    cost:7000,  skill:'art',  lvl:2, inc:1300, vr:500,  risk:0.010,
+  {id:'studio',  name:'PRINT STUDIO',    cost:7000,  skill:'art',  lvl:2, inc:1300, vr:500,  risk:0.010, cr:30,
    venue:['art'],                    note:'editions, framing, your own wall'},
-  {id:'kitchen', name:'BAKERY',          cost:9000,  skill:'cook', lvl:2, inc:1800, vr:700,  risk:0.020,
+  {id:'kitchen', name:'BAKERY',          cost:9000,  skill:'cook', lvl:2, inc:1800, vr:700,  risk:0.020, cr:32,
    venue:['food'],                   note:'flour, ovens, a queue by seven'},
-  {id:'gymco',   name:'TRAINING STUDIO', cost:10000, skill:'fit',  lvl:2, inc:2000, vr:800,  risk:0.020,
+  {id:'gymco',   name:'TRAINING STUDIO', cost:10000, skill:'fit',  lvl:2, inc:2000, vr:800,  risk:0.020, cr:35,
    venue:['gym'],                    note:'members, classes, your name on the door'},
-  {id:'agency',  name:'CONSULTANCY',     cost:12000, skill:'proj', lvl:2, inc:2400, vr:900,  risk:0.020,
+  {id:'agency',  name:'CONSULTANCY',     cost:12000, skill:'proj', lvl:2, inc:2400, vr:900,  risk:0.020, cr:38,
    venue:['office'],                 note:'you, a laptop, other people\u2019s chaos'},
-  {id:'garage',  name:'LOGISTICS CO',    cost:14000, skill:'drive',lvl:2, inc:2900, vr:1100, risk:0.020,
+  {id:'garage',  name:'LOGISTICS CO',    cost:14000, skill:'drive',lvl:2, inc:2900, vr:1100, risk:0.020, cr:40,
    venue:['travel'],                 note:'vans, routes, standing contracts'},
-  {id:'advisory',name:'ADVISORY',        cost:18000, skill:'fin',  lvl:2, inc:3700, vr:1200, risk:0.015,
+  {id:'advisory',name:'ADVISORY',        cost:18000, skill:'fin',  lvl:2, inc:3700, vr:1200, risk:0.015, cr:45,
    venue:['bank'],                   note:'other people\u2019s money, your fee'},
-  {id:'software',name:'SOFTWARE STUDIO', cost:20000, skill:'prog', lvl:2, inc:4200, vr:1800, risk:0.040,
+  {id:'software',name:'SOFTWARE STUDIO', cost:20000, skill:'prog', lvl:2, inc:4200, vr:1800, risk:0.040, cr:48,
    venue:['office'],                 note:'a product that runs without you'},
-  {id:'app',     name:'APP STARTUP',     cost:45000, skill:'prog', lvl:4, inc:9000, vr:3600, risk:0.060,
+  {id:'app',     name:'APP STARTUP',     cost:45000, skill:'prog', lvl:4, inc:9000, vr:3600, risk:0.060, cr:55,
    venue:['office'],                 note:'high risk, high ceiling'},
-  {id:'franch',  name:'FRANCHISE GROUP', cost:80000, skill:'fin',  lvl:4, inc:15000,vr:2500, risk:0.006,
+  {id:'franch',  name:'FRANCHISE GROUP', cost:80000, skill:'fin',  lvl:4, inc:15000,vr:2500, risk:0.006, cr:65,
    venue:['office','bank'],          note:'a proven playbook, bought in bulk'}
 ];
 
@@ -6100,12 +6129,14 @@ const ownsBiz  = id => bizList().some(x=>x.b.id===id);
    venture you cannot rescue is not a game, it is a punishment. Averaging keeps every
    stat genuinely wired to the money — 1.00 perfect, 0.45 for a wreck — while leaving
    the player a way back. The panel prints these same numbers, because a game must
-   never quote a profit it will not pay (the rule that fixed payIfHired and the bed). */
+   never quote a profit it will not pay (the rule that fixed payIfHired and the bed).
+   CREDIT sits here because terms are money: a supplier who trusts you ships on net-30
+   instead of cash on delivery, and a landlord who trusts you does not ask for a deposit. */
 function opsFactors(){
   return [
     {n:'HEALTH', w:0.32, v:ST.health/100,   why:'showing up at all'},
     {n:'CALM',   w:0.32, v:1-ST.stress/100, why:'clear head, clean calls'},
-    {n:'CHARM',  w:0.18, v:ST.charm/100,    why:'deals and word of mouth'},
+    {n:'CREDIT', w:0.18, v:(ST.credit||0)/100, why:'suppliers ship on terms'},
     {n:'MOOD',   w:0.18, v:ST.happy/100,    why:'momentum and nerve'}
   ];
 }
@@ -6127,10 +6158,17 @@ const bizNow = (b,st) => (st.lastProfit!==undefined ? st.lastProfit : bizExpecte
 function startBiz(b){
   if(!ST.bizs) ST.bizs={};
   if(ownsBiz(b.id)) return;
+  /* the skill says you can do the work; the record says someone will rent you a door */
+  if((ST.credit|0) < (b.cr||0)){
+    toast('\u26D4 '+b.name+' needs CREDIT '+(b.cr||0)+' on the lease. You have '+(ST.credit|0)+'. '
+      +'Pay every bill for a few months and come back.');
+    return false;
+  }
   ST.cash-=b.cost;
   ST.bizs[b.id]={months:0};
   advanceMinutes(180);
   toast('\uD83D\uDE80 LAUNCHED: '+b.name+' \u00B7 '+fmt$(b.cost)+' in \u00B7 first receipts in a month');
+  return true;
 }
 function closeBiz(id, sell){
   const rec=ST.bizs && ST.bizs[id]; if(!rec) return;
@@ -6153,6 +6191,36 @@ const SAVINGS_APR = 0.032;
 const INFLATION   = 0.03;     /* savings barely outrun it - "savers are losers" */
 const GOOD_APR    = 0.06;     /* cheaper than the asset it buys: the asset pays the interest */
 const BAD_APR     = 0.15;     /* bad debt buys consumption */
+
+/* ===================== CREDIT: the record behind the promise =====================
+   The bank does not ask how charming you are. It asks one question: have you paid
+   when the month closed? So the fourth stat is a record, and it moves on exactly
+   two things — a month settled in full, and a month that was not.
+     paid in full .............. +2   (and +1 more if an instalment was part of it)
+     overdraft ................. -8   (bills went unpaid: the record says so)
+     a missed instalment ....... -6 on top (someone lent you money and waited)
+     paid off early ............ +5   (a promise closed ahead of time)
+     loan runs its term ........ +8   (twelve clean months)
+     debt restructure .......... -15  (the court had to clear it)
+     a venture you owned died .. -6   (the bank heard about it)
+   Nothing you can buy raises it: a suit, a round of drinks and a friend's coffee
+   are HAPPY, not history. That is the whole point of calling it CREDIT. */
+const creditBand = c => c>=80?'EXCELLENT':c>=65?'GOOD':c>=45?'FAIR':c>=30?'THIN FILE':'POOR';
+/* every movement goes through here, so the panel can always show the last reason */
+function creditAdd(n, why){
+  const from=ST.credit|0;
+  ST.credit=clamp(Math.round(from+n),0,100);
+  const d=ST.credit-from;
+  if(d) ST.creditLog={day:ST.day, d, why, from, to:ST.credit};
+  return d;
+}
+const creditLast = () => ST.creditLog
+  ? ('last moved '+(ST.creditLog.d>0?'+':'')+ST.creditLog.d+' \u00B7 '+ST.creditLog.why)
+  : 'no history yet';
+/* one price for everybody, adjusted by the record: the same $5,000 is dearer to
+   a thin file than to a clean one, and a good borrower can always walk away */
+const creditApr = base => Math.max(0.03, Math.round(base*(1+(50-(ST.credit||0))*0.008)*1000)/1000);
+
 /* only a dividend payer is an asset in Rich Dad's book; a pure price bet is not */
 const DIVIDEND = {POMM:0.005, SFTL:0.007, VTEG:0.0003, VLTR:0, ORBX:0.005,
                   VECA:0.004, FLUV:0, CINE:0, VYPR:0, MRDN:0.023, STLG:0.021,
@@ -6192,7 +6260,15 @@ function loanPayoff(){
 }
 function takeLoan(amt,tag){
   const good = tag==='asset';
-  const apr  = good?GOOD_APR:BAD_APR;
+  /* the door first, the price second: a record below THIN FILE gets no money at
+     all, and a fresh-start offer still asks for a pulse (CREDIT 20) */
+  const need = tag==='fresh' ? 20 : 30;
+  if((ST.credit|0) < need){
+    toast('\uD83C\uDFE6 The bank passed on you: CREDIT '+(ST.credit|0)+' of '+need+' needed. '
+      +'Pay every bill for a few months and the door reopens.');
+    return false;
+  }
+  const apr  = creditApr(good?GOOD_APR:BAD_APR);
   ST.loan={principal:amt, left:12, payment:Math.round(amt*(1+apr)/12), apr, kind:good?'good':'bad'};
   if(good){
     /* GOOD DEBT: the money never reaches your pocket. It buys an asset that pays you. */
@@ -6202,9 +6278,10 @@ function takeLoan(amt,tag){
   ST.freshStart=false;
   advanceMinutes(60);
   toast((good?'\uD83C\uDF31 ':tag?'\u{1F949} ':'\uD83C\uDFE6 ')
-    +(good?'GOOD DEBT':'Loan')+' approved: '+fmt$(amt)+' at '+Math.round(apr*100)+'% APR, '
+    +(good?'GOOD DEBT':'Loan')+' approved: '+fmt$(amt)+' at '+Math.round(apr*1000)/10+'% APR \u00B7 CREDIT '+(ST.credit|0)+', '
     +fmt$(ST.loan.payment)+'/mo for 12 months \u00B7 '+fmt$(loanMonthInterest(ST.loan))+' interest each'
     +(good?' \u00B7 paid straight into your asset fund.':'.'));
+  return true;
 }
 
 function syncFin(){
@@ -6333,7 +6410,7 @@ function updatePanel(){
   document.getElementById('rowJob').title = own.length
     ? ('B quadrant \u00B7 '+own.length+' venture'+(own.length>1?'s':'')+' \u00B7 '+fmt$(bizIncome())+'/mo'
        +' \u00B7 your condition pays '+Math.round(opsQuality()*100)+'% of the sign price. Tap for the books.')
-    : 'No business yet. Every skill taken to LV2 opens one \u2014 or start a coffee cart today. Tap to see the board.';
+    : 'No business yet. Every skill taken to LV2 opens one, if your CREDIT will carry the lease \u2014 or start a coffee cart today, which asks nobody for anything. Tap to see the board.';
   const rp=document.getElementById('rowPerf');
   if(rp){
     const pv=ST.perf||70;
@@ -6347,7 +6424,7 @@ function updatePanel(){
       : 'No job. Offices, banks, fire & police houses and markets all hire.';
   }
   document.getElementById('cHappy').textContent=ST.happy;
-  document.getElementById('cCharm').textContent=ST.charm;
+  document.getElementById('cCredit').textContent=ST.credit;
   document.getElementById('cStress').textContent=ST.stress;
   document.getElementById('hpBar').style.width=ST.health+'%';
   document.getElementById('hudIcon').style.setProperty('--hp', ST.health+'%');
@@ -6363,6 +6440,7 @@ function updatePanel(){
   };
   setChip('cHappy',ST.happy,25,40,false);
   setChip('cStress',ST.stress,80,65,true);
+  setChip('cCredit',ST.credit,20,30,false);
   document.getElementById('hpBar').style.background =
     ST.health<=30 ? 'linear-gradient(90deg,#8a2a22,#e2564a)'
     : ST.health<=55 ? 'linear-gradient(90deg,#8a6a22,#e2c04a)'
@@ -6519,32 +6597,50 @@ function openAction(b){
   };
 
   if(kind==='bank'){
+    /* The price of money is your record. Both the rate and the door are quoted from
+       the same number the HUD shows, so nothing here can promise a rate the bank
+       would not give you. */
+    const cr=ST.credit|0, need=30, canBorrow=cr>=need;
+    const pct=a=>Math.round(a*1000)/10;
+    const quote=(amt,good)=>{ const apr=good?creditApr(GOOD_APR):creditApr(BAD_APR);
+      return {apr, pay:Math.round(amt*(1+apr)/12)}; };
+    const creditFoot=' \u00B7 CREDIT '+cr+'/100 '+creditBand(cr)+' \u00B7 '+creditLast()+'.';
     if(ST.loan){
       descEl.textContent=(ST.loan.kind==='good'?'GOOD DEBT \u2014 the asset fund earns while you repay. ':'BAD DEBT \u2014 this bought nothing that pays you. ')
         +'You still owe '+fmt$(ST.loan.payment)+'/mo for '+ST.loan.left+' more month'+(ST.loan.left>1?'s':'')
-        +' \u2014 '+fmt$(loanMonthInterest(ST.loan))+' of each payment is interest ('+Math.round((ST.loan.apr||LOAN_APR)*100)+'% APR). Balance '+fmt$(debtValue())+'.';
-      A('PAY OFF EARLY \u00B7 '+fmt$(loanPayoff()),'remaining principal + this month\u2019s interest \u00B7 no future interest',
+        +' \u2014 '+fmt$(loanMonthInterest(ST.loan))+' of each payment is interest ('+pct(ST.loan.apr||LOAN_APR)+'% APR). Balance '+fmt$(debtValue())+'.'
+        +creditFoot;
+      A('PAY OFF EARLY \u00B7 '+fmt$(loanPayoff()),'remaining principal + this month\u2019s interest \u00B7 no future interest \u00B7 CREDIT +5',
         ()=>{const d=loanPayoff();
           let due=d; const fc=Math.min(Math.max(ST.cash,0),due); ST.cash-=fc; due-=fc;
           if(due>0){const fb=Math.min(ST.bank,due); ST.bank-=fb; due-=fb;}
           if(due>0) ST.cash-=due;
-          ST.loan=null; advanceMinutes(45); toast('\u2705 Debt cleared. That weight is gone.');},
+          ST.loan=null; creditAdd(5,'paid a loan off early');
+          advanceMinutes(45); toast('\u2705 Debt cleared. That weight is gone. \u00B7 CREDIT +5');},
         {dis:()=>ST.cash+ST.bank<loanPayoff()});
     } else {
-      descEl.textContent='Not all debt is bad. GOOD DEBT buys an asset that pays you; BAD DEBT buys consumption. Deposits earn 3.2% APR \u2014 barely above inflation.';
+      descEl.textContent='Not all debt is bad. GOOD DEBT buys an asset that pays you; BAD DEBT buys consumption. '
+        +'The rate is set by your record: the same $5,000 costs less at CREDIT 80 than at CREDIT 35.'
+        +creditFoot;
+      const good=quote(10000,true), bad5=quote(5000,false), bad20=quote(20000,false), bad50=quote(50000,false);
       A('\uD83C\uDF31 GOOD DEBT \u00B7 ASSET LOAN \u00B7 $10,000',
-        '6% APR \u00B7 '+fmt$(Math.round(10000*1.06/12))+'/mo \u00B7 asset fund yields 8% \u00B7 needs a job',
-        ()=>takeLoan(10000,'asset'),{dis:()=>!ST.employed, cls:'cur'});
+        (canBorrow?'':'\u26D4 NEEDS CREDIT '+need+' (you are '+cr+') \u00B7 ')
+        +pct(good.apr)+'% APR \u00B7 '+fmt$(good.pay)+'/mo \u00B7 asset fund yields 8% \u00B7 needs a job',
+        ()=>takeLoan(10000,'asset'),{dis:()=>!canBorrow||!ST.employed, cls:'cur'});
       if(ST.freshStart){
-        A('\u{1F949} BAD DEBT \u00B7 FRESH START \u00B7 $10,000','the bank saw your business fail \u00B7 '+fmt$(Math.round(10000*1.15/12))+'/mo \u00B7 12 months',
-          ()=>takeLoan(10000,'fresh'));   /* the same 15% APR applies */
+        const fs=quote(10000,false);
+        A('\u{1F949} BAD DEBT \u00B7 FRESH START \u00B7 $10,000','the bank saw your business fail \u00B7 '+fmt$(fs.pay)+'/mo \u00B7 12 months \u00B7 '+pct(fs.apr)+'% APR',
+          ()=>takeLoan(10000,'fresh'));
       }
-      A('BAD DEBT \u00B7 $5,000','repay '+fmt$(Math.round(5000*1.15/12))+'/mo \u00B7 12 months @15%/yr \u00B7 consumption only',
-        ()=>takeLoan(5000));
-      A('BAD DEBT \u00B7 $20,000','repay '+fmt$(Math.round(20000*1.15/12))+'/mo \u00B7 12 months @15%/yr \u00B7 consumption only',
-        ()=>takeLoan(20000));
-      A('BAD DEBT \u00B7 $50,000','repay '+fmt$(Math.round(50000*1.15/12))+'/mo \u00B7 12 months @15%/yr \u00B7 needs a job',
-        ()=>takeLoan(50000),{dis:()=>!ST.employed});
+      A('BAD DEBT \u00B7 $5,000',
+        (canBorrow?'repay ':'\u26D4 NEEDS CREDIT '+need+' (you are '+cr+') \u00B7 ')+fmt$(bad5.pay)+'/mo \u00B7 12 months @'+pct(bad5.apr)+'%/yr \u00B7 consumption only',
+        ()=>takeLoan(5000),{dis:()=>!canBorrow});
+      A('BAD DEBT \u00B7 $20,000',
+        (canBorrow?'repay ':'\u26D4 NEEDS CREDIT '+need+' (you are '+cr+') \u00B7 ')+fmt$(bad20.pay)+'/mo \u00B7 12 months @'+pct(bad20.apr)+'%/yr \u00B7 consumption only',
+        ()=>takeLoan(20000),{dis:()=>!canBorrow});
+      A('BAD DEBT \u00B7 $50,000',
+        (canBorrow?'repay ':'\u26D4 NEEDS CREDIT '+need+' (you are '+cr+') \u00B7 ')+fmt$(bad50.pay)+'/mo \u00B7 12 months @'+pct(bad50.apr)+'%/yr \u00B7 needs a job',
+        ()=>takeLoan(50000),{dis:()=>!canBorrow||!ST.employed});
     }
     A('DEPOSIT $1,000','cash \u2192 savings',()=>{ST.cash-=1000;ST.bank+=1000;flash('Deposited $1,000');},{dis:()=>ST.cash<1000});
     A('DEPOSIT $5,000','cash \u2192 savings',()=>{ST.cash-=5000;ST.bank+=5000;flash('Deposited $5,000');},{dis:()=>ST.cash<5000});
@@ -6606,8 +6702,8 @@ function openAction(b){
     A(ST.daily.med?'\u2713 MEDITATED TODAY':'MEDITATE 1 HOUR','stress -22 \u00B7 happy +4 \u00B7 once a day',
       ()=>{ST.daily.med=true;const sfx=relax('med',22);ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(60);flash('Deep calm washes over you.'+sfx);},
       {dis:()=>!!ST.daily.med});
-    A(ST.daily.donate?'\u2713 DONATED TODAY':'DONATE TO THE PLATE \u00B7 $100','happy +10 \u00B7 charm +4',
-      ()=>{ST.cash-=100;ST.daily.donate=true;ST.happy=clamp(ST.happy+10,0,100);ST.charm=clamp(ST.charm+4,0,100);advanceMinutes(20);flash('Giving feels good.');},
+    A(ST.daily.donate?'\u2713 DONATED TODAY':'DONATE TO THE PLATE \u00B7 $100','happy +10 \u00B7 the plate does not report to the bank',
+      ()=>{ST.cash-=100;ST.daily.donate=true;ST.happy=clamp(ST.happy+10,0,100);advanceMinutes(20);flash('Giving feels good.');},
       {dis:()=>!!ST.daily.donate||ST.cash<100});
     /* the night a church actually offers: a pew, not a bed. Cheaper than a room and
        rougher than one — and it goes through the same one-night-per-day gate, so it
@@ -6624,7 +6720,7 @@ function openAction(b){
   } else if(kind==='hospital'){
     /* ONE appointment per visit. All three services buy the body back, so leaving them
        unlocked let a player stack check-up + rest + dental in a single stop: health 100,
-       charm +6, and the visit stopped being a decision. Pick one service; walk on for the
+       happy +3, and the visit stopped being a decision. Pick one service; walk on for the
        next chance. Same semantics as a school's one-class-per-visit. */
     const sickName = ST.sick ? ST.sick.name.toLowerCase() : '';
     descEl.textContent = treatedHere
@@ -6644,8 +6740,8 @@ function openAction(b){
        today to fix it — say so on the button instead of letting the player find out. */
     TREAT('REST & RECOVER \u00B7 $80','health +20'+(ST.sick?' \u00B7 does not cure '+sickName:''),
       ()=>{ST.cash-=80;ST.health=clamp(ST.health+20,0,100);advanceMinutes(120);flash('Resting helps. HEALTH +20');},{dis:()=>ST.cash<80});
-    TREAT('DENTAL WORK \u00B7 $350','health +8 \u00B7 charm +6'+(ST.sick?' \u00B7 does not cure '+sickName:''),
-      ()=>{ST.cash-=350;ST.health=clamp(ST.health+8,0,100);ST.charm=clamp(ST.charm+6,0,100);advanceMinutes(120);flash('A new smile. CHARM +6');},{dis:()=>ST.cash<350});
+    TREAT('DENTAL WORK \u00B7 $350','health +8 \u00B7 happy +3'+(ST.sick?' \u00B7 does not cure '+sickName:''),
+      ()=>{ST.cash-=350;ST.health=clamp(ST.health+8,0,100);ST.happy=clamp(ST.happy+3,0,100);advanceMinutes(120);flash('A new smile. HAPPY +3');},{dis:()=>ST.cash<350});
   } else if(kind==='gym'){
     descEl.textContent='Iron paradise. Sweat now, shine later.';
     A(ST.daily.gym?'\u2713 TRAINED TODAY':'TRAIN \u00B7 $25','+10 FITNESS XP \u00B7 health +4 \u00B7 happy +6',
@@ -6680,8 +6776,8 @@ function openAction(b){
       ()=>{ST.cash-=18;ST.happy=clamp(ST.happy+6,0,100);ST.health=clamp(ST.health+2,0,100);advanceMinutes(45);flash('Delicious.');},{dis:()=>ST.cash<18});
     EAT('COFFEE TO GO \u00B7 $6','happy +2 \u00B7 stress -3',
       ()=>{ST.cash-=6;ST.happy=clamp(ST.happy+2,0,100);ST.stress=clamp(ST.stress-3,0,100);advanceMinutes(10);flash('Caffeine acquired.');},{dis:()=>ST.cash<6});
-    EAT('TAKE A FRIEND TO DINNER \u00B7 $95','happy +9 \u00B7 charm +7 \u00B7 stress -8',
-      ()=>{ST.cash-=95;ST.happy=clamp(ST.happy+9,0,100);ST.charm=clamp(ST.charm+7,0,100);const sfx=relax('dinner',8);advanceMinutes(120);flash('Good food, good company.'+sfx);},{dis:()=>ST.cash<95});
+    EAT('TAKE A FRIEND TO DINNER \u00B7 $95','happy +9 \u00B7 stress -8 \u00B7 a gift, not a repayment',
+      ()=>{ST.cash-=95;ST.happy=clamp(ST.happy+9,0,100);const sfx=relax('dinner',8);advanceMinutes(120);flash('Good food, good company.'+sfx);},{dis:()=>ST.cash<95});
   } else if(kind==='art'){
     descEl.textContent='Canvas and calm. Create something tonight.';
     A(ST.daily.art?'\u2713 SKETCHED TODAY':'SKETCH THE HALLS \u00B7 $20','+10 ART XP \u00B7 happy +5',
@@ -6693,8 +6789,8 @@ function openAction(b){
   } else if(kind==='shop'){
     descEl.textContent='Retail therapy. Try to resist \u2014 or pick up a shift out back: cash today, no interview.';
     GIG('\uD83D\uDCE6 STOCK THE SHELVES \u00B7 2H','the stockroom');
-    A(ST.owned.suit?'\u2713 SUIT OWNED':'BUY A SUIT \u00B7 $260','charm +8 \u00B7 yours forever',
-      ()=>{ST.cash-=260;ST.owned.suit=true;ST.charm=clamp(ST.charm+8,0,100);advanceMinutes(60);flash('Looking sharp! CHARM +8');},
+    A(ST.owned.suit?'\u2713 SUIT OWNED':'BUY A SUIT \u00B7 $260','happy +4 \u00B7 yours forever \u00B7 CREDIT is not for sale',
+      ()=>{ST.cash-=260;ST.owned.suit=true;ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(60);flash('Looking sharp. HAPPY +4');},
       {dis:()=>ST.owned.suit||ST.cash<260});
     A(ST.owned.painting?'\u2713 PAINTING OWNED':'BUY A PAINTING \u00B7 $140','happy +9 \u00B7 yours forever',
       ()=>{ST.cash-=140;ST.owned.painting=true;ST.happy=clamp(ST.happy+9,0,100);advanceMinutes(30);flash('It will look great at home.');},
@@ -6702,8 +6798,8 @@ function openAction(b){
     A(ST.owned.laptop?'\u2713 LAPTOP OWNED':'BUY A LAPTOP \u00B7 $1,200','+15 IT XP \u00B7 happy +4 \u00B7 yours forever',
       ()=>{ST.cash-=1200;ST.owned.laptop=true;const g=grantXp('prog',15);ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(60);flash('New laptop. +'+g+' PROGRAMMING XP');},
       {dis:()=>ST.owned.laptop||ST.cash<1200});
-    A(ST.owned.sneakers?'\u2713 SNEAKERS OWNED':'BUY SNEAKERS \u00B7 $150','fitness +5 \u00B7 charm +3 \u00B7 happy +4',
-      ()=>{ST.cash-=150;ST.owned.sneakers=true;const g=grantXp('fit',5);ST.charm=clamp(ST.charm+3,0,100);ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(45);flash('Fresh kicks. +'+g+' FITNESS XP');},
+    A(ST.owned.sneakers?'\u2713 SNEAKERS OWNED':'BUY SNEAKERS \u00B7 $150','fitness +5 \u00B7 happy +4',
+      ()=>{ST.cash-=150;ST.owned.sneakers=true;const g=grantXp('fit',5);ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(45);flash('Fresh kicks. +'+g+' FITNESS XP');},
       {dis:()=>ST.owned.sneakers||ST.cash<150});
   } else if(kind==='game'){
     descEl.textContent='Fictional titles, fictional prices \u2014 no real purchase ever takes place. Prices drift like stocks; hover a title for original box art.';
@@ -6741,9 +6837,9 @@ function openAction(b){
       A(own?'\u2713 YOU DRIVE THE '+c.m : 'BUY '+brand+' '+c.m+' \u00B7 '+fmt$(c.p),
         own ? 'your ride \u00B7 a liability, not an asset'
             : (trade ? fmt$(c.p)+' \u2212 '+fmt$(trade)+' trade-in = '+fmt$(net)+' \u00B7 LIABILITY'
-                     : 'LIABILITY \u00B7 -'+fmt$(Math.round(c.p*CAR_UPKEEP))+'/mo upkeep \u00B7 charm +6'),
+                     : 'LIABILITY \u00B7 -'+fmt$(Math.round(c.p*CAR_UPKEEP))+'/mo upkeep \u00B7 happy +8'),
         ()=>{ ST.cash-=net; ST.car={brand, model:c.m, price:c.p};
-              ST.charm=clamp(ST.charm+6,0,100); ST.happy=clamp(ST.happy+8,0,100);
+              ST.happy=clamp(ST.happy+8,0,100);
               advanceMinutes(90); updateWheels(); updatePanel();
               toast('\uD83D\uDE97 '+brand+' '+c.m+' \u2014 a liability on your sheet, not an asset.'); openAction(b); },
         {dis:()=> own || ST.cash<net});
@@ -6782,11 +6878,11 @@ function openAction(b){
     descEl.textContent=ateHere
       ? 'You have already had a drink here. Walk on before you order another round.'
       : 'Faces everywhere. Say hello to somebody. One round of drinks per visit.';
-    A(ST.daily.mingle?'\u2713 MINGLED TODAY':'MINGLE','happy +7 \u00B7 charm +2 \u00B7 once a day',
-      ()=>{ST.daily.mingle=true;ST.happy=clamp(ST.happy+7,0,100);ST.charm=clamp(ST.charm+2,0,100);advanceMinutes(30);flash('You made a friend.');},
+    A(ST.daily.mingle?'\u2713 MINGLED TODAY':'MINGLE','happy +7 \u00B7 once a day',
+      ()=>{ST.daily.mingle=true;ST.happy=clamp(ST.happy+7,0,100);advanceMinutes(30);flash('You made a friend.');},
       {dis:()=>!!ST.daily.mingle});
-    EAT('BUY A ROUND OF DRINKS \u00B7 $120','charm +9 \u00B7 happy +8 \u00B7 stress -6',
-      ()=>{ST.cash-=120;ST.charm=clamp(ST.charm+9,0,100);ST.happy=clamp(ST.happy+8,0,100);const sfx=relax('drinks',6);advanceMinutes(120);flash('Everybody loves you tonight.'+sfx);},{dis:()=>ST.cash<120});
+    EAT('BUY A ROUND OF DRINKS \u00B7 $120','happy +8 \u00B7 stress -6 \u00B7 generosity is not credit',
+      ()=>{ST.cash-=120;ST.happy=clamp(ST.happy+8,0,100);const sfx=relax('drinks',6);advanceMinutes(120);flash('Everybody loves you tonight.'+sfx);},{dis:()=>ST.cash<120});
   } else if(kind==='museum'){
     descEl.textContent='History under glass.';
     A(ST.daily.museum?'\u2713 VISITED TODAY':'ADMIT ONE \u00B7 $20','happy +6 \u00B7 +5 ART XP',
@@ -6934,12 +7030,12 @@ function openAction(b){
     if(kind==='venture'){
       const afford=BIZ.some(b=>{
         const lv=b.skill?lvlOf(ST.skills[b.skill]||0):99;
-        return (!b.skill||lv>=b.lvl) && ST.cash>=b.cost && !ownsBiz(b.id);
+        return (!b.skill||lv>=b.lvl) && ST.cash>=b.cost && (ST.credit|0)>=(b.cr||0) && !ownsBiz(b.id);
       });
       A('\uD83D\uDE80 YOUR VENTURES \u00B7 '+mine.length,
         mine.length ? ('paying '+fmt$(bizIncome())+'/mo \u00B7 your condition is worth '+Math.round(q*100)+'% of the sign price')
         : afford ? 'you own nothing yet \u00B7 at least one trade below is within reach today'
-                 : 'you own nothing yet \u00B7 LV2 in a trade, plus the cash to launch it, is all it takes',
+                 : 'you own nothing yet \u00B7 LV2 in a trade, the cash to launch it, and a CREDIT the landlord will take',
         ()=>{},{dis:()=>true, cls:mine.length?'cur':''});
     }
     ownedHere.forEach(({b,st})=>{
@@ -6956,13 +7052,15 @@ function openAction(b){
     canOpen.forEach(b=>{
       const lv=b.skill?lvlOf(ST.skills[b.skill]||0):99;
       const ok=!b.skill || lv>=b.lvl;
+      const crOk=(ST.credit|0)>=(b.cr||0);
       const est=bizExpected(b,{months:0});
       A('LAUNCH '+b.name+' \u00B7 '+fmt$(b.cost),
-        (ok ? ('~'+fmt$(est)+'/mo at your condition \u00B7 ') : ('LOCKED \u00B7 '))
+        (!crOk ? ('\u26D4 NEEDS CREDIT '+(b.cr||0)+' (you are '+(ST.credit|0)+') \u00B7 ')
+               : (ok ? ('~'+fmt$(est)+'/mo at your condition \u00B7 ') : ('LOCKED \u00B7 ')))
           +b.note
           +(b.skill ? (' \u00B7 needs '+skillName(b.skill)+' LV'+b.lvl+(ok?'':(' (you are LV'+lv+')'))) : ' \u00B7 no experience needed'),
         ()=>startBiz(b),
-        {dis:()=>ST.cash<b.cost||!ok, cls:ok&&ST.cash>=b.cost?'hire':''});
+        {dis:()=>ST.cash<b.cost||!ok||!crOk, cls:ok&&crOk&&ST.cash>=b.cost?'hire':''});
     });
     /* never let a truncation look like the whole board: say what was left off */
     if(openable.length>canOpen.length)
@@ -7200,8 +7298,9 @@ document.getElementById('rowJob').addEventListener('click',()=>{
        +opsFactors().map(f=>f.n+' '+Math.round(f.v*100)).join(' \u00B7 ')+'. '
        +'Every venture past the first also adds stress when the month closes.')
     : ('No business yet. Every skill taken to LV2 opens one: art at a gallery, cooking in a market, '
-       +'finance at a bank, code or consultancy in an office tower. The VENTURE LAB on 42nd Street '
-       +'lists every trade you qualify for.');
+       +'finance at a bank, code or consultancy in an office tower. A landlord also reads your CREDIT '
+       +'\u2014 30 for a shop, 45 for an advisory, 65 for a franchise group \u2014 because the lease is in your name. '
+       +'The VENTURE LAB on 42nd Street lists every trade you qualify for.');
   const body=document.getElementById('actBody');
   body.innerHTML='';
   mine.forEach(({b,st})=>{
@@ -7269,7 +7368,13 @@ const EVENTS=[
      return [['HAPPY +9','plus'],['STRESS -6','plus']];}},
   {k:'good',ic:'\u2615',h:'SOMEONE BOUGHT YOUR COFFEE',
    d:'The barista says the guy ahead of you already paid. Pay it forward.',
-   run:()=>{ST.happy=clamp(ST.happy+4,0,100);ST.charm=clamp(ST.charm+2,0,100);return [['HAPPY +4','plus'],['CHARM +2','plus']];}},
+   /* a gift is not a repayment: it lifts the day, it does not touch the record */
+   run:()=>{ST.happy=clamp(ST.happy+6,0,100);ST.stress=clamp(ST.stress-3,0,100);
+     return [['HAPPY +6','plus'],['STRESS -3','plus']];}},
+  {k:'good',ic:'\uD83C\uDF5D',h:'LUNCH IS ON THE HOUSE',
+   d:'A friend you have not seen in months waves you over and refuses to let you pay.',
+   run:()=>{ST.happy=clamp(ST.happy+7,0,100);ST.stress=clamp(ST.stress-5,0,100);advanceMinutes(60);
+     return [['HAPPY +7','plus'],['STRESS -5','plus']];}},
   {k:'good',ic:'\uD83D\uDCBC',h:'A SIDE GIG',
    d:'A shop owner needs a website by Friday. Cash on delivery.',
    run:()=>{ST.cash+=260;const g=grantXp('prog',8);advanceMinutes(180);
@@ -7282,8 +7387,8 @@ const EVENTS=[
    run:()=>{ST.cash+=1200;return [['CASH +$1,200','plus']];}},
   {k:'good',ic:'\uD83C\uDFA4',h:'A MENTOR APPEARS',
    d:'A retired banker talks to you for an hour on the subway. Free advice, worth a fortune.',
-   run:()=>{ST.charm=clamp(ST.charm+7,0,100);const g=grantXp('fin',10);ST.happy=clamp(ST.happy+4,0,100);
-     return [['CHARM +7','plus'],['FINANCE +'+g+' XP','plus']];}},
+   run:()=>{const g=grantXp('fin',14);ST.happy=clamp(ST.happy+4,0,100);
+     return [['FINANCE +'+g+' XP','plus'],['HAPPY +4','plus']];}},
   {k:'good',ic:'\uD83D\uDECB\uFE0F',h:'SOLD THE OLD COUCH',
    d:'Someone paid full asking price. No haggling, no drama.',
    run:()=>{ST.cash+=95;return [['CASH +$95','plus']];}},
@@ -7300,8 +7405,8 @@ const EVENTS=[
   {k:'good',ic:'\u265F',h:'THE OLD MAN AT THE CHESS TABLE',
    d:'He beat you three times without saying a word, then spent an hour telling you why.',
    run:()=>{const sk=SKILLS[Math.floor(Math.random()*SKILLS.length)];
-     const g=grantXp(sk.id,12);ST.charm=clamp(ST.charm+3,0,100);
-     return [['+'+g+' '+skillName(sk.id)+' XP','plus'],['CHARM +3','plus']];}},
+     const g=grantXp(sk.id,12);ST.stress=clamp(ST.stress-2,0,100);
+     return [['+'+g+' '+skillName(sk.id)+' XP','plus'],['STRESS -2','plus']];}},
   {k:'good',ic:'\uD83D\uDCDE',h:'YOUR OLD BOSS CALLS',
    d:'Not to hire you back. To ask how you would handle it now \u2014 and to admit you were right.',
    run:()=>{const sk=bestSkill();const g=grantXp(sk.id,14);ST.stress=clamp(ST.stress-3,0,100);
@@ -7385,8 +7490,8 @@ const EVENTS=[
    run:()=>{ST.stress=clamp(ST.stress+5,0,100);advanceMinutes(40);return [['STRESS +5','minus'],['40 MIN LOST','minus']];}},
   {k:'life',ic:'\uD83D\uDC4B',h:'SOMEONE REMEMBERS YOU',
    d:'A stranger stops you: you helped them last year and they never forgot it.',
-   run:()=>{ST.charm=clamp(ST.charm+5,0,100);ST.happy=clamp(ST.happy+6,0,100);
-     return [['CHARM +5','plus'],['HAPPY +6','plus']];}}
+   run:()=>{ST.happy=clamp(ST.happy+6,0,100);ST.stress=clamp(ST.stress-3,0,100);
+     return [['HAPPY +6','plus'],['STRESS -3','plus']];}}
 ];
 const evCard=document.getElementById('evCard');
 let evResolve=null;
@@ -8058,7 +8163,7 @@ function spawnNPCs(myIdx){
       invest: Math.random()<0.35 ? Math.round(400+Math.random()*2400) : 0,
       debt: Math.random()<0.3 ? Math.round(300+Math.random()*1800) : 0,
       happy: 30+Math.floor(Math.random()*66),
-      charm: 20+Math.floor(Math.random()*71),
+      credit: 20+Math.floor(Math.random()*71),      /* their file; the card prints it */
       mood: NPC_MOODS[Math.floor(Math.random()*NPC_MOODS.length)],
       x:PATH[idx].x, y:PATH[idx].y, flip:1, pi:idx
     };
@@ -8360,7 +8465,7 @@ function openNpcCard(nc){
     '<div class="sk-row"><span>\uD83D\uDCB0</span><span class="sklv">CASH</span><span class="skcash">'+fmt$(nc.cash)+'</span></div>'
    +'<div class="sk-row"><span>\uD83D\uDC8E</span><span class="sklv">NET WORTH</span><span class="skcash">'+fmt$(npcWorth(nc))+'</span></div>'
    +'<div class="sk-row"><span>\uD83D\uDE0A</span><span class="sklv">HAPPY</span><div class="skbar"><div style="width:'+nc.happy+'%"></div></div><span class="sklv">'+nc.happy+'/100</span></div>'
-   +'<div class="sk-row"><span>\u2728</span><span class="sklv">CHARM</span><div class="skbar"><div style="width:'+nc.charm+'%"></div></div><span class="sklv">'+nc.charm+'/100</span></div>';
+   +'<div class="sk-row"><span>\uD83D\uDCB3</span><span class="sklv">CREDIT</span><div class="skbar"><div style="width:'+nc.credit+'%"></div></div><span class="sklv">'+nc.credit+'/100</span></div>';
   ap.classList.add('show');
 }
 /* NPCs are quiet now: their card appears only while the mouse rests on them */
@@ -9041,6 +9146,10 @@ function resumeGame(){
   if(window.syncHudFace) syncHudFace();        /* the corner badge wears the same face */
   /* restore the life itself */
   Object.keys(ST).forEach(k=>{ if(k in s.ST) ST[k]=s.ST[k]; });
+  /* CHARM became CREDIT. They are not the same thing — charm was bought with a suit
+     and a round of drinks, credit is a record of bills paid — so an old save does not
+     inherit the number: it opens with a thin file, the same as a new life. */
+  if(typeof s.ST.credit!=='number') ST.credit=CREDIT_START;
   /* older saves: IT became PROGRAMMING, WRITING is new, and a work can now be owned */
   if(!ST.skills) ST.skills={};
   if(ST.skills.it!==undefined){
