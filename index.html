@@ -252,7 +252,7 @@
   #goalsBtn.allDone .sbNum{color:#2a1c08;background:#e2c878;border-color:#ffe9b0}
   #rankBtn.champ{border-color:#ffd76a;box-shadow:0 0 0 3px rgba(255,215,106,.22),0 10px 24px rgba(0,0,0,.55)}
   #rankBtn.champ .sbNum{color:#2a1c08;background:#ffd76a;border-color:#ffe9b0}
-  #mktPanel,#realtyPanel,#portPanel{
+  #mktPanel,#realtyPanel,#portPanel,#estatePanel{
     position:fixed;left:80px;width:340px;overflow:auto;
     z-index:46;display:none;
     background:linear-gradient(180deg,#f7ebc8,#e9d5a4);
@@ -263,7 +263,8 @@
   #mktPanel{top:230px;max-height:calc(100vh - 320px)}
   #realtyPanel{top:290px;max-height:calc(100vh - 380px)}
   #portPanel{top:350px;max-height:calc(100vh - 440px)}
-  #mktPanel.show,#realtyPanel.show,#portPanel.show{display:block}
+  #estatePanel{top:350px;max-height:calc(100vh - 440px)}
+  #mktPanel.show,#realtyPanel.show,#portPanel.show,#estatePanel.show{display:block}
   .mk-act{display:flex;gap:6px;justify-content:flex-end;margin:3px 3px 2px}
   .mk-act button{
     font-family:Verdana,sans-serif;font-size:11.5px;font-weight:bold;letter-spacing:1px;
@@ -717,10 +718,10 @@
        draping over the side buttons, the brand and the dock) and the others
        overflow the right edge by ~56px — which lets the WeChat webview pan the
        whole fixed layer. Anchor every sheet INSIDE the viewport instead. */
-    #finPanel,#mktPanel,#realtyPanel,#portPanel{left:12px;right:12px;width:auto;max-width:none}
+    #finPanel,#mktPanel,#realtyPanel,#portPanel,#estatePanel{left:12px;right:12px;width:auto;max-width:none}
     /* the three left sheets drop below the side-button stack (buttons end at
        y≈340) so the buttons stay visible and the user can flip between them */
-    #mktPanel,#realtyPanel,#portPanel{top:360px;max-height:calc(100vh - 430px)}
+    #mktPanel,#realtyPanel,#portPanel,#estatePanel{top:360px;max-height:calc(100vh - 430px)}
     #actPanel{left:12px;right:12px;width:auto;top:auto;bottom:70px;max-height:52vh}
     /* the newspaper slides in "centered minus 200px" on desktop to clear the HUD —
        on a phone that parks half of it off-screen. Bottom sheet above the dock.
@@ -760,7 +761,7 @@
      v17 · NOIR HUD  — one dark-walnut + gold skin for every panel,
      so the street art reads as the picture and the UI as the frame
      ================================================================== */
-  #panel,#finPanel,#actPanel,#mktPanel,#realtyPanel,#portPanel{
+  #panel,#finPanel,#actPanel,#mktPanel,#realtyPanel,#portPanel,#estatePanel{
     background:linear-gradient(165deg,rgba(34,27,20,.96),rgba(16,12,9,.975));
     border:1px solid rgba(201,163,95,.50);
     border-radius:14px;
@@ -770,7 +771,7 @@
   }
   .fin-t{padding-bottom:8px;border-bottom:1px solid rgba(201,163,95,.22);margin-bottom:9px}
   .fin-t b{font-family:Georgia,serif;color:#ffe9b0;font-size:15.5px;letter-spacing:2.4px}
-  #finClose,#mktClose,#realtyClose,#portClose,#actClose{
+  #finClose,#mktClose,#realtyClose,#portClose,#estateClose,#actClose{
     margin-left:auto;cursor:pointer;font-size:11px;font-weight:bold;font-family:Georgia,serif;
     color:#c9a35f;width:22px;height:22px;line-height:20px;text-align:center;flex:none;
     border:1px solid rgba(201,163,95,.4);border-radius:50%;background:rgba(255,233,176,.04);
@@ -893,6 +894,24 @@
   .pt-total{background:rgba(255,233,176,.07);border:1px solid rgba(201,163,95,.25);color:#d9c08d}
   .pt-total span:last-child{color:#ffe9b0;font-family:Georgia,serif}
   .mk-note{color:#7e6f57}
+  /* the canvas row carries one action: the sale that turns it into cash */
+  .est-sell{
+    display:block;width:100%;margin-top:7px;cursor:pointer;
+    font-family:Verdana,sans-serif;font-size:11px;font-weight:bold;letter-spacing:1.4px;
+    padding:7px 10px;border-radius:7px;
+    color:#1a1208;background:linear-gradient(180deg,#f2d99b,#c9a35f);
+    border:1px solid #c9a35f;
+  }
+  .est-sell:hover:not(:disabled){filter:brightness(1.08)}
+  .est-sell:disabled{color:#8a7a5c;background:rgba(255,244,214,.05);border-color:rgba(216,180,112,.24);cursor:default}
+  .est-hint{font-size:11.5px;color:#8f7f66;line-height:1.55;margin-top:9px}
+  /* this page is read, not scanned: name and number on one line, the detail under
+     them at full width. A note squeezed into a flex gap dies mid-word ("bought $…"),
+     which is worse than no note at all. */
+  #estatePanel .fin-i.est{display:grid;grid-template-columns:1fr auto;gap:1px 9px;align-items:baseline}
+  #estatePanel .fin-i.est .note{grid-column:1/-1;white-space:normal;line-height:1.4;font-size:11.5px}
+  #estatePanel .fin-i.est .fn,#estatePanel .fin-i.est .fv{line-height:1.35}
+  #estatePanel .fin-h{line-height:1.35}
 
   /* ---- candlestick charts ---- */
   .kl{display:block;margin:3px 0 5px 3px;border-radius:5px;background:rgba(0,0,0,.22);
@@ -1118,7 +1137,7 @@
      tokens: glass rgba(22,20,18,.88) / gold #e8c88a /
              hairline rgba(216,180,112,.4) / radius 16px
      ===================================================== */
-  #panel,#finPanel,#actPanel,#mktPanel,#realtyPanel,#portPanel,#kModal,#evCard,#setPanel,#miniWrap{
+  #panel,#finPanel,#actPanel,#mktPanel,#realtyPanel,#portPanel,#estatePanel,#kModal,#evCard,#setPanel,#miniWrap{
     background:linear-gradient(168deg,rgba(26,23,20,.88),rgba(12,11,10,.93)) !important;
     backdrop-filter:blur(14px) saturate(1.15);
     -webkit-backdrop-filter:blur(14px) saturate(1.15);
@@ -1165,10 +1184,10 @@
   /* ---- panels inside: headers, lists, buttons ---- */
   .fin-t b{color:#e8c88a !important;letter-spacing:2.4px}
   .fin-t span:first-child{filter:sepia(.3) brightness(1.1)}
-  #finClose,#actClose,#mktClose,#realtyClose,#portClose,#kClose,#miniClose{
+  #finClose,#actClose,#mktClose,#realtyClose,#portClose,#estateClose,#kClose,#miniClose{
     color:#c9a35f !important;background:rgba(255,244,214,.05) !important;
     border:1px solid rgba(216,180,112,.3) !important}
-  #finClose:hover,#actClose:hover,#mktClose:hover,#realtyClose:hover,#portClose:hover,#kClose:hover{color:#ffe9b0 !important;border-color:#c9a35f !important}
+  #finClose:hover,#actClose:hover,#mktClose:hover,#realtyClose:hover,#portClose:hover,#estateClose:hover,#kClose:hover{color:#ffe9b0 !important;border-color:#c9a35f !important}
   .fin-h{background:rgba(255,244,214,.06) !important;color:#e8c88a !important;border-radius:8px !important}
   .fin-i{color:#d8c9a4 !important}
   .fin-i .fn{color:#f5efe2 !important}
@@ -1218,7 +1237,7 @@
   .kl-tabs button.on{color:#1a1208 !important;background:linear-gradient(180deg,#f2d99b,#c9a35f) !important;border-color:#c9a35f !important}
   .kl-tabs button:hover:not(.on){color:#ffe9b0 !important;background:rgba(255,233,176,.10) !important}
   /* section header inside market/realty panels */
-  #mktPanel .fin-h,#realtyPanel .fin-h,#portPanel .fin-h,#finPanel .fin-h{
+  #mktPanel .fin-h,#realtyPanel .fin-h,#portPanel .fin-h,#estatePanel .fin-h,#finPanel .fin-h{
     color:#ffe9b0 !important;background:rgba(216,180,112,.16) !important;border:1px solid rgba(216,180,112,.25)}
 
 
@@ -1381,7 +1400,10 @@
   </div>
   <div class="row" data-fin><span class="ic">&#128176;</span><span class="lab">CASH</span><span class="val" id="vCash">$1,000</span></div>
   <div class="row" id="rowBank" data-fin title="What you have saved, and what you owe the bank. Tap for the full sheet."><span class="ic">&#127974;</span><span class="lab">BANK</span><span class="val"><span id="vBank">$0</span><small id="vBankSub"></small></span></div>
-  <div class="row" data-fin><span class="ic">&#127962;</span><span class="lab">ESTATE</span><span class="val" id="vEstate">$0</span></div>
+  <!-- ESTATE is not a money row: it opens the statement of what you OWN and what it
+       would fetch. It used to borrow the portfolio sheet, which answers a different
+       question ("what did I pay and what is it worth now") and never listed a work. -->
+  <div class="row" id="rowEstate" title="What you OWN that pays you: works, a canvas, property"><span class="ic">&#127962;</span><span class="lab">ESTATE</span><span class="val" id="vEstate">$0</span></div>
   <div class="row" id="rowJob" title="What you OWN: your ventures, and what they pay you"><span class="ic">&#127970;</span><span class="lab">BUSINESS</span><span class="val" id="vJob">NONE</span></div>
   <div class="row" id="rowPerf" title="Who you WORK FOR: the desk you sit at, and your standing there"><span class="ic">&#128188;</span><span class="lab">JOB</span><span class="val" id="vPerf">UNEMPLOYED</span></div>
   <div class="row" id="rowSkills" title="Tap: all 8 skills, each ladder LV1-LV5, and the works you own"><span class="ic">&#129504;</span><span class="lab">SKILLS</span><span class="val" id="vSkills">LV 1</span></div>
@@ -1478,6 +1500,12 @@
   <div class="fin-t"><span>&#128188;</span><b>MY PORTFOLIO</b><span id="portClose">&#10005;</span></div>
   <div id="portBody"></div>
   <div class="mk-note">P&amp;L = PROFIT / LOSS VS YOUR PURCHASE PRICE</div>
+</div>
+
+<div id="estatePanel">
+  <div class="fin-t"><span>&#127962;</span><b>ESTATE</b><span id="estateClose">&#10005;</span></div>
+  <div id="estateBody"></div>
+  <div class="mk-note">AN ASSET PAYS YOU WHETHER YOU WORK OR NOT &#183; A POSSESSION DOES NOT</div>
 </div>
 
 <div id="newsPanel" title="Click to dismiss">
@@ -5360,7 +5388,7 @@ function moodTick(){
      whole emotional story of owning things: cost basis is memory, market value is
      the news. */
   const basis=stockCost+homeCost;
-  const invested=stockValue()+estateValue();
+  const invested=stockValue()+propertyValue();   /* a work is not a price bet */
   const worth=Math.max(1,myWorth());
   /* EXPOSURE, not size, is what keeps you up. $1m cash + $50k stocks sleeps fine;
      $2k cash + $50k stocks checks the board every hour. */
@@ -5501,7 +5529,7 @@ function moodTick(){
      reads as a bad week, not a light switch. Eased to 60% when there is something
      sellable, because the fear is then liquidity, not ruin. */
   if(cashFloor){
-    const sellable=(s.bank||0)+stockValue()+estateValue()*0.6;
+    const sellable=(s.bank||0)+stockValue()+propertyValue()*0.6+canvasValue();
     const fl=Math.round(cashFloor*(sellable>=2000?0.6:1));
     const room=fl-s.stress;
     if(room>0){
@@ -5745,9 +5773,14 @@ const workOf      = id => WORKS.find(w=>w.skill===id);
 const workRoyalty = (w,lv) => Math.round(w.base + Math.max(0, lv-WORK_LV)*w.per);
 const breakOf     = id => (ST.breaks&&ST.breaks[id])||0;         /* the big-break monthly add, once won */
 const worksCount  = () => Object.keys(ST.works||{}).length;
-const worksIncome = () => Object.keys(ST.works||{}).reduce((a,id)=>{
-  const w=workOf(id); return w ? a + workRoyalty(w, lvlOf((ST.skills||{})[id]||0)) + breakOf(id) : a;
-},0);
+/* one work's monthly cheque: royalty at the level you hold, plus the break if it
+   landed. The income statement and the ESTATE number both read this, so the panel
+   can never capitalise a cheque the game does not actually pay. */
+const workMonthly = id => {
+  const w=workOf(id); if(!w) return 0;
+  return workRoyalty(w, lvlOf((ST.skills||{})[id]||0)) + breakOf(id);
+};
+const worksIncome = () => Object.keys(ST.works||{}).reduce((a,id)=>a+workMonthly(id),0);
 
 /* ---- a fresh start: 18 years old, $1,000 in the pocket, nothing else ---- */
 const AGE_START = 18;
@@ -5760,6 +5793,8 @@ const ST={age:AGE_START, cash:CASH_START, bank:0, happy:50, credit:CREDIT_START,
   fund:0, paySelf:0.10, paySelfMonths:0,                    /* pay yourself first: the asset fund */
   skills:{prog:0, write:0, proj:0, drive:0, cook:0, art:0, fin:0, fit:0, eng:0},
   works:{},                                                /* skill id -> day the work went on sale */
+  canvas:null,                                             /* the ONE original on the easel: {day,v} */
+  canvasSold:-99,                                          /* day the gallery last bought an original */
   craftSeen:{},                                            /* skill id -> the LV5 "you could sell this" card was shown */
   stocks:{}, realty:{}, games:{},                          /* holdings: sym -> {qty,cost} / name -> {cost} / game -> {qty,cost} */
   course:null,                                             /* the ONE skill you are currently studying */
@@ -6376,6 +6411,14 @@ function syncFin(){
                  note:divIncome()? 'dividends +'+fmt$(divIncome())+'/mo' : 'no dividends \u00B7 a price bet, not an asset'});
   REALTY.forEach(r=>{ if(ST.realty[r.n]) h.push({ic:'🏢', n:r.n, v:r.v, side:'asset',
                  note:'net rent +'+fmt$(Math.round(r.v*(PROP_RENT-PROP_UPKEEP)))+'/mo'}); });
+  /* your own works: an asset only once a LV5 skill has put it on sale */
+  Object.keys(ST.works||{}).forEach(id=>{
+    const w=workOf(id), c=workCapital(id); if(!w || !c) return;
+    h.push({ic:w.ic, n:'WORK · '+w.what, v:c, side:'asset',
+            note:'royalty +'+fmt$(workMonthly(id))+'/mo · '+ESTATE_MONTHS+' months'});
+  });
+  if(ST.canvas) h.push({ic:'🎨', n:'CANVAS', v:canvasValue(), side:'asset',
+                 note:'one-off sale · no monthly income'});
   bizList().forEach(({b,st})=>h.push({ic:'🚀', n:b.name, v:bizSellPrice(b,st), side:'asset',
                  note:'B quadrant \u00B7 '+fmt$(bizNow(b,st))+'/mo'}));
   if(gameValue()) h.push({ic:'\uD83C\uDFAE', n:'Game collectibles', v:gameValue(), side:'asset',
@@ -6429,8 +6472,43 @@ function syncFin(){
   if(worksIncome()) FIN.income.push({n:'Royalties \u00B7 '+worksCount()+' work'+(worksCount()>1?'s':'')+' on sale',
                                      v:worksIncome(), per:'/mo', kind:'passive'});
 }
-/* estate = every property you hold (the panel row called ESTATE) */
-const estateValue = () => Object.keys(ST.realty).reduce((s,n)=>{const r=REALTY.find(x=>x.n===n); return s+(r?r.v:0);},0);
+/* ---- ESTATE: what you own that pays you, and what a buyer would pay for it ----
+   Rich Dad's balance sheet has one line that matters: an ASSET puts money in your
+   pocket whether you show up or not. This row used to hold property and nothing
+   else, so a player with a novel on the shelf, an app in the store and a canvas on
+   the easel still read $0 on the one line that answers "what do you own?" — the
+   whole B/I half of the book, invisible on the sheet.
+
+   Two kinds of thing sit here, valued differently on purpose:
+     WORKS   a royalty is an annuity, so it is capitalised at ESTATE_MONTHS of the
+             cheque. A bestseller lifts the NUMBER as well as the income.
+     CANVAS  a painting pays nothing while you sleep. It is stock: one piece, one
+             price, and the sale ends it — cash in, row gone.
+   Property stays as it was: the market price of the deed.
+
+   Possessions are still not assets. The suit, the print you bought, the car and
+   the game shelf take money out and put nothing in, and the panel says so rather
+   than quietly listing them. */
+const ESTATE_MONTHS = 24;      /* two years of the cheque: the multiple the panel prints */
+const propertyValue = () => Object.keys(ST.realty||{}).reduce((s,n)=>{const r=REALTY.find(x=>x.n===n); return s+(r?r.v:0);},0);
+const workCapital = id => {
+  if(!(ST.works && ST.works[id]!==undefined)) return 0;      /* not published, not yours */
+  if(lvlOf((ST.skills||{})[id]||0) < WORK_LV) return 0;       /* the work needs its level */
+  return Math.round(workMonthly(id)*ESTATE_MONTHS);
+};
+const worksValue = () => Object.keys(ST.works||{}).reduce((s,id)=>s+workCapital(id),0);
+/* an original: what a gallery would hand you today. After the auction that made
+   your name it is worth several of the old ones. */
+const CANVAS_BASE = 1500, CANVAS_PER_LV = 350, CANVAS_FAME = 8, CANVAS_WAIT = 7;
+function canvasPrice(){
+  const lv=lvlOf((ST.skills||{}).art||0);
+  const fame=(ST.breaks && ST.breaks.art) ? CANVAS_FAME : 1;
+  return Math.round((CANVAS_BASE + Math.max(0, lv-WORK_LV)*CANVAS_PER_LV) * fame);
+}
+/* the offer on the frame today: never below what it was painted for, and higher
+   the day the auction made your name (and with every level of art since) */
+const canvasValue = () => ST.canvas ? Math.max(Math.round(ST.canvas.v||0), canvasPrice()) : 0;
+const estateValue = () => Math.round(propertyValue()+worksValue()+canvasValue());
 const stockValue = () => Object.keys(ST.stocks||{}).reduce((s,n)=>{const h=ST.stocks[n]||{}, st=STOCKS.find(x=>x.n===n); return s+((st?st.v:(h.cost||0))*(h.qty||0));},0);
 const debtValue  = () => ST.loan ? Math.max(0, ST.loan.payment*ST.loan.left) : 0;
 /* everything that can put money IN your pocket, minus everything that takes it OUT.
@@ -6470,6 +6548,18 @@ function updatePanel(){
     ? 'Loan '+fmt$(debtValue())+' owed \u00B7 '+fmt$(ST.loan.payment)+'/mo ('+fmt$(loanMonthInterest(ST.loan))+' int). Tap for the full sheet.'
     : 'What you have saved, and what you owe the bank. Tap for the full sheet.';
   document.getElementById('vEstate').textContent=fmt$(estateValue());
+  /* the row says what the number is made of; a total nobody can decompose is noise */
+  const re=document.getElementById('rowEstate');
+  if(re){
+    const wv=worksValue(), cv=canvasValue(), pv=propertyValue();
+    re.title=(wv||cv||pv)
+      ? ('ESTATE '+fmt$(estateValue())+' \u00B7 works '+fmt$(wv)+' \u00B7 canvas '+fmt$(cv)
+         +' \u00B7 property '+fmt$(pv)+'. Tap to see each one.')
+      : ('Nothing owned yet. LV5 in a skill puts a work on sale, a canvas is a painting with a price, '
+         +'and property pays rent. Tap to see the page.');
+  }
+  const ep=document.getElementById('estatePanel');
+  if(ep && ep.classList.contains('show')) renderEstate();
   const rf=document.getElementById('rowFree'), vf=document.getElementById('vFree');
   if(rf){
     const pct=freedomPct(), pas=passiveIncome(), out=trueExpenses();
@@ -6860,7 +6950,18 @@ function openAction(b){
     EAT('TAKE A FRIEND TO DINNER \u00B7 $95','happy +9 \u00B7 stress -8 \u00B7 a gift, not a repayment',
       ()=>{ST.cash-=95;ST.happy=clamp(ST.happy+9,0,100);const sfx=relax('dinner',8);advanceMinutes(120);flash('Good food, good company.'+sfx);},{dis:()=>ST.cash<95});
   } else if(kind==='art'){
-    descEl.textContent='Canvas and calm. Create something tonight.';
+    descEl.textContent='Canvas and calm. An edition pays monthly; an original is sold once, for cash.';
+    /* LV5: the easel. One piece at a time, and a sold painting is money, not income. */
+    {
+      const alv=lvlOf((ST.skills||{}).art||0);
+      if(alv>=WORK_LV){
+        A(ST.canvas?'\u2713 CANVAS PAINTED':'\uD83C\uDFA8 PAINT A CANVAS \u00B7 8 HOURS',
+          ST.canvas ? ('unsold \u00B7 worth '+fmt$(canvasValue())+' \u00B7 sell it from the ESTATE row')
+                    : ('art LV'+alv+' \u00B7 sells for '+fmt$(canvasPrice())+' \u00B7 one at a time'),
+          ()=>paintCanvas(),
+          {dis:()=>!!ST.canvas});
+      }
+    }
     A(ST.daily.art?'\u2713 SKETCHED TODAY':'SKETCH THE HALLS \u00B7 $20','+10 ART XP \u00B7 happy +5',
       ()=>{ST.cash-=20;ST.daily.art=true;const g=grantXp('art',10);ST.happy=clamp(ST.happy+5,0,100);advanceMinutes(60);flash('+'+g+' ART XP');},
       {dis:()=>!!ST.daily.art||ST.cash<20});
@@ -7230,6 +7331,42 @@ function makeWork(id){
     [['ADVANCE +'+fmt$(w.adv),'plus'],
      ['ROYALTY +'+fmt$(workRoyalty(w,lv))+'/MO','plus'],
      ['STRESS +10','minus']]);
+}
+/* ---------- the original: one canvas, one buyer, cash ----------
+   A print series is an edition and pays like one (see WORKS): a licence, a cheque
+   every month, an asset. A canvas is not that. It is one object with one price,
+   and the day it is sold it is money — there is nothing left to own, which is why
+   it never shows up as a monthly line. The gallery takes one original a week, the
+   only thing between a maxed artist and a printing press. */
+function canvasWait(){
+  const last=(ST.canvasSold===undefined?-99:ST.canvasSold);
+  return Math.max(0, CANVAS_WAIT-((ST.day||0)-last));
+}
+function paintCanvas(){
+  if(ST.canvas){ flash('One canvas at a time \u2014 the one on your easel is still unsold.'); return false; }
+  const lv=lvlOf((ST.skills||{}).art||0);
+  if(lv<WORK_LV){ flash('ART LV'+WORK_LV+' first \u2014 a canvas is what mastery paints.'); return false; }
+  ST.canvas={day:ST.day||0, v:canvasPrice()};
+  ST.stress=clamp(ST.stress+12,0,100);
+  ST.happy=clamp(ST.happy+8,0,100);
+  grantXp('art',15);
+  advanceMinutes(8*60);
+  updatePanel();
+  toast('\uD83C\uDFA8 A canvas, still wet. It sits in ESTATE at '+fmt$(ST.canvas.v)
+    +' until someone buys it \u2014 a painting pays nothing while you sleep.');
+  return true;
+}
+function sellCanvas(){
+  if(!ST.canvas){ flash('Nothing on the easel to sell.'); return false; }
+  const wait=canvasWait();
+  if(wait>0){ flash('\uD83C\uDFA8 The gallery buys one original a week \u2014 '+wait+' more day'+(wait>1?'s':'')); return false; }
+  const v=canvasValue();
+  ST.cash+=v; ST.canvas=null; ST.canvasSold=ST.day||0;
+  ST.happy=clamp(ST.happy+6,0,100);
+  advanceMinutes(45);
+  updatePanel();
+  toast('\uD83D\uDCB5 Sold. '+fmt$(v)+' in cash \u2014 not an asset any more, just money.');
+  return true;
 }
 /* ---------- THE BIG BREAK: mastery catches the wind ----------
    Kiyosaki's promise, playable: at LV5 a skill stops being a wage and becomes an
@@ -7676,8 +7813,8 @@ REALTY.forEach(r=>seedCandles(r,0.012));
 const mktPanel=document.getElementById('mktPanel');
 const realtyPanel=document.getElementById('realtyPanel');
 const portPanel=document.getElementById('portPanel');
-const anyMktShown=()=>[mktPanel,realtyPanel,portPanel].some(p=>p.classList.contains('show'));
-function refreshMktBoards(){ if(mktPanel.classList.contains('show')) renderMkt(); if(realtyPanel.classList.contains('show')) renderRealty(); if(portPanel.classList.contains('show')) renderPort(); if(document.getElementById('finPanel').classList.contains('show')) openFin(); }
+const anyMktShown=()=>[mktPanel,realtyPanel,portPanel,estatePanel].some(p=>p.classList.contains('show'));
+function refreshMktBoards(){ if(mktPanel.classList.contains('show')) renderMkt(); if(realtyPanel.classList.contains('show')) renderRealty(); if(portPanel.classList.contains('show')) renderPort(); if(estatePanel.classList.contains('show')) renderEstate(); if(document.getElementById('finPanel').classList.contains('show')) openFin(); }
 
 /* ===================== the city board: everyone's net worth ===================== */
 /* The board is the point of the city. It is printed every 7 days once the first week is
@@ -7759,7 +7896,8 @@ function renderRank(){
     ['CASH', Math.round(ST.cash)],
     ['BANK', Math.round(ST.bank)],
     ['STOCKS', Math.round(stockValue())],
-    ['PROPERTY', Math.round(estateValue())],
+    ['PROPERTY', Math.round(propertyValue())],
+    ['WORKS', Math.round(worksValue()+canvasValue())],
     ['BUSINESS', Math.round(bizWorth())]
   ];
   if(ST.fund) parts.push(['FUND', Math.round(ST.fund)]);
@@ -7777,7 +7915,7 @@ function renderRank(){
   const streak=ST.champMonths||0;
   const gap=me===0?0:rows[0].worth-rows[me].worth;
   document.getElementById('rankFoot').innerHTML=
-    'Net worth = cash + savings + stocks + property + business + asset fund \u2212 debt. A car is a liability, not an asset.<br>'+
+    'Net worth = cash + savings + stocks + property + your works + business + asset fund \u2212 debt. A car is a liability, not an asset.<br>'+
     'Rich Dad: wealth is how long your assets keep you alive without a job \u2014 not how much sits in the bank.<br>'+
     'Your passive income <b style="color:#a8d68a">'+fmt$(passiveIncome())+'/mo</b> covers <b style="color:#ffd76a">'+freedomPct()+'%</b> of your '+fmt$(trueExpenses())+'/mo bills.<br>'+
     'Issue '+Math.max(1,Math.floor(ST.day/RANK_EVERY))+' \u00B7 printed every '+RANK_EVERY+' days.<br>'+
@@ -7916,6 +8054,72 @@ function renderPort(){
   <div class="pt-total"><span>TOTAL P&amp;L</span><span style="color:${totPl>=0?'#8fd07a':'#ff9a8a'}">${totPl>=0?'+':''}${fmt$(Math.round(totPl))} (${totPct>=0?'+':''}${totPct.toFixed(1)}%)</span></div>`;
   document.getElementById('portBody').innerHTML=h;
 }
+/* ---- the statement behind the ESTATE row ----
+   Three sections and one number. The number at the bottom is estateValue(), the
+   same call the HUD prints, so this page cannot disagree with the row that opened
+   it. Every line says what the asset IS and what it pays, because a value with no
+   object behind it is exactly the kind of decoration this game keeps deleting. */
+const estatePanel=document.getElementById('estatePanel');
+function renderEstate(){
+  const body=document.getElementById('estateBody'); if(!body) return;
+  const ip=Object.keys(ST.works||{}).filter(id=>workCapital(id)>0);
+  /* one row shape for the whole page: name and number on the first line, the
+     sentence that explains them underneath */
+  const row=(ic,name,val,note)=>'<div class="fin-i est"><span class="fn">'+ic+' '+name+'</span>'
+    +'<span class="fv">'+val+'</span><span class="note">'+note+'</span></div>';
+  let h='';
+  h+='<div class="fin-h">WORKS \u00B7 MONTHLY CHEQUES</div>';
+  if(!ip.length){
+    h+=row('','Nothing on the shelf','$0','A LV5 skill puts a work on sale \u2014 a novel, an app, a route contract.');
+  }
+  ip.forEach(id=>{
+    const w=workOf(id), m=workMonthly(id), d=(ST.works[id]||0);
+    const months=Math.max(0, Math.floor(((ST.day||0)-d)/30));
+    h+=row(w.ic, w.what, fmt$(workCapital(id)),
+      fmt$(m)+'/mo'+(breakOf(id)?' \u2605 after the break':'')+' \u00B7 '
+      +months+' month'+(months===1?'':'s')+' on sale');
+  });
+  h+='<div class="fin-h">THE EASEL \u00B7 ONE CANVAS</div>';
+  if(ST.canvas){
+    const wait=canvasWait(), ago=Math.max(0,(ST.day||0)-(ST.canvas.day||0));
+    h+=row('\uD83C\uDFA8','CANVAS',fmt$(canvasValue()),
+      'painted '+(ago?ago+' day'+(ago>1?'s':'')+' ago':'today')
+      +' \u00B7 no monthly income \u00B7 sold once, for cash');
+    h+='<button class="est-sell" data-sell="canvas"'+(wait>0?' disabled':'')+'>'
+      +(wait>0 ? ('GALLERY FULL \u00B7 BACK IN '+wait+' DAY'+(wait>1?'S':''))
+               : ('SELL THE CANVAS \u00B7 '+fmt$(canvasValue())))+'</button>';
+  } else {
+    h+=row('','Nothing on the easel','$0','ART LV'+WORK_LV+' lets you paint one \u2014 a one-off sale, not an annuity.');
+  }
+  h+='<div class="fin-h">PROPERTY \u00B7 DEEDS</div>';
+  const rk=Object.keys(ST.realty||{});
+  if(!rk.length){
+    h+=row('','No deeds yet','$0','Rental property pays every month; the market list is on the house button.');
+  }
+  rk.forEach(n=>{
+    const rec=ST.realty[n]||{}, r=REALTY.find(x=>x.n===n);
+    const val=r?r.v:(rec.cost||0), rent=r?Math.round(r.v*(PROP_RENT-PROP_UPKEEP)):0;
+    h+=row('\uD83C\uDFE0', n, fmt$(val),
+      'bought '+fmt$(rec.cost||0)+' \u00B7 net rent +'+fmt$(rent)+'/mo');
+  });
+  h+='<div class="fin-net"><span>ESTATE</span><span>'+fmt$(estateValue())+'</span></div>';
+  h+='<div class="est-hint">A work is worth '+ESTATE_MONTHS+' months of the cheque it pays \u2014 the price of an annuity, not a guess. '
+    +'A canvas is worth the offer on the frame: sell it, and it becomes cash.</div>';
+  h+='<div class="est-hint">Not estate: the suit, the print, the car, the game shelf. '
+    +(bizList().length ? 'Your '+(bizList().length>1?bizList().length+' ventures sit':'venture sits')+' on the BUSINESS row, counted once.' : 'They pay you nothing.')
+    +'</div>';
+  body.innerHTML=h;
+  body.querySelectorAll('[data-sell]').forEach(b=>b.addEventListener('click',()=>{
+    if(sellCanvas()) renderEstate();
+  }));
+}
+function openEstate(){ renderEstate(); estatePanel.classList.add('show'); layoutSidePanels(); }
+function closeEstate(){ estatePanel.classList.remove('show'); layoutSidePanels(); }
+document.getElementById('estateClose').addEventListener('click',closeEstate);
+document.getElementById('rowEstate').addEventListener('click',()=>{
+  if(estatePanel.classList.contains('show')) closeEstate(); else openEstate();
+});
+
 /* ---- K-line chart popup: one shared modal for stocks and property ---- */
 let KITEM=null;
 function openKChart(item,label,ic){
@@ -8099,7 +8303,7 @@ document.getElementById('portClose').addEventListener('click',closePort);
 /* stack the open left panels vertically so they never cover each other or the dock */
 function layoutSidePanels(){
   let y=168;                                     /* below the music pill */
-  ['mktPanel','realtyPanel','portPanel'].forEach(id=>{
+  ['mktPanel','realtyPanel','portPanel','estatePanel'].forEach(id=>{
     const el=document.getElementById(id);
     if(!el.classList.contains('show')) return;
     el.style.top=Math.min(y, window.innerHeight-140)+'px';

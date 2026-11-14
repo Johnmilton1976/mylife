@@ -13,6 +13,8 @@ node store_test.js       # in-game collectibles store
 node loan_test.js        # good/bad debt lifecycle
 node probe_on_street.js  # NOTHING BUILT IN A ROADWAY: every building, landmark,
                          # set piece and wedge lawn vs the paved corridors
+node probe_estate.js     # ESTATE: works capitalised at 24 months, canvas sold for
+                         # cash, possessions excluded, HUD == page, 390px phone
 node book_test.js / eat_test.js / night_test.js / perf_test.js ...
 ```
 
