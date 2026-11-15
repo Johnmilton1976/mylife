@@ -4691,7 +4691,12 @@ function renderClock(){
   document.getElementById('clSpeed').textContent = SPEEDS[speedIdx] + '\u00D7';
   /* a new in-game day -> the market re-prices itself, the sky picks a mood, the grass turns */
   const dayKey = d.toDateString();
-  if(window._clockDay && dayKey !== window._clockDay){ marketDayShift(); setWeather(); seasonApply(); }
+  if(window._clockDay && dayKey !== window._clockDay){
+    marketDayShift(); setWeather(); seasonApply();
+    /* the soundtrack follows the same calendar: the bells open on the Sunday that
+       holds Dec 24 and hand the playlist back the following Sunday */
+    if(typeof Music!=='undefined' && Music.check) Music.check();
+  }
   window._clockDay = dayKey;
 }
 
@@ -4733,7 +4738,136 @@ let lastT=performance.now();
   requestAnimationFrame(loop);
 })(lastT);
 
-/* ===================== music: theme song first, then the rest shuffled ===================== */
+/* ===================== music: theme song first, then the rest shuffled =====================
+   Two seasons, one switch. For fifty-one weeks the soundtrack is the theme plus a
+   shuffled playlist. For the week that HOLDS December 24 it is Jingle Bells: the
+   city is wearing lights, and a Tuesday in July playing over it was the one thing
+   the calendar could not fix by itself.
+   The window is the week, not the day — the user asked for the week that contains
+   Dec 24 — so it opens on the Sunday before it and closes the following Saturday.
+   That also keeps New Year's Day outside the window (Dec 24 2026 is a Thursday;
+   the week ends Dec 26, and the next one starts Dec 27). */
+function xmasWeek(d){
+  const day=new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const sunday=new Date(day); sunday.setDate(day.getDate()-day.getDay());   /* Sunday opens the week */
+  for(let y=day.getFullYear(); y>=day.getFullYear()-1; y--){
+    const x=new Date(y,11,24);                       /* the 24th itself */
+    const xs=new Date(y,11,24-x.getDay());           /* the Sunday that opens its week */
+    if(xs.getTime()===sunday.getTime()) return true;
+  }
+  return false;
+}
+/* The tune, synthesised rather than shipped. Jingle Bells is public domain (1857),
+   so the bells can be built out of oscillators: two sines per note (the octave
+   above at a third of the gain is what makes a note ring like a bell), a soft
+   triangle on the root of each bar, and a filtered noise burst on every beat for
+   the sleigh. No file, no licence, and it works on a build opened from disk. */
+const Xmas = (function(){
+  const BEAT=0.42;                                   /* 143 bpm: brisk, but a walk */
+  const HZ=m=>440*Math.pow(2,(m-69)/12);
+  /* [midi, beats], C4 = 60. A = the chorus, B = "oh what fun it is to ride",
+     B2 = the same line resolving home on C instead of the sleigh. */
+  const A =[[64,1],[64,1],[64,2], [64,1],[64,1],[64,2], [64,1],[67,1],[60,1],[62,1],[64,4]];
+  const B =[[65,1],[65,1],[65,1],[65,1], [65,1],[64,1],[64,1],[64,1],
+            [64,1],[62,1],[62,1],[64,1], [62,2],[67,2]];
+  const B2=[[65,1],[65,1],[65,1],[65,1], [65,1],[64,1],[64,1],[64,1],
+            [67,1],[67,1],[65,1],[62,1], [60,4]];
+  const MELODY=[].concat(A,B,A,B2);
+  /* one root per bar (4 beats): C C C C | F C C G | C C C C | F C G C */
+  const ROOTS=[48,48,48,48, 53,48,48,55, 48,48,48,48, 53,48,55,48];
+  let ctx=null, master=null, timer=null, running=false, noiseBuf=null;
+  let list=null, loopLen=0, loopStart=0, idx=0;
+
+  function build(){
+    if(list) return list;
+    const ev=[]; let t=0;
+    MELODY.forEach(([m,b])=>{ ev.push({t, m, dur:b*BEAT, k:'bell'}); t+=b*BEAT; });
+    loopLen=t;                                        /* 64 beats */
+    ROOTS.forEach((m,i)=>{
+      ev.push({t:i*4*BEAT, m, dur:BEAT*1.6, k:'bass'});          /* root */
+      ev.push({t:(i*4+2)*BEAT, m:m+7, dur:BEAT*1.2, k:'bass'});  /* fifth */
+    });
+    for(let i=0;i<64;i++) ev.push({t:i*BEAT, k:'jingle', v:(i%4===0?0.55:0.24)});
+    ev.sort((a,b)=>a.t-b.t);
+    list=ev;
+    return list;
+  }
+  function bell(f,t,dur){
+    const o1=ctx.createOscillator(), o2=ctx.createOscillator(), g=ctx.createGain(), g2=ctx.createGain();
+    o1.type='sine'; o1.frequency.value=f;
+    o2.type='sine'; o2.frequency.value=f*2.01;
+    g2.gain.value=0.30;
+    o1.connect(g); o2.connect(g2); g2.connect(g);
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(0.20,t+0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+Math.max(0.22,dur*0.95));
+    g.connect(master);
+    o1.start(t); o2.start(t); o1.stop(t+dur+0.35); o2.stop(t+dur+0.35);
+  }
+  function bass(f,t,dur){
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type='triangle'; o.frequency.value=f;
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(0.13,t+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dur*1.5);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t+dur*1.7);
+  }
+  function noise(){
+    if(noiseBuf) return noiseBuf;
+    const n=Math.floor(ctx.sampleRate*0.22);
+    noiseBuf=ctx.createBuffer(1,n,ctx.sampleRate);
+    const d=noiseBuf.getChannelData(0);
+    for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/n,3);
+    return noiseBuf;
+  }
+  function jingle(t,v){
+    const s=ctx.createBufferSource(); s.buffer=noise();
+    const hp=ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=5200;
+    const g=ctx.createGain(); g.gain.value=v*0.30;
+    s.connect(hp); hp.connect(g); g.connect(master);
+    s.start(t); s.stop(t+0.22);
+  }
+  function fire(e,t){
+    if(e.k==='bell')   bell(HZ(e.m), t, e.dur);
+    else if(e.k==='bass') bass(HZ(e.m), t, e.dur);
+    else jingle(t, e.v);
+  }
+  /* look-ahead scheduling: oscillators are booked ~0.6s early, which survives a
+     frame drop without the beat stumbling */
+  function schedule(){
+    if(!running || !ctx) return;
+    const horizon=ctx.currentTime+0.6, ev=build();
+    let guard=0;
+    while(loopStart+ev[idx].t < horizon && guard++<400){
+      fire(ev[idx], loopStart+ev[idx].t);
+      idx++;
+      if(idx>=ev.length){ idx=0; loopStart+=loopLen; }
+    }
+  }
+  function start(vol){
+    if(running) return true;
+    if(!ctx){ try{ ctx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return false; } }
+    if(ctx.state==='suspended') ctx.resume().catch(()=>{});
+    master=ctx.createGain(); master.gain.value=vol; master.connect(ctx.destination);
+    running=true; idx=0; loopStart=ctx.currentTime+0.18;
+    if(timer) clearInterval(timer);
+    timer=setInterval(schedule, 200);
+    schedule();
+    return true;
+  }
+  function stop(){
+    running=false;
+    if(timer){ clearInterval(timer); timer=null; }
+    if(master){ try{ master.disconnect(); }catch(e){} master=null; }
+  }
+  function volume(v){ if(master) master.gain.value=v; }
+  function melody(){
+    let beats=0; MELODY.forEach(([m,b])=>{ beats+=b; });
+    return {length:MELODY.length, beats, seconds:Math.round(beats*BEAT*10)/10};
+  }
+  return {start, stop, volume, melody, isRunning:()=>running};
+})();
+
 const Music = (function(){
   const DIR='music/';
   const LEAD='luminewave-infinity-love-629401.mp3';        /* the MY LIFE theme — cover & first day */
@@ -4751,23 +4885,39 @@ const Music = (function(){
     'purrplecat-long-day-518602.mp3'
   ];
   const au=new Audio(); au.volume=0.65;
-  let order=[], oi=0, playing=false;
+  let order=[], oi=0, playing=false, vol=0.65, xmas=false;
   function shuffle(){
     order=TRACKS.map((_,i)=>i);
     for(let i=order.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [order[i],order[j]]=[order[j],order[i]]; }
     oi=0;
   }
   function playSrc(src){ au.src=DIR+src; au.play().catch(()=>{}); }   /* silent track change — no song titles in the feed */
-  function playCur(){ if(!playing) return; playSrc(oi<0 ? LEAD : TRACKS[order[oi]]); }
+  function playCur(){ if(!playing||xmas) return; playSrc(oi<0 ? LEAD : TRACKS[order[oi]]); }
   au.addEventListener('ended',()=>{
+    if(xmas) return;                                       /* the bells own the week */
     if(oi<0){ shuffle(); }                                 /* theme finished -> roll the shuffle */
     else{ oi++; if(oi>=order.length) shuffle(); }
     playCur();
   });
-  function start(){ playing=true; oi=-1; playCur(); }      /* every session opens with the theme */
-  function stop(){ playing=false; au.pause(); }
-  function volume(v){ au.volume=v; }
-  return {start, stop, volume, isPlaying:()=>playing, state:()=>'html-audio'};
+  function playXmas(){
+    if(xmas) return;
+    xmas=true; au.pause(); Xmas.start(vol*0.9);
+  }
+  function stopXmas(){ if(!xmas) return; xmas=false; Xmas.stop(); }
+  function start(){ playing=true; oi=-1;
+    if(xmasWeek(clockNow())) playXmas(); else { stopXmas(); playCur(); } }   /* the theme, or the bells */
+  function stop(){ playing=false; stopXmas(); au.pause(); }
+  function volume(v){ vol=v; au.volume=v; Xmas.volume(v*0.9); }
+  /* called on every day shift: the calendar decides which season is playing */
+  function check(){
+    if(!playing) return;
+    const want=xmasWeek(clockNow());
+    if(want) playXmas();
+    else if(xmas){ stopXmas(); shuffle(); playCur(); }     /* the week is over: back to the playlist */
+  }
+  const season=()=>xmasWeek(clockNow())?'xmas':'normal';
+  return {start, stop, volume, check, season, inXmas:()=>xmas, melody:()=>Xmas.melody(),
+          isPlaying:()=>playing, state:()=>'html-audio'};
 })();
 
 const musicDock=document.getElementById('musicDock');
@@ -4870,13 +5020,56 @@ function playGame(){
   advanceMinutes(120);
   flash('\uD83D\uDD79 Two hours well spent. HAPPY +5, STRESS -2. One session per visit.');
 }
-/* ---- one XP grant, clamped at LV5, so every source (luck, gigs, books) agrees ---- */
+/* ---- one XP grant, clamped at LV5, so every source (luck, gigs, books) agrees ----
+   ...and a door that is already shut must not be knocked on. See xpTarget below:
+   a maxed trade cannot absorb XP, so the drop is aimed before it is paid. */
 function grantXp(id, xp){
   if(!ST.skills || !(id in ST.skills)) return 0;
   const cur=ST.skills[id]||0;
   const gain=Math.max(0, Math.min(xp, SKILL_XP_CAP-cur));
   if(gain){ ST.skills[id]=cur+gain; if(typeof updateSkillsHud==='function') updateSkillsHud(); }
   return gain;
+}
+/* LV5 is the ceiling, and the city kept advertising past it: the museum printed
+   "+5 ART XP", the sketch halls "+10 ART XP", the gym "+10 FITNESS XP" — and for a
+   player who had maxed that trade the tap paid ZERO. That breaks the one rule this
+   codebase keeps: the number on the button is the number the game pays.  It also
+   wasted the day's drop, because the generic sources (a gig, a podcast, the chess
+   table) drew a skill at random and could land on the closed one.
+   So every drop now asks for a TARGET first:
+     - the trade it was meant for, while that door is open;
+     - otherwise the least-trained trade that still has room (mastery in one thing
+       does not stop you learning another);
+     - nothing at all when all eight are LV5.
+   `xpLabel` is the panel's half of the same rule, so copy and payout cannot drift. */
+const skillFull = id => ((ST.skills||{})[id]||0) >= SKILL_XP_CAP;
+const openSkills = () => SKILLS.filter(s=>!skillFull(s.id));
+function xpTarget(id){
+  if(!skillFull(id)) return id;
+  const open=openSkills();
+  if(!open.length) return null;
+  return open.reduce((a,k)=>((ST.skills[k.id]||0)<(ST.skills[a.id]||0)?k:a), open[0]).id;
+}
+/* the paid drop: reports which trade moved, and whether it had to move at all */
+function grantXpAuto(id, xp){
+  const t=xpTarget(id);
+  if(!t) return {id:null, gain:0, moved:false};
+  return {id:t, gain:grantXp(t,xp), moved:t!==id};
+}
+/* the button line for a fixed-trade activity: quotes the trade that will move */
+function xpLabel(id, xp, extra){
+  const t=xpTarget(id), tail=extra?' \u00B7 '+extra:'';
+  if(!t) return 'LV5 everywhere \u00B7 nothing left to learn'+tail;
+  return '+'+xp+' '+skillName(t)+' XP'+(t!==id?' \u00B7 '+skillName(id).toLowerCase()+' is maxed':'')+tail;
+}
+/* generic sources have no trade of their own: draw from the trades with room */
+const randomOpenSkill = () => { const o=openSkills(); return o.length?o[Math.floor(Math.random()*o.length)].id:null; };
+const randomXpLabel = xp => openSkills().length ? '+'+xp+' XP to a random trade' : 'LV5 everywhere \u00B7 nothing left to learn';
+/* an event card's XP line, in the shape the card prints ([[text, cls]]) */
+function xpFx(id, xp){
+  const r=grantXpAuto(id,xp);
+  if(!r.gain) return [['nothing left to learn','']];
+  return [['+'+r.gain+' '+skillName(r.id)+' XP'+(r.moved?' \u00B7 '+skillName(id).toLowerCase()+' is maxed':''),'plus']];
 }
 const lowestSkill=()=>SKILLS.reduce((a,k)=>((ST.skills[k.id]||0)<(ST.skills[a.id]||0)?k:a), SKILLS[0]);
 const bestSkill  =()=>SKILLS.reduce((a,k)=>((ST.skills[k.id]||0)>(ST.skills[a.id]||0)?k:a), SKILLS[0]);
@@ -4911,11 +5104,13 @@ function oddJob(b, where){
   s.cash+=r.pay;
   s.stress=clamp(s.stress+strain,0,100);
   s.health=clamp(s.health-1,0,100);
-  const sk=SKILLS[Math.floor(Math.random()*SKILLS.length)];
-  const xp=grantXp(sk.id,3);
+  /* the gig teaches whatever you have not mastered yet: it used to draw from all
+     eight trades, so a maxed artist could burn the whole drop on nothing */
+  const sk=randomOpenSkill();
+  const xp=sk?grantXp(sk,3):0;
   advanceMinutes(120);
   flash('\uD83D\uDCAA Two hours in '+where+': '+fmt$(r.pay)
-    +(xp?' \u00B7 +'+xp+' '+skillName(sk.id)+' XP':'')
+    +(xp?' \u00B7 +'+xp+' '+skillName(sk)+' XP':'')
     +(r.focus<0.9?' \u00B7 stress had your hands slow':'')
     +' \u00B7 gig '+s.daily.odd+'/'+ODD_DAILY_CAP);
 }
@@ -6533,8 +6728,12 @@ function updateSkillsHud(){
 }
 function updatePanel(){
   syncFin();
-  /* age creeps up one year for every 365 in-game days on the street */
-  ST.age = AGE_START + Math.floor(Math.floor(clockMin/1440)/365);
+  /* A birthday is January 1 — the calendar's birthday, not a 365-day tally.
+     Counting elapsed days put the first one on Jan 5 (the life starts Jan 5 2026),
+     so AGE stayed 18 through the first four days of the new year; and 2028 is a
+     leap year, which pushed every birthday one more day late. The year difference
+     is the honest number, leap years included, and it moves at midnight Jan 1. */
+  ST.age = AGE_START + (clockNow().getFullYear() - CLOCK_BASE.getFullYear());
   document.getElementById('cAge').textContent=ST.age;
   const vc=document.getElementById('vCash');
   vc.textContent=fmt$(ST.cash);
@@ -6818,38 +7017,47 @@ function openAction(b){
     A('WITHDRAW $1,000','savings \u2192 cash',()=>{ST.bank-=1000;ST.cash+=1000;flash('Withdrew $1,000');},{dis:()=>ST.bank<1000});
     A('WITHDRAW $5,000','savings \u2192 cash',()=>{ST.bank-=5000;ST.cash+=5000;flash('Withdrew $5,000');},{dis:()=>ST.bank<5000});
   } else if(kind==='study'){
-    /* one class per visit: you may sit ONE lecture each time you pass a school */
+    /* one class per visit: you may sit ONE lecture each time you pass a school.
+       A maxed trade is not on the board: there is nothing to enrol in, and listing
+       it as "LV5 → +12 XP" promised tuition for a lesson that pays nothing. */
     if(studyStop){
       descEl.textContent='You already sat through a class here. One skill per visit \u2014 walk to another school, library or bookshop to keep learning.';
     } else if(ST.course){
       const ck=SKILLS.find(s=>s.id===ST.course);
       const lv=lvlOf(ST.skills[ck.id]);
       descEl.textContent='You are enrolled in '+ck.name+'. One course at a time \u2014 drop it first to switch.';
-      A('STUDY '+ck.name,'LV'+lv+' \u2192 +12 XP \u00B7 '+fmt$(studyFee(ck.id))+' \u00B7 one class per visit',
+      A('STUDY '+ck.name, skillFull(ck.id)
+          ? 'LV5 \u00B7 maxed \u2014 drop the course and pick a trade with room'
+          : 'LV'+lv+' \u2192 +12 XP \u00B7 '+fmt$(studyFee(ck.id))+' \u00B7 one class per visit',
         ()=>studySession(ck.id),
-        {dis:()=>ST.cash<studyFee(ck.id)||ST.skills[ck.id]>=SKILL_XP_CAP});
+        {dis:()=>ST.cash<studyFee(ck.id)||skillFull(ck.id)});
       A('DROP '+ck.name+' COURSE','quit \u00B7 pick another skill next time',
         ()=>{ST.course=null;flash('Dropped '+ck.name+' course');openAction(b);},{cls:'danger'});
     } else {
-      descEl.textContent='Evening classes. One skill, one class per visit. Tuition rises with your level (LV5 cap) \u2014 choose well.';
-      SKILLS.forEach(sk=>{
+      const openClasses=SKILLS.filter(sk=>!skillFull(sk.id));
+      const maxed=SKILLS.filter(sk=>skillFull(sk.id));
+      descEl.textContent='Evening classes. One skill, one class per visit. Tuition rises with your level (LV5 cap) \u2014 choose well.'
+        +(maxed.length?' '+maxed.map(sk=>sk.name).join(', ')+' '+(maxed.length>1?'are':'is')+' maxed, so '+(maxed.length>1?'they are':'it is')+' off the board.':'');
+      openClasses.forEach(sk=>{
         const lv=lvlOf(ST.skills[sk.id]);
         const unlocks=JOBS.filter(j=>j.skill===sk.id&&j.lvl<=lv+1&&j.lvl>lv).map(j=>j.title)[0];
         A('ENROLL \u00B7 '+sk.name,'LV'+lv+' \u2192 +12 XP \u00B7 '+fmt$(studyFee(sk.id))+(unlocks?' \u00B7 next job: '+unlocks:''),
           ()=>{ST.course=sk.id;studySession(sk.id);},
-          {dis:()=>ST.cash<studyFee(sk.id)||ST.skills[sk.id]>=SKILL_XP_CAP});
+          {dis:()=>ST.cash<studyFee(sk.id)});
       });
+      if(!openClasses.length)
+        A('EVERY TRADE IS LV5','nothing left to learn \u2014 mastery is the ceiling',()=>{},{dis:()=>true});
     }
   } else if(kind==='books'){
     descEl.textContent='A cozy bookshop. Reading grows the mind.';
-    A(ST.owned.book?'\u2713 BOOK OWNED':'BUY A BOOK \u00B7 $15','+8 XP to a random skill',
-      ()=>{ST.cash-=15;ST.owned.book=true;const sk=SKILLS[Math.floor(Math.random()*SKILLS.length)];const g=grantXp(sk.id,8);advanceMinutes(45);flash('+'+g+' '+sk.name+' XP'+(g?'':' \u00B7 already LV5'));},
+    A(ST.owned.book?'\u2713 BOOK OWNED':'BUY A BOOK \u00B7 $15',randomXpLabel(8),
+      ()=>{ST.cash-=15;ST.owned.book=true;const sk=randomOpenSkill();const g=sk?grantXp(sk,8):0;advanceMinutes(45);flash(g?('+'+g+' '+skillName(sk)+' XP'):'Nothing new on these shelves \u2014 every trade is LV5.');},
       {dis:()=>ST.owned.book||ST.cash<15});
-    A(ST.daily.browse?'\u2713 BROWSED TODAY':'BROWSE FOR FREE','+3 XP to a random skill \u00B7 happy +2',
-      ()=>{ST.daily.browse=true;const sk=SKILLS[Math.floor(Math.random()*SKILLS.length)];const g=grantXp(sk.id,3);ST.happy=clamp(ST.happy+2,0,100);advanceMinutes(30);flash('+'+g+' '+sk.name+' XP'+(g?'':' \u00B7 already LV5'));},
+    A(ST.daily.browse?'\u2713 BROWSED TODAY':'BROWSE FOR FREE',randomXpLabel(3)+' \u00B7 happy +2',
+      ()=>{ST.daily.browse=true;const sk=randomOpenSkill();const g=sk?grantXp(sk,3):0;ST.happy=clamp(ST.happy+2,0,100);advanceMinutes(30);flash(g?('+'+g+' '+skillName(sk)+' XP'):'You read the jackets and learn nothing new.');},
       {dis:()=>!!ST.daily.browse});
-    A(ST.owned.firstEdition?'\u2713 FIRST EDITION OWNED':'BUY A FIRST EDITION \u00B7 $400','+20 WRITING XP \u00B7 happy +6 \u00B7 yours forever',
-      ()=>{ST.cash-=400;ST.owned.firstEdition=true;const g=grantXp('write',20);ST.happy=clamp(ST.happy+6,0,100);advanceMinutes(60);flash('A collector piece. +'+g+' WRITING XP');},
+    A(ST.owned.firstEdition?'\u2713 FIRST EDITION OWNED':'BUY A FIRST EDITION \u00B7 $400',xpLabel('write',20,'happy +6 \u00B7 yours forever'),
+      ()=>{ST.cash-=400;ST.owned.firstEdition=true;const d=grantXpAuto('write',20);ST.happy=clamp(ST.happy+6,0,100);advanceMinutes(60);flash('A collector piece. '+(d.gain?'+'+d.gain+' '+skillName(d.id)+' XP':'nothing left to learn'));},
       {dis:()=>ST.owned.firstEdition||ST.cash<400});
   } else if(kind==='venture'){
     descEl.textContent='The city\u2019s venture board \u2014 the B quadrant in one room. Every trade you have taken to '
@@ -6915,14 +7123,14 @@ function openAction(b){
       ()=>{ST.cash-=350;ST.health=clamp(ST.health+8,0,100);ST.happy=clamp(ST.happy+3,0,100);advanceMinutes(120);flash('A new smile. HAPPY +3');},{dis:()=>ST.cash<350});
   } else if(kind==='gym'){
     descEl.textContent='Iron paradise. Sweat now, shine later.';
-    A(ST.daily.gym?'\u2713 TRAINED TODAY':'TRAIN \u00B7 $25','+10 FITNESS XP \u00B7 health +4 \u00B7 happy +6',
-      ()=>{ST.cash-=25;ST.daily.gym=true;const g=grantXp('fit',10);ST.health=clamp(ST.health+4,0,100);ST.happy=clamp(ST.happy+6,0,100);advanceMinutes(60);flash('+'+g+' FITNESS XP');},
+    A(ST.daily.gym?'\u2713 TRAINED TODAY':'TRAIN \u00B7 $25',xpLabel('fit',10,'health +4 \u00B7 happy +6'),
+      ()=>{ST.cash-=25;ST.daily.gym=true;const d=grantXpAuto('fit',10);ST.health=clamp(ST.health+4,0,100);ST.happy=clamp(ST.happy+6,0,100);advanceMinutes(60);flash(d.gain?'+'+d.gain+' '+skillName(d.id)+' XP':'\uD83D\uDCAA A good session. Nothing new to learn.');},
       {dis:()=>!!ST.daily.gym||ST.cash<25});
     A(ST.daily.hoops?'\u2713 HOOPS PLAYED TODAY':'SHOOT HOOPS','free \u00B7 happy +5 \u00B7 health +2 \u00B7 once a day',
       ()=>{ST.daily.hoops=true;ST.happy=clamp(ST.happy+5,0,100);ST.health=clamp(ST.health+2,0,100);advanceMinutes(45);flash('Good game!');},
       {dis:()=>!!ST.daily.hoops});
-    A(ST.daily.trainer?'\u2713 TRAINER TODAY':'PERSONAL TRAINER \u00B7 $120','+20 FITNESS XP \u00B7 health +5 \u00B7 happy +4',
-      ()=>{ST.cash-=120;ST.daily.trainer=true;const g=grantXp('fit',20);ST.health=clamp(ST.health+5,0,100);ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(90);flash('+'+g+' FITNESS XP');},
+    A(ST.daily.trainer?'\u2713 TRAINER TODAY':'PERSONAL TRAINER \u00B7 $120',xpLabel('fit',20,'health +5 \u00B7 happy +4'),
+      ()=>{ST.cash-=120;ST.daily.trainer=true;const d=grantXpAuto('fit',20);ST.health=clamp(ST.health+5,0,100);ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(90);flash(d.gain?'+'+d.gain+' '+skillName(d.id)+' XP':'He has nothing left to teach you.');},
       {dis:()=>!!ST.daily.trainer||ST.cash<120});
   } else if(kind==='fun'){
     descEl.textContent=(ateHere||showHere)
@@ -6962,11 +7170,12 @@ function openAction(b){
           {dis:()=>!!ST.canvas});
       }
     }
-    A(ST.daily.art?'\u2713 SKETCHED TODAY':'SKETCH THE HALLS \u00B7 $20','+10 ART XP \u00B7 happy +5',
-      ()=>{ST.cash-=20;ST.daily.art=true;const g=grantXp('art',10);ST.happy=clamp(ST.happy+5,0,100);advanceMinutes(60);flash('+'+g+' ART XP');},
+    A(ST.daily.art?'\u2713 SKETCHED TODAY':'SKETCH THE HALLS \u00B7 $20',xpLabel('art',10,'happy +5'),
+      ()=>{ST.cash-=20;ST.daily.art=true;const d=grantXpAuto('art',10);ST.happy=clamp(ST.happy+5,0,100);advanceMinutes(60);flash(d.gain?'+'+d.gain+' '+skillName(d.id)+' XP':'\uD83C\uDFA8 You look, you do not learn. Nothing new in these halls.');
+        },
       {dis:()=>!!ST.daily.art||ST.cash<20});
-    A(ST.owned.print?'\u2713 PRINT OWNED':'BUY A LIMITED PRINT \u00B7 $220','+8 ART XP \u00B7 happy +8 \u00B7 yours forever',
-      ()=>{ST.cash-=220;ST.owned.print=true;const g=grantXp('art',8);ST.happy=clamp(ST.happy+8,0,100);advanceMinutes(45);flash('Signed and numbered. +'+g+' ART XP');},
+    A(ST.owned.print?'\u2713 PRINT OWNED':'BUY A LIMITED PRINT \u00B7 $220',xpLabel('art',8,'happy +8 \u00B7 yours forever'),
+      ()=>{ST.cash-=220;ST.owned.print=true;const d=grantXpAuto('art',8);ST.happy=clamp(ST.happy+8,0,100);advanceMinutes(45);flash('Signed and numbered. '+(d.gain?'+'+d.gain+' '+skillName(d.id)+' XP':'nothing left to learn'));},
       {dis:()=>ST.owned.print||ST.cash<220});
   } else if(kind==='shop'){
     descEl.textContent='Retail therapy. Try to resist \u2014 or pick up a shift out back: cash today, no interview.';
@@ -6977,11 +7186,11 @@ function openAction(b){
     A(ST.owned.painting?'\u2713 PAINTING OWNED':'BUY A PAINTING \u00B7 $140','happy +9 \u00B7 yours forever',
       ()=>{ST.cash-=140;ST.owned.painting=true;ST.happy=clamp(ST.happy+9,0,100);advanceMinutes(30);flash('It will look great at home.');},
       {dis:()=>ST.owned.painting||ST.cash<140});
-    A(ST.owned.laptop?'\u2713 LAPTOP OWNED':'BUY A LAPTOP \u00B7 $1,200','+15 IT XP \u00B7 happy +4 \u00B7 yours forever',
-      ()=>{ST.cash-=1200;ST.owned.laptop=true;const g=grantXp('prog',15);ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(60);flash('New laptop. +'+g+' PROGRAMMING XP');},
+    A(ST.owned.laptop?'\u2713 LAPTOP OWNED':'BUY A LAPTOP \u00B7 $1,200',xpLabel('prog',15,'happy +4 \u00B7 yours forever'),
+      ()=>{ST.cash-=1200;ST.owned.laptop=true;const d=grantXpAuto('prog',15);ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(60);flash('New laptop. '+(d.gain?'+'+d.gain+' '+skillName(d.id)+' XP':'nothing left to learn'));},
       {dis:()=>ST.owned.laptop||ST.cash<1200});
-    A(ST.owned.sneakers?'\u2713 SNEAKERS OWNED':'BUY SNEAKERS \u00B7 $150','fitness +5 \u00B7 happy +4',
-      ()=>{ST.cash-=150;ST.owned.sneakers=true;const g=grantXp('fit',5);ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(45);flash('Fresh kicks. +'+g+' FITNESS XP');},
+    A(ST.owned.sneakers?'\u2713 SNEAKERS OWNED':'BUY SNEAKERS \u00B7 $150',xpLabel('fit',5,'happy +4'),
+      ()=>{ST.cash-=150;ST.owned.sneakers=true;const d=grantXpAuto('fit',5);ST.happy=clamp(ST.happy+4,0,100);advanceMinutes(45);flash('Fresh kicks. '+(d.gain?'+'+d.gain+' '+skillName(d.id)+' XP':'nothing left to learn'));},
       {dis:()=>ST.owned.sneakers||ST.cash<150});
   } else if(kind==='game'){
     descEl.textContent='Fictional titles, fictional prices \u2014 no real purchase ever takes place. Prices drift like stocks; hover a title for original box art.';
@@ -7067,11 +7276,11 @@ function openAction(b){
       ()=>{ST.cash-=120;ST.happy=clamp(ST.happy+8,0,100);const sfx=relax('drinks',6);advanceMinutes(120);flash('Everybody loves you tonight.'+sfx);},{dis:()=>ST.cash<120});
   } else if(kind==='museum'){
     descEl.textContent='History under glass.';
-    A(ST.daily.museum?'\u2713 VISITED TODAY':'ADMIT ONE \u00B7 $20','happy +6 \u00B7 +5 ART XP',
-      ()=>{ST.cash-=20;ST.daily.museum=true;ST.happy=clamp(ST.happy+6,0,100);const g=grantXp('art',5);advanceMinutes(90);flash('Inspiring. +'+g+' ART XP');},
+    A(ST.daily.museum?'\u2713 VISITED TODAY':'ADMIT ONE \u00B7 $20',xpLabel('art',5,'happy +6'),
+      ()=>{ST.cash-=20;ST.daily.museum=true;ST.happy=clamp(ST.happy+6,0,100);const d=grantXpAuto('art',5);advanceMinutes(90);flash('Inspiring. '+(d.gain?'+'+d.gain+' '+skillName(d.id)+' XP':'nothing left to learn'));},
       {dis:()=>!!ST.daily.museum||ST.cash<20});
-    A(ST.daily.museumShop?'\u2713 SHOPPED TODAY':'MUSEUM SHOP \u00B7 $45','art +4 \u00B7 happy +3',
-      ()=>{ST.cash-=45;ST.daily.museumShop=true;const g=grantXp('art',4);ST.happy=clamp(ST.happy+3,0,100);advanceMinutes(25);flash('Postcards and prints. +'+g+' ART XP');},
+    A(ST.daily.museumShop?'\u2713 SHOPPED TODAY':'MUSEUM SHOP \u00B7 $45',xpLabel('art',4,'happy +3'),
+      ()=>{ST.cash-=45;ST.daily.museumShop=true;const d=grantXpAuto('art',4);ST.happy=clamp(ST.happy+3,0,100);advanceMinutes(25);flash('Postcards and prints. '+(d.gain?'+'+d.gain+' '+skillName(d.id)+' XP':'nothing left to learn'));},
       {dis:()=>!!ST.daily.museumShop||ST.cash<45});
   } else if(kind==='casino'){
     descEl.textContent='The house always whispers your name. Honest odds, rigged house edge.';
@@ -7099,20 +7308,10 @@ function openAction(b){
         if(Math.random()<0.12){ST.cash+=160;ST.happy=clamp(ST.happy+9,0,100);flash('\uD83C\uDFB0 JACKPOT! +$140');}
         else {ST.stress=clamp(ST.stress+2,0,100);flash('The reels stop on nothing.');}},
       {dis:()=>ST.cash<20});
-    A('ALL IN \u00B7 everything you carry','40% chance to walk out with 2.5x',
-      ()=>{
-        const stake=Math.floor(ST.cash); if(stake<50) return;
-        ST.cash-=stake; advanceMinutes(20);
-        if(Math.random()<0.40){
-          const win=Math.round(stake*2.5); ST.cash+=win;
-          ST.happy=clamp(ST.happy+12,0,100); ST.stress=clamp(ST.stress+12,0,100);
-          flash('\uD83D\uDD25 ALL IN AND WIN! +'+fmt$(win-stake));
-        } else {
-          ST.happy=clamp(ST.happy-10,0,100); ST.stress=clamp(ST.stress+15,0,100);
-          flash('\uD83D\uDCB8 You lost it all. '+fmt$(stake)+' gone.');
-        }
-      },
-      {dis:()=>ST.cash<50, cls:'danger'});
+    /* ALL IN used to sit at the bottom of this column: one tap that pushed every
+       dollar you carried — rent included — onto the felt. No cage on earth takes
+       that bet, and as a mechanic it was a button that could end a run by accident.
+       The four fixed bets and the slots are the whole board now. */
   } else if(kind==='travel'){
     descEl.textContent='Departure board is glowing. Anywhere is one ticket away.';
     A('CATCH A TRAIN \u00B7 $15','teleport to a random place in the city',
@@ -7349,7 +7548,9 @@ function paintCanvas(){
   ST.canvas={day:ST.day||0, v:canvasPrice()};
   ST.stress=clamp(ST.stress+12,0,100);
   ST.happy=clamp(ST.happy+8,0,100);
-  grantXp('art',15);
+  /* no XP line: a canvas can only be painted at ART LV5, so the old grantXp('art',15)
+     was a promise the ceiling could never pay. Eight hours at the easel are worth a
+     painting and the calm, not a level. */
   advanceMinutes(8*60);
   updatePanel();
   toast('\uD83C\uDFA8 A canvas, still wet. It sits in ESTATE at '+fmt$(ST.canvas.v)
@@ -7595,8 +7796,8 @@ const EVENTS=[
      return [['HAPPY +7','plus'],['STRESS -5','plus']];}},
   {k:'good',ic:'\uD83D\uDCBC',h:'A SIDE GIG',
    d:'A shop owner needs a website by Friday. Cash on delivery.',
-   run:()=>{ST.cash+=260;const g=grantXp('prog',8);advanceMinutes(180);
-     return [['CASH +$260','plus'],['PROGRAMMING +'+g+' XP','plus']];}},
+   run:()=>{ST.cash+=260;const fx=xpFx('prog',8);advanceMinutes(180);
+     return [['CASH +$260','plus'],...fx];}},
   {k:'good',ic:'\uD83C\uDF40',h:'SCRATCH CARD WINNER',
    d:'You never buy these. Today you did, and today it paid.',
    run:()=>{ST.cash+=500;ST.happy=clamp(ST.happy+8,0,100);return [['CASH +$500','plus'],['HAPPY +8','plus']];}},
@@ -7605,8 +7806,8 @@ const EVENTS=[
    run:()=>{ST.cash+=1200;return [['CASH +$1,200','plus']];}},
   {k:'good',ic:'\uD83C\uDFA4',h:'A MENTOR APPEARS',
    d:'A retired banker talks to you for an hour on the subway. Free advice, worth a fortune.',
-   run:()=>{const g=grantXp('fin',14);ST.happy=clamp(ST.happy+4,0,100);
-     return [['FINANCE +'+g+' XP','plus'],['HAPPY +4','plus']];}},
+   run:()=>{const fx=xpFx('fin',14);ST.happy=clamp(ST.happy+4,0,100);
+     return [...fx,['HAPPY +4','plus']];}},
   {k:'good',ic:'\uD83D\uDECB\uFE0F',h:'SOLD THE OLD COUCH',
    d:'Someone paid full asking price. No haggling, no drama.',
    run:()=>{ST.cash+=95;return [['CASH +$95','plus']];}},
@@ -7617,26 +7818,23 @@ const EVENTS=[
   /* ---- luck that leaves something behind: XP you keep after the card closes ---- */
   {k:'good',ic:'\uD83C\uDFA7',h:'A PODCAST YOU ALMOST SKIPPED',
    d:'Forty minutes on the train, and one idea you will still be using in five years.',
-   run:()=>{const sk=SKILLS[Math.floor(Math.random()*SKILLS.length)];
-     const g=grantXp(sk.id,9);
-     return g?[['+'+g+' '+skillName(sk.id)+' XP','plus']]:[['nothing new under the sun','']];}},
+   run:()=>xpFx(randomOpenSkill(),9)},
   {k:'good',ic:'\u265F',h:'THE OLD MAN AT THE CHESS TABLE',
    d:'He beat you three times without saying a word, then spent an hour telling you why.',
-   run:()=>{const sk=SKILLS[Math.floor(Math.random()*SKILLS.length)];
-     const g=grantXp(sk.id,12);ST.stress=clamp(ST.stress-2,0,100);
-     return [['+'+g+' '+skillName(sk.id)+' XP','plus'],['STRESS -2','plus']];}},
+   run:()=>{const fx=xpFx(randomOpenSkill(),12);ST.stress=clamp(ST.stress-2,0,100);
+     return [...fx,['STRESS -2','plus']];}},
   {k:'good',ic:'\uD83D\uDCDE',h:'YOUR OLD BOSS CALLS',
    d:'Not to hire you back. To ask how you would handle it now \u2014 and to admit you were right.',
-   run:()=>{const sk=bestSkill();const g=grantXp(sk.id,14);ST.stress=clamp(ST.stress-3,0,100);
-     return [['+'+g+' '+skillName(sk.id)+' XP','plus'],['STRESS -3','plus']];}},
+   run:()=>{const fx=xpFx(bestSkill().id,14);ST.stress=clamp(ST.stress-3,0,100);
+     return [...fx,['STRESS -3','plus']];}},
   {k:'good',ic:'\uD83C\uDFDB\uFE0F',h:'A FREE SEMINAR IN THE LIBRARY',
    d:'Rain outside, twelve folding chairs inside, and a retired tradesman who loves his subject.',
-   run:()=>{const sk=lowestSkill();const g=grantXp(sk.id,10);ST.happy=clamp(ST.happy+3,0,100);
-     return [['+'+g+' '+skillName(sk.id)+' XP','plus'],['HAPPY +3','plus']];}},
+   run:()=>{const fx=xpFx(lowestSkill().id,10);ST.happy=clamp(ST.happy+3,0,100);
+     return [...fx,['HAPPY +3','plus']];}},
   {k:'good',ic:'\uD83D\uDD27',h:'THE NEIGHBOUR\u2019S WORKSHOP',
    d:'He needed a second pair of hands. You got a lesson and a sandwich out of it.',
-   run:()=>{const sk=lowestSkill();const g=grantXp(sk.id,8);ST.health=clamp(ST.health+3,0,100);
-     return [['+'+g+' '+skillName(sk.id)+' XP','plus'],['HEALTH +3','plus']];}},
+   run:()=>{const fx=xpFx(lowestSkill().id,8);ST.health=clamp(ST.health+3,0,100);
+     return [...fx,['HEALTH +3','plus']];}},
 
   /* ---------------- the bad days ---------------- */
   {k:'bad',ic:'\uD83E\uDD77',h:'PICKPOCKET',

@@ -35,6 +35,15 @@ the game.
 Every session starts with the theme, then the rest of the pool plays shuffled.
 Track titles are never shown in-game (no interruption to the mood).
 
+## Christmas week（12 月 24 日所在的那一周）
+
+That week the playlist is replaced by **Jingle Bells**, synthesised in-page with
+the Web Audio API (`Xmas` in `index.html`): two sine oscillators per note, a
+triangle bass, a filtered noise burst for the sleigh. No recording is shipped,
+so no third-party performance right is involved — the composition itself is
+public domain (James Lord Pierpont, 1857). The window is the Sunday-to-Saturday
+week that contains December 24; the playlist returns the following Sunday.
+
 If you are a rights holder and want a track removed, open an issue — it will be
 taken out of the build.
 
