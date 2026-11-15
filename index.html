@@ -1410,7 +1410,7 @@
   <div class="row" id="rowFree" title="Passive income vs monthly bills"><span class="ic">&#127793;</span><span class="lab">FREE</span><span class="val" id="vFree">0%</span></div>
   <!-- GOALS and RANK moved to the left icon rail. These rows stay in the DOM (display:none)
        as the anchors their click handlers hang on; the live numbers live in the rail badges. -->
-  <div class="row" id="rowGoals" style="display:none"><span class="ic">&#127942;</span><span class="lab">GOALS</span><span class="val" id="vGoalsOld">0 / 18</span></div>
+  <div class="row" id="rowGoals" style="display:none"><span class="ic">&#127942;</span><span class="lab">GOALS</span><span class="val" id="vGoalsOld">0 / 19</span></div>
   <div class="row" id="rowRank" style="display:none"><span class="ic">&#128202;</span><span class="lab">RANK</span><span class="val" id="vRankOld">&mdash;</span></div>
   <div class="sub" id="moodRow" title="Tap to see why the numbers moved">
     <div class="chip">AGE<b id="cAge">18</b></div>
@@ -1481,7 +1481,7 @@
 <button id="mktBtn" class="sideBtn" title="Stock market">&#128200;</button>
 <button id="realtyBtn" class="sideBtn" title="Real estate market">&#127968;</button>
 <button id="portBtn" class="sideBtn" title="My portfolio">&#128188;</button>
-<button id="goalsBtn" class="sideBtn" title="Life goals &mdash; 14 to live, 4 to climb">&#127919;<span class="sbNum" id="vGoals">0 / 18</span></button>
+<button id="goalsBtn" class="sideBtn" title="Life goals &mdash; 15 to live, 4 to climb">&#127919;<span class="sbNum" id="vGoals">0 / 19</span></button>
 <button id="rankBtn" class="sideBtn" title="City rankings &mdash; net worth of everyone on this map" style="display:none">&#128202;<span class="sbNum" id="vRank">&mdash;</span></button>
 
 <div id="mktPanel">
@@ -1591,11 +1591,11 @@
     <div id="gpNote">FAN-MADE PARODY &#183; ORIGINAL PROGRAMMATIC ART &#183; NO OFFICIAL LOGOS, SCREENS OR CHARACTERS<br>
     NOT AFFILIATED WITH OR ENDORSED BY ANY PUBLISHER &#183; NO REAL-MONEY TRANSACTIONS INSIDE THE GAME</div></div>
 </div>
-<!-- the finish line: the 14 LIFE goals banked (the fortune rungs above them stay open).
+<!-- the finish line: the 15 LIFE goals banked (the fortune rungs above them stay open).
      A life needs a closing card, not just a slot in a list. -->
 <div id="lifeEnd" role="dialog" aria-modal="true" aria-labelledby="leTitle">
   <div class="le-card">
-    <div class="le-kicker" id="leKicker">LIFE GOALS &middot; 14 / 14</div>
+    <div class="le-kicker" id="leKicker">LIFE GOALS &middot; 15 / 15</div>
     <h2 id="leTitle">A LIFE, LIVED</h2>
     <div class="le-name" id="leName">JOHN &middot; AGE 24</div>
     <div class="le-line" id="leLine"></div>
@@ -1663,7 +1663,7 @@
     <a href="/rich-dad-rules/">RICH DAD RULES</a>
     <a href="/rich-dad-poor-dad-game/">RICH DAD GAME</a>
     <a href="/new-york-map/">NEW YORK MAP</a>
-    <a href="/goals/">18 LIFE GOALS</a>
+    <a href="/goals/">19 LIFE GOALS</a>
     <a href="/text-based-life-simulator/">TEXT-BASED SIMS</a>
     <a href="/life-simulator-browser-game/">BROWSER LIFE SIMS</a>
     <a href="/bitlife-alternative/">BITLIFE ALTERNATIVE</a>
@@ -6013,7 +6013,7 @@ const ST={age:AGE_START, cash:CASH_START, bank:0, happy:50, credit:CREDIT_START,
   lvSnap:{},                                               /* last known skill levels, so a level-up can be announced */
   rank:0, rankOf:0, rankWeek:0,                            /* city net-worth board: position, field size, issue no. */
   champMonths:0, champBest:0,                              /* consecutive months held as #1, and the record */
-  ended:0,                                                 /* day the 14th goal closed: the ending plays once */
+  ended:0,                                                 /* day the 15th goal closed: the ending plays once */
   daily:{}};                                               /* one-shot upgrades, reset each new day */
 
 /* ===================== life goals ===================== */
@@ -6022,7 +6022,7 @@ const RANK_EVERY   = 7;              /* the board is printed once a week */
 /* ---- the fortune ladder ----
    Four money mountains on top of the life ladder: $1M, $10M, $100M, $1B net worth.
    They are a SECOND ACT on purpose. The closing card ("A LIFE, LIVED") still fires on
-   the 14 life goals, because freedom is a life you can live, not a number you can print.
+   the 15 life goals, because freedom is a life you can live, not a number you can print.
    The fortune rungs are what the player climbs after the city has already said well done. */
 const fmtM = v => v>=1e9 ? '$'+(v/1e9).toFixed(0)+'B'
               : v>=1e6 ? '$'+(v/1e6).toFixed(0)+'M'
@@ -6043,6 +6043,11 @@ const GOALS=[
   {id:'job',       label:'Land your first job (E quadrant)',            check:s=>!!s.employed},
   {id:'invest',    label:'Buy a dividend-paying stock (I)',             check:s=>divIncome()>0},
   {id:'home',      label:'Own a rental with positive cash flow',         check:s=>netRent()>0},
+  /* The one rung that is a LIABILITY on purpose. Every panel in this city tells you
+     a car never pays you and bills you every month — which is exactly why owning one
+     is a decision about the life rather than the sheet. It banks the moment the keys
+     are yours and stays banked if you sell: you owned it, you learned it. */
+  {id:'car',       label:'Own a car (a liability, chosen on purpose)',    check:s=>!!s.car},
   {id:'skill',     label:'Reach LV3 in any skill',                      check:s=>SKILLS.some(k=>lvlOf(s.skills[k.id])>=3)},
   {id:'paySelf',   label:'Pay yourself first 3 months running',          check:s=>(s.paySelfMonths||0)>=3,
                    prog:s=>(s.paySelfMonths||0)+' / 3'},
@@ -9515,9 +9520,9 @@ document.getElementById('scCopy').addEventListener('click',async()=>{
   const shareText=finished
     ? 'A LIFE, LIVED \u2014 '+(lastLife&&lastLife.name?lastLife.name:'WALKER')+' reached financial freedom in MY LIFE\n'
       +(ST.day||0)+' days \u00B7 net worth '+fmt$(myWorth())+' \u00B7 bills covered by passive income: '+freedomPct()+'%\n'
-      +'14/14 life goals \u00B7 free life simulator, no install: '+SC_URL
+      +'15/15 life goals \u00B7 free life simulator, no install: '+SC_URL
     : 'Day '+(ST.day||0)+' of my New York life in MY LIFE \u2014 net worth '+fmt$(myWorth())+', passive income covers '+freedomPct()+'% of the bills\n'
-      +'14 life goals, 4 fortune rungs, one city — free in your browser, no install: '+SC_URL;
+      +'15 life goals, 4 fortune rungs, one city — free in your browser, no install: '+SC_URL;
   try{ await navigator.clipboard.writeText(shareText); flash('Story + link copied \u2014 paste it anywhere.'); }
   catch(e){
     const ta=document.createElement('textarea'); ta.value=shareText; document.body.appendChild(ta);
