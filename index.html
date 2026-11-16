@@ -638,6 +638,10 @@
   }
   .saveFound.show{display:block}
   #resumeBtn:hover{border-color:#ffe9b0;filter:brightness(1.1)}
+  #coverImport{margin-top:0;padding:0;background:none;border:none;cursor:pointer;
+    font-family:Georgia,serif;font-size:11.5px;letter-spacing:2.4px;color:#8a7a5c;
+    text-decoration:underline dotted rgba(201,163,95,.5);text-underline-offset:4px}
+  #coverImport:hover{color:#ffe9b0;filter:none}
   .cover-guides{
     margin-top:14px;display:flex;gap:22px;justify-content:center;flex-wrap:wrap;
   }
@@ -1143,6 +1147,12 @@
   .set-btn:hover{color:#ffe9b0;border-color:#c9a35f;background:rgba(201,163,95,.14)}
   .set-btn.danger{color:#e08a7a;border-color:rgba(200,90,70,.45)}
   .set-btn.danger:hover{color:#ffb4a4;border-color:#c85a46;background:rgba(200,90,70,.14)}
+  #saveBox{display:none;box-sizing:border-box;width:100%;height:76px;margin-top:7px;resize:vertical;
+    font-family:Consolas,"Courier New",monospace;font-size:9.5px;line-height:1.45;letter-spacing:0;
+    color:#e8d8b4;background:#0a0f0c;border:1px solid rgba(201,163,95,.34);border-radius:7px;padding:7px 8px;outline:none}
+  #saveBox.show{display:block}
+  #saveBox:focus{border-color:#c9a35f}
+  #saveBox::placeholder{color:#6d5f45}
   /* =====================================================
      DARK GLASSMORPHISM THEME — final art direction
      tokens: glass rgba(22,20,18,.88) / gold #e8c88a /
@@ -1552,6 +1562,18 @@
   </div></div>
   <div style="font-size:10px;color:#8a7a5c;line-height:1.5;margin:2px 2px 8px">That slice of income buys an asset BEFORE any bill is paid. The fund throws off cash every month.</div>
 
+  <div class="set-sec">SAVE FILE &middot; CARRY A LIFE ACROSS SITES</div>
+  <div style="font-size:10px;color:#8a7a5c;line-height:1.5;margin:2px 2px 8px">
+    A life is kept by ONE site. Play on itch and on mylifesim.com and you are walking two
+    different lives &mdash; export a code here and paste it there to carry the same walk over,
+    or to move a life to another browser. The code is plain text and is never uploaded.
+  </div>
+  <div class="set-row"><span>EXPORT</span><button class="set-btn" id="saveExport">&#11123; SHOW MY SAVE CODE</button></div>
+  <div class="set-row"><span>IMPORT</span><button class="set-btn" id="saveImportPick">&#11121; PASTE A CODE FROM ELSEWHERE</button></div>
+  <textarea id="saveBox" spellcheck="false" autocomplete="off" placeholder="Press EXPORT to show this life's code, or paste a code from the other site here, then press IMPORT."></textarea>
+  <div class="set-row"><span>&nbsp;</span><button class="set-btn" id="saveApply" style="display:none">&#10003; IMPORT THIS SAVE</button></div>
+  <div id="saveMsg" style="font-size:10px;color:#8a7a5c;line-height:1.5;margin:2px 2px 8px"></div>
+
   <div class="set-sec">SUPPORT MY LIFE</div>
   <div id="proLocked" style="font-size:11px;color:#8a7a5c;line-height:1.6;margin:2px 2px 8px">
     MY LIFE is free. <b style="color:#ffd98a">PRO ($4.99 once)</b> pins a gold badge on your dock, seals your
@@ -1663,6 +1685,7 @@
   <button id="coverBtn" style="margin-top:18px">START LIFE</button>
   <button id="resumeBtn">&#9654; CONTINUE</button>
   <div id="saveFound" class="saveFound">&#10003; SAVED LIFE FOUND &mdash; press CONTINUE to resume</div>
+  <button id="coverImport">HAVE A SAVE CODE? &#11121;</button>
   <div class="picker-dedi">
     Dedicated to Robert T. Kiyosaki, Warren Buffett &amp; Charlie Munger &mdash;<br>
     the minds behind <b>Rich Dad Poor Dad</b> and the art of letting money work for you.
@@ -8760,6 +8783,100 @@ document.getElementById('proUnlock').addEventListener('click',()=>{
 const proDockBtn=document.getElementById('proDock');
 if(proDockBtn) proDockBtn.addEventListener('click',()=>{ const p=document.getElementById('setPanel'); if(p&&!p.classList.contains('show')){ try{ document.getElementById('setBtn').click(); }catch(e){} } });
 applyProUI();
+
+/* ---- save codes: one life, two sites ----
+   itch serves this build from html.itch.zone, a different origin from
+   mylifesim.com, so the two do not share localStorage: the same player walks
+   two unrelated lives. A save code is the bridge — exactly the snapshot the 💾
+   button writes, as plain JSON text. Nothing is uploaded; the text only moves
+   if the player copies it out. */
+(function(){
+  const box=document.getElementById('saveBox');
+  const msg=document.getElementById('saveMsg');
+  const applyBtn=document.getElementById('saveApply');
+  if(!box||!applyBtn||!msg) return;
+  const say=function(h){ msg.innerHTML=h; };
+  const r2=function(n){ return Math.round(n*100)/100; };
+  /* the snapshot stores 30 candles per chart with full float precision — that is
+     74 KB of text, too much to paste into a note or a message. The code keeps the
+     last 10 candles at 2 decimals: every number that decides the game (cash, the
+     portfolio, prices, debts) travels untouched, only the chart's tail is trimmed. */
+  function compact(snap){
+    const cut=function(arr){
+      if(!Array.isArray(arr)) return arr;
+      return arr.map(function(d){
+        if(!d||typeof d!=='object') return d;
+        const o={};
+        Object.keys(d).forEach(function(k){ if(k!=='hist') o[k]=d[k]; });
+        if(Array.isArray(d.hist)){
+          o.hist=d.hist.slice(-10).map(function(c){
+            return (c&&typeof c==='object') ? {o:r2(c.o),h:r2(c.h),l:r2(c.l),c:r2(c.c)} : c;
+          });
+        }
+        return o;
+      });
+    };
+    const out={};
+    Object.keys(snap).forEach(function(k){ out[k]=snap[k]; });
+    if(snap.stocks) out.stocks=cut(snap.stocks);
+    if(snap.realty) out.realty=cut(snap.realty);
+    return out;
+  }
+  const build=function(){
+    if(started && !ST.ended) return snapshot();
+    try{ return JSON.parse(STORE.getItem(SAVE_KEY)||'null'); }catch(e){ return null; }
+  };
+  document.getElementById('saveExport').addEventListener('click',function(){
+    const snap=build();
+    if(!snap){ say('<span style="color:#e0a868">No life to export yet &mdash; start one, or press &#128190; on the dock first.</span>'); return; }
+    const code=JSON.stringify(compact(snap));
+    box.classList.add('show'); box.value=code; applyBtn.style.display='none';
+    box.focus(); box.select();
+    let copied=false;
+    try{ copied=document.execCommand('copy'); }catch(e){}
+    if(copied){
+      say('&#10003; Code copied ('+code.length+' characters). Open the other site &rarr; &#9881; &rarr; IMPORT and paste it there.');
+    }else if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(code).then(function(){
+        say('&#10003; Code copied ('+code.length+' characters). Open the other site &rarr; &#9881; &rarr; IMPORT and paste it there.');
+      }).catch(function(){
+        say('Your code is in the box below &mdash; select all of it and copy (Ctrl+A, Ctrl+C), then paste it on the other site.');
+      });
+    }else{
+      say('Your code is in the box below &mdash; select all of it and copy (Ctrl+A, Ctrl+C), then paste it on the other site.');
+    }
+  });
+  function openImport(hint){
+    const p=document.getElementById('setPanel');
+    if(p&&!p.classList.contains('show')){ try{ document.getElementById('setBtn').click(); }catch(e){} }
+    box.classList.add('show'); box.value=''; applyBtn.style.display='';
+    try{ box.scrollIntoView({block:'nearest'}); }catch(e){}
+    box.focus();
+    say(hint||'Paste the code from the other site into the box, then press IMPORT.');
+  }
+  document.getElementById('saveImportPick').addEventListener('click',function(){ openImport(); });
+  const coverBtn=document.getElementById('coverImport');
+  if(coverBtn) coverBtn.addEventListener('click',function(){ openImport('Paste the save code from the other site, then press IMPORT.'); });
+  applyBtn.addEventListener('click',function(){
+    const raw=(box.value||'').trim();
+    if(!raw){ say('<span style="color:#e0a868">The box is empty.</span>'); return; }
+    let snap=null;
+    try{ snap=JSON.parse(raw); }catch(e){ snap=null; }
+    if(!snap || typeof snap!=='object' || !snap.ST || typeof snap.ST!=='object'){
+      say('<span style="color:#e08a7a">That is not a MY LIFE save code. Copy the whole thing &mdash; it starts with {"v":1.</span>'); return;
+    }
+    if((snap.v|0)>1){ say('<span style="color:#e08a7a">That code comes from a newer version of the game.</span>'); return; }
+    const who=(typeof snap.name==='string'&&snap.name.trim())?snap.name:'Walker';
+    let when='an unknown day';
+    try{ when=new Date(snap.when).toLocaleDateString(); }catch(e){}
+    if(!confirm('Replace the life saved in this browser with '+who+' (banked '+when+')?\n\nAny unsaved progress in the life you are walking right now is lost.')) return;
+    try{ STORE.setItem(SAVE_KEY, JSON.stringify(snap)); }
+    catch(e){ say('<span style="color:#e08a7a">This browser refused to store the save &mdash; it may be full or in a locked-down mode.</span>'); return; }
+    saveDirty=false;
+    say('&#10003; Imported '+who+'. Reloading&hellip;');
+    setTimeout(function(){ location.reload(); },500);
+  });
+})();
 
 function startGame(opts){
   opts = (opts && typeof opts.name==='string') ? opts : null;   /* goBtn passes a click event - ignore it */
