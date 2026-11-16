@@ -8699,6 +8699,31 @@ if(STORE.memoryOnly){
    entered here once, remembered in localStorage. Rotate the code by editing one line
    here and the code chip on /pro/. */
 const PRO_CODE='MLPRO-NYC-4999';
+
+/* ---- portal guard: nothing is sold or linked out from inside an embed ----
+   itch.io / CrazyGames / Poki / GameJolt forbid taking payment (or sending the
+   player to a payment page) inside the embedded game. On those hosts the whole
+   PRO block is hidden and replaced by a neutral line, so the same build can be
+   shipped to a portal without a separate version. On mylifesim.com nothing
+   changes: PORTAL is false there. */
+const PORTAL=(function(){
+  const h=(location.hostname||'').toLowerCase();
+  if(/(^|\.)(itch\.zone|itch\.io|crazygames\.com|poki\.com|gamejolt\.com|newgrounds\.com)$/.test(h)) return true;
+  try{ return window.self!==window.top; }catch(e){ return true; }   /* any third-party iframe */
+})();
+if(PORTAL){
+  try{
+    ['proOpen','proCodeIn','proUnlock'].forEach(function(id){
+      const el=document.getElementById(id);
+      if(!el) return;
+      const row=el.closest('.set-row');
+      if(row) row.style.display='none';
+    });
+    const lockedEl=document.getElementById('proLocked');
+    if(lockedEl) lockedEl.innerHTML='<span style="color:#c9a866;letter-spacing:1px">&#9733; THE FULL GAME IS FREE HERE &mdash; every option, no paywall. If you want to support the walk, use the project page on this platform. Nothing is sold inside the game.</span>';
+  }catch(e){}
+}
+
 function isPro(){ try{ return STORE.getItem('ml_pro')==='1'; }catch(e){ return false; } }
 function applyProUI(){
   const on=isPro();
