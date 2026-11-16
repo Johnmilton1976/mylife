@@ -524,6 +524,17 @@
   .coverSub{font-size:15px;letter-spacing:7px;text-indent:0;font-weight:normal;
     font-family:Verdana,sans-serif;margin-top:14px;color:#e2cf8f;text-align:center;
     text-shadow:0 2px 8px rgba(0,0,0,.55)}
+  /* SEO 2026-11-16: the H1 used to be the bare brand "MY LIFE"; the keyword line
+     lived in a sibling div, so the page's single visible H1 carried no query
+     words. The subtitle is now INSIDE the H1 (second line), while the gold
+     gradient + glow stay on the brand span only — pixels must not move.
+     Geometry assertions in _shot_cover.js pin this. */
+  #picker h1.coverTitle{background:none;filter:none;-webkit-text-fill-color:initial;color:inherit;line-height:0}
+  #picker h1.coverTitle .coverBrand{display:block;line-height:normal;
+    background:linear-gradient(180deg,#fdf3c8 8%,#f2d98a 38%,#c9992e 62%,#f5e3a6 88%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 4px 16px rgba(0,0,0,.65)) drop-shadow(0 0 34px rgba(232,200,138,.30))}
+  #picker h1.coverTitle .coverSub{display:block;line-height:normal;margin-top:30px}
   #picker p,#create p{color:#c8d8c8;font-size:14.5px;letter-spacing:4px;text-shadow:0 2px 8px rgba(0,0,0,.6)}
   #picker p{color:#cdbc86;text-shadow:0 0 14px rgba(232,200,138,.35),0 2px 8px rgba(0,0,0,.6)}
   #nameInput{
@@ -1647,8 +1658,7 @@
 
 <div id="picker">
   <div id="coverSky"></div>
-  <h1 style="font-size:86px;letter-spacing:26px">MY LIFE</h1>
-  <div class="coverSub">A FREE LIFE SIMULATOR GAME IN YOUR BROWSER</div>
+  <h1 id="coverTitle" class="coverTitle" style="font-size:86px;letter-spacing:26px"><span class="coverBrand">MY LIFE</span><span class="coverSub">A FREE LIFE SIMULATOR GAME IN YOUR BROWSER</span></h1>
   <p>A LIFE SIMULATOR ON THE STREETS OF NEW YORK</p>
   <button id="coverBtn" style="margin-top:18px">START LIFE</button>
   <button id="resumeBtn">&#9654; CONTINUE</button>
