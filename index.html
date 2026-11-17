@@ -1340,6 +1340,14 @@
        caption tier and give the box the phone width so it folds to ~2 lines. */
     .tmsg{font-size:15px;letter-spacing:.6px;line-height:1.45;padding:10px 16px}
     #toastWrap{width:88vw;max-width:88vw}
+    /* 4) settings: the PAY YOURSELF FIRST label (flex:1 + nowrap) refused to
+       shrink and pushed the 0/5/10/20% seg 6px past the panel edge — the 20%
+       button was clipped and unclickable. Let only that row's label wrap. */
+    #setPanel .set-lbl-wrap{white-space:normal;min-width:0;line-height:1.25}
+    /* 5) zoom is wheel-only (mouse) — unreachable on touch. On phones this
+       hint is dead text and, sitting under the HUD, showed as a half string.
+       Hide it; desktop keeps the wheel zoom and its hint. */
+    #zoomhint{display:none}
   }
   /* very short screens (landscape phones): the HUD shrinks instead of scrolling away */
   @media (max-height:560px){
@@ -1592,7 +1600,7 @@
   <div class="set-row"><span>CITY LIGHTS</span><button class="tg on" id="tgNight">ON</button></div>
 
   <div class="set-sec">MONEY &middot; RICH DAD'S RULE</div>
-  <div class="set-row"><span>PAY YOURSELF FIRST</span><div class="seg" id="segPaySelf">
+  <div class="set-row"><span class="set-lbl-wrap">PAY YOURSELF FIRST</span><div class="seg" id="segPaySelf">
     <button data-ps="0">0%</button><button data-ps="5">5%</button><button data-ps="10" class="on">10%</button><button data-ps="20">20%</button>
   </div></div>
   <div style="font-size:10px;color:#8a7a5c;line-height:1.5;margin:2px 2px 8px">That slice of income buys an asset BEFORE any bill is paid. The fund throws off cash every month.</div>

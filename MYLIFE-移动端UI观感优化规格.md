@@ -179,3 +179,23 @@
 
 **约束**：玩法（spin 走 1-6、随机岔路、格子事件）不变；桌面 1440×900 走路逐像素不变；角色稳态落点 66%/水平 50% 不变；cull 机制不删（性能保护）。
 
+---
+
+## 6.7 第三轮：全界面体检（用户："继续优化移动版本的游戏"，主动体检 2026-11-17）
+
+用户未指定具体元素，故对手机端全部面板做体检：`qa/ui-shots/_audit.js` 逐个打开 7 个面板（fin/mkt/port/realty/estate/news/set），390×844 截图 + 量出界/滚动/最小字号。结果：面板均在视口内、可滚动、0 报错；发现 2 个真实问题，均移动端专属、桌面零影响。
+
+| # | 问题 | 实测数据（390×844） | 根因 |
+|---|---|---|---|
+| 1 | 设置面板 `20%` 按钮被裁 | `#setPanel` 右边界 345px；`#segPaySelf` 右边界 **351px**（溢出面板 6px）。行内 4 按钮 0/5/10/20% 各 31px，seg 宽 133px @ left 218 | `.set-row>span:first-child{flex:1;white-space:nowrap}` 标签 `PAY YOURSELF FIRST` 不肯收缩，把按钮组顶出边框 → 20% 点不全 |
+| 2 | 顶部灰字半截乱码 | `#zoomhint`「zoom out = city overview · zoom in = street level」@ (18,96,226w)，z-index 15 < 面板，被盖住只露半截 | 缩放只绑 `wheel`（4533 行鼠标滚轮），手机无滚轮**无法触发**——死提示；叠加层级被遮挡 |
+
+**修复规格**（全部在 `max-width:760px` 块内，桌面零影响）：
+
+| # | 改动 | 依据 |
+|---|---|---|
+| 1 | `PAY YOURSELF FIRST` 标签允许收缩换行（`.set-row>span:first-child` 在该行 `white-space:normal;min-width:0`），按钮组回面板内 | 保 4 个档位全可点；标签两行不影响可滚动面板 |
+| 2 | `#zoomhint{display:none}` 手机端 | 手机无滚轮=功能不可达，隐藏死提示；桌面缩放仍可用，保留 |
+
+**不动项**：面板尺寸/颜色/其它字号；toast；玩法；桌面全部行为。验证：按钮右边界 ≤345、截图无裁切；回归 smoke/verify_mobile/savecode 全绿。
+
