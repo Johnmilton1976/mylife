@@ -1323,6 +1323,23 @@
   @media (max-width:760px){
     #wheelWrap{bottom:calc(64px + env(safe-area-inset-bottom,0px))}
     #newsPanel{bottom:calc(70px + env(safe-area-inset-bottom,0px))}
+    /* ---- round 2 · game HUD breathing room (user photo, 390x844) ----
+       Everything here sits AFTER the NOIR skin above, so it wins the cascade
+       without !important. Desktop (1440x900) never sees any of it. */
+    /* 1) brand box was 212px wide — 16px padding + a 6px tracking that the
+       global NOIR rule pushed onto phones — and collided with #panel at x=172.
+       Keep the wordmark, tame the caption, cap the box. */
+    #brand{letter-spacing:3px;padding:7px 12px;max-width:150px}
+    #brand small{font-size:8px;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    /* 2) folded stats panel was 206px wide, its left edge at x=172 sitting on
+       the walker's head (~x195). 176px pulls its left edge to ~202 — right of
+       centre — so the avatar reads clear, while clock/health/fold all stay. */
+    #panel{width:176px}
+    /* 3) flash tips: 19px in a 195px shrink-wrapped box ran to 6 lines and ate
+       the lower screen (the 15px rule only fired in landscape). Drop to the
+       caption tier and give the box the phone width so it folds to ~2 lines. */
+    .tmsg{font-size:15px;letter-spacing:.6px;line-height:1.45;padding:10px 16px}
+    #toastWrap{width:88vw;max-width:88vw}
   }
   /* very short screens (landscape phones): the HUD shrinks instead of scrolling away */
   @media (max-height:560px){
