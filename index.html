@@ -4472,9 +4472,17 @@ function buildCullUnits(){
 function cullCity(){
   if(!CULL.length || !cam) return;
   const vw=VW()/cam.scale, vh=VH()/cam.scale, M=CULL_MARGIN;
-  const x0=cam.x-M, y0=cam.y-M, x1=cam.x+vw+M, y1=cam.y+vh+M;
+  /* round 2 · phones: walking used to flip ~80 groups in/out around the margin
+     edge every frame (42 display writes) — the pavement under the walker
+     blinked and read as "he vanished for a frame". Hysteresis: a group already
+     on screen must travel 240px FURTHER before it is culled, so edge groups
+     stop chattering while the camera rolls. Entrance uses the original margin.
+     Desktop keeps the single-margin behaviour byte-for-byte. */
+  const mOut = IS_LITE ? M+240 : M;
   for(let i=0;i<CULL.length;i++){
     const u=CULL[i];
+    const m = u.on ? mOut : M;
+    const x0=cam.x-m, y0=cam.y-m, x1=cam.x+vw+m, y1=cam.y+vh+m;
     const hit = u.x<x1 && u.x2>x0 && u.y<y1 && u.y2>y0;
     if(hit!==u.on){ u.on=hit; u.el.style.display = hit ? '' : 'none'; }
   }
@@ -9332,7 +9340,10 @@ async function walkRoute(n, chkLast){
   }
 
   const mood=ST.happy>=70?0.95:(ST.happy<=30?1.15:1);
-  const speed=1/mood;                       /* world px per ms: ~1, mood nudges it */
+  /* round 2 · phones walked ~470ms per cell at speed 1 and read as sluggish;
+     lift the phone pace ~35% so each cell lands in ~350ms. Desktop keeps the
+     classic 1/mood stride — this is a phone-only feel fix, not a rules change. */
+  const speed=(IS_LITE?1.35:1)/mood;         /* world px per ms */
   const me=CHARS['me'];
   const put=(x,y)=>{
     const flip=parseFloat(g.dataset.flip||1);
@@ -9362,8 +9373,11 @@ async function walkRoute(n, chkLast){
     let tPrev=tStart, travelled=0;
     const brake=speed*WALK_RAMP_OUT/2;       /* distance needed to stop from full stride */
     (function step(t){
-      const dt=Math.min(64, t-tPrev);        /* clamp: a 400ms frame must not move him 400px; 64ms keeps
-                                                a 15fps machine on real-time pace and never bites at 60fps */
+      /* clamp: a tab-switch frame must not teleport him. Phones allow 100ms so a
+         choppy 20-25fps frame (~50ms) is never cut short — a 64ms cap was truncating
+         exactly those frames and quantising the stride into visible 33/50/64px jumps.
+         Desktop keeps 64. 100ms still guards against a 400ms stall. */
+      const dt=Math.min(IS_LITE?100:64, t-tPrev);
       tPrev=t;
       const remaining=total-travelled;
       /* ease in from standstill, ease out onto the last cell — nothing in between */
