@@ -3290,6 +3290,12 @@ function cabSpotsLazy(){
 }
 function ensureCabNearby(){
   if(!started || cabSpawns>=50) return;
+  /* round 2 · phones: don't force a cab to pull over beside the walker. On a
+     390px screen that spawn lands right on top of the character and reads as
+     clutter. The scattered cabs the city already generated are still around
+     and still tappable (cabTalk), so the driver easter egg survives — we just
+     stop manufacturing one at the player's feet. Desktop is untouched. */
+  if(IS_LITE) return;
   const svg=document.querySelector('#world>svg'); if(!svg) return;
   /* a cab whose centre is on screen can already be hovered/tapped where it sits */
   const centred=g=>{
