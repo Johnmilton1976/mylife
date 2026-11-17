@@ -1,6 +1,9 @@
 # QA 截图与过程产物（体积大，不进仓库）
 qa/
 shot_*.png
+cover_*-desk.png
+cover_*-phone.png
+live_cover*.png
 route-*.png
 route-*.svg
 route-*.html
