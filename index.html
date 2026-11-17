@@ -656,7 +656,10 @@
     text-shadow:0 1px 4px rgba(0,0,0,.6);
   }
   /* first-run tutorial: dark card over the freshly born city */
-  #tut{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;
+  /* the tutorial is a MODAL: it must sit above the toast stack (85) and the
+     share sheet (88). Open-toasts used to paint 21px white text ON TOP of the
+     instructions — the single biggest cause of "the screen is full of words". */
+  #tut{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;
     background:rgba(4,8,12,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
   #tut.show{display:flex}
   #tutCard{max-width:560px;width:min(560px,92vw);max-height:86vh;overflow:auto;
@@ -681,8 +684,14 @@
   #hudToggle{display:none}
   @media (max-width:760px){
     #picker h1{font-size:clamp(40px,12vw,86px) !important;letter-spacing:clamp(8px,3vw,26px) !important;text-indent:0 !important}
-    .coverSub{font-size:12px;letter-spacing:4px;padding:0 14px}
-    #picker p{font-size:12px;padding:0 18px}
+    /* C档 11px / 字距 4→1.5px: the wide tracking was the "scattered" feel */
+    .coverSub{font-size:11px;letter-spacing:1.5px;padding:0 14px}
+    /* the H1 subtitle already says "A FREE LIFE SIMULATOR GAME IN YOUR BROWSER";
+       this second line repeats it. Hide the WORDS but keep the box: display:none
+       would shrink the flex column and re-center the whole title block +85px
+       (the cover H1 geometry is pinned by _shot_cover.js). Empty space is the
+       breathing room the first screen wants anyway. */
+    #picker p{visibility:hidden}
     #coverBtn{padding:13px 40px;font-size:19px}
     #resumeBtn{padding:10px 34px;font-size:15px}
     /* onboarding on a phone: two thumb-sized sex buttons, a smaller standee */
@@ -696,8 +705,17 @@
     .sexBtn{flex:1;min-width:0;padding:11px 8px;font-size:14px;letter-spacing:2px}
     #faceBox{width:140px;height:184px}
     #faceTag{left:-24px;right:-24px;letter-spacing:1.8px}
+    /* Caption C档: 12.5/1.8 → 11/1.5, four lines become three */
+    .picker-dedi{font-size:11px;line-height:1.5}
+    /* Micro M档: tighter tracking + gap so eight links stop filling a whole band */
+    .cover-guides{gap:14px 12px;margin-top:11px}
+    .cover-guides a{font-size:10px;letter-spacing:1px}
+    .cover-legal{font-size:9.5px;line-height:1.5;margin-top:12px}
+    /* tutorial card — H1档 title, B档 body at 1.5 line-height, 22px icons */
     #tutCard{padding:18px 18px}
-    .tutRow{font-size:13px}
+    #tutCard h2{font-size:19px;letter-spacing:2px;margin-bottom:13px}
+    .tutRow{font-size:13px;line-height:1.5;margin-bottom:11px}
+    .tutIc{font-size:22px}
     /* the mini map AND its collapsed round button would fight the wheel and
        the dock for thumb space — a phone needs neither */
     #miniWrap{display:none}
@@ -9854,6 +9872,7 @@ const TUT_KEY='mylife.tut.v1';
 function showTutorial(){
   const t=document.getElementById('tut');
   if(!t) return;
+  clearToasts();                        /* the welcome / cab hints must not shout over the instructions */
   t.classList.add('show');
 }
 function tutDone(){
