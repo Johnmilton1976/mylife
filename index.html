@@ -4062,10 +4062,10 @@ function animateCam(toScale, ms, trackMe, cx, cy){
   const fromS=cam.scale, t0=performance.now();
   const fcx=cx!==undefined?cx:cam.x+VW()/2/fromS;
   const fcy=cy!==undefined?cy:cam.y+VH()/2/fromS;
-  /* phones park the walker at 60% of the frame (see followCam); desktop keeps
-     the classic slight look-ahead. The offset is computed in world units from
-     the live scale, so it holds at any zoom. */
-  const trackY=()=>IS_LITE?(mePos.y-VH()*0.10/cam.scale):(mePos.y-40);
+  /* phones park the walker at WALKER_PHONE_Y (66%) of the frame (see followCam);
+     desktop keeps the classic slight look-ahead. The offset is computed in world
+     units from the live scale, so it holds at any zoom. */
+  const trackY=()=>IS_LITE?phoneFeetAnchorY(mePos.y):(mePos.y-40);
   cancelAnimationFrame(camAnimId);
   /* the OS says "reduce motion": cut to the destination, keep the destination */
   if(REDUCED){
@@ -4397,6 +4397,17 @@ document.getElementById('wheelSvg').innerHTML  = WHEEL_MARKUP;
 const vp=document.getElementById('viewport'), world=document.getElementById('world');
 const cam={x:0,y:0,scale:0.78};
 const VW=()=>window.innerWidth, VH=()=>window.innerHeight;
+/* round 2 · where the walker sits on a PHONE screen (fraction of viewport
+   height from the top, feet). 0.66 puts the head near 45% — clear of the
+   top-right stats panel (which ends ~162px) and dead centre horizontally.
+   Desktop keeps its classic edge-follow and never reads this. */
+const WALKER_PHONE_Y = 0.66;
+/* world-Y to hand to centerOn() so the walker's FEET land on WALKER_PHONE_Y.
+   centerOn puts the anchor at screen centre (50%), so the anchor sits above
+   the feet by (0.66-0.50) of a viewport, converted to world units by scale. */
+const phoneFeetAnchorY = (feetY) => IS_LITE
+  ? feetY - VH()*(WALKER_PHONE_Y-0.5)/cam.scale
+  : feetY - 40;
 /* ===================== viewport culling =====================
    The city is ~16.7k SVG nodes, but the camera only ever shows a few hundred
    of them: measured on a 1280x800 viewport, 62 of 3830 top-level groups are
@@ -4482,13 +4493,13 @@ let camFollow=true;
 function followCam(x,y){
   if(!camFollow||camAnimId) return;     /* the cinematic pull owns the camera while it runs */
   const vw=VW()/cam.scale, vh=VH()/cam.scale;
-  /* phones park the walker a touch below centre: 60% of the frame — below the
-     HUD, above the wheel/dock, with more street ahead. Hard lock, no easing:
-     an eased chase lags the walk and freezes mid-frame when the walk stops,
-     which is exactly how he kept drifting back under the HUD. */
+  /* phones park the walker below centre: WALKER_PHONE_Y (66%) of the frame —
+     head well clear of the top-right stats panel, feet above the wheel/dock.
+     Hard lock, no easing: an eased chase lags the walk and freezes mid-frame
+     when the walk stops, which is how he kept drifting back under the HUD. */
   if(IS_LITE){
     cam.x=x-vw*0.5;
-    cam.y=y-vh*0.60;
+    cam.y=y-vh*WALKER_PHONE_Y;
     applyCam();
     return;
   }
@@ -8961,7 +8972,7 @@ function startGame(opts){
   document.getElementById('create').classList.remove('show');
   cam.scale=0.78;
   sessionPulled=false;                    /* a fresh life earns its pull-back on the first spin */
-  centerOn(PATH[meIdx].x, PATH[meIdx].y-40);
+  centerOn(PATH[meIdx].x, phoneFeetAnchorY(PATH[meIdx].y));
   mePos={x:PATH[meIdx].x, y:PATH[meIdx].y}; zoneBld=null;
   cur=meIdx;                                        /* the walk begins from wherever you were born */
   curCell=PATH[meIdx]; pendingDetour.length=0;
@@ -9514,7 +9525,7 @@ segSpeed.addEventListener('click',e=>{
 tgFollow.addEventListener('click',()=>{
   STG.follow=!STG.follow; saveSettings(); applySettings(); syncSetUI();
   flash(STG.follow?'Camera follows you':'Camera stays where you drag it');
-  if(STG.follow) centerOn(mePos.x, mePos.y-40);
+  if(STG.follow) centerOn(mePos.x, phoneFeetAnchorY(mePos.y));
 });
 tgLabels.addEventListener('click',()=>{ STG.labels=!STG.labels; saveSettings(); applySettings(); syncSetUI(); });
 tgNight.addEventListener('click',()=>{ STG.night=!STG.night; saveSettings(); applySettings(); syncSetUI(); });
@@ -9869,7 +9880,7 @@ function resumeGame(){
   document.getElementById('create').classList.remove('show');
   cam.scale=0.78;
   sessionPulled=false;                    /* a resumed life gets the same opening move */
-  centerOn(PATH[pos].x, PATH[pos].y-40);
+  centerOn(PATH[pos].x, phoneFeetAnchorY(PATH[pos].y));
   mePos={x:PATH[pos].x, y:PATH[pos].y}; zoneBld=null;
   cur=pos; curCell=PATH[pos]; pendingDetour.length=0;
   setCellMark();

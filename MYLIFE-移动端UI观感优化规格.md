@@ -135,3 +135,13 @@
 - 折叠态功能不变：时钟、头像血量、FULL HUD 都保留，只调布局与尺寸。
 - 提示词文案与触发时机（4.2s / 9s / 14.5s 三条）不动。
 
+### 6.4 追加：角色取景下移（用户第二轮实拍后追问"人物再下面一点、居中、别被属性遮住"）
+
+| 项 | 内容 |
+|---|---|
+| 实测基线 | 开局静止角色脚 y=453（**53.7%**），走路 y=506（60%）；头顶约在脚上 400 世界单位=312px → 开局头顶 ~141px，正好擦着属性框底部 162px = "被遮"真相。水平已 50% 居中。 |
+| 根因 | 取景系数分散在 4 处且不一致：开局 `centerOn(x,y-40)`（53.7%）、走路 `followCam` 锁 60%、缩放 `animateCam` 偏移 0.10、follow 开关 `y-40`。 |
+| 修复 | 新增统一常量 `WALKER_PHONE_Y=0.66` + helper `phoneFeetAnchorY()`；4 处取景（开局 startGame/resumeGame、followCam、animateCam.trackY、follow 开关）全部改用它们。角色脚稳态落到视口 66%、水平 50%。 |
+| 踩坑 | `trackY` 初版写成 `mePos.y-VH()*(1-0.66)/scale` 导致走路跑到 52%；应为 `phoneFeetAnchorY()`（`y-0.16*VH/scale`）——centerOn 把锚点放 50%，锚点须在脚上方 0.16 个视口。已统一。 |
+| 验证 | 开局/走路脚均 66.0%、水平 50%；头顶 ~360px 远离属性框底部 162px（间隔约 200px）。截图 `qa/ui-shots/walker_idle.png`。`verify_mobile` 断言同步 0.60→0.66、步数 3→4（等 pull 结束取稳态），连跑 2 次 38/38；smoke/savecode 绿。桌面走 else(-40) 分支不受影响。 |
+

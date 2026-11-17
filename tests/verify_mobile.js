@@ -124,12 +124,14 @@ const ok = (c, msg) => { if (c) { pass++; console.log('  PASS', msg); } else { f
     });
     ok(wd.sep, `wheel and dock do not intersect (wheel ${wd.w.join(',')} dock ${wd.d.join(',')})`);
 
-    /* the walker must sit low-centre (~60% of the frame) on a phone: below the
-       HUD, above the wheel. Desktop rim-follow is untouched. */
-    for (let k = 0; k < 3; k++) { await page.keyboard.press('Space'); await page.waitForTimeout(1600); }
+    /* the walker must sit low-centre (WALKER_PHONE_Y = 66% of the frame) on a
+       phone: head well clear of the top-right stats panel, feet above the wheel.
+       Round 2 moved him from 60% to 66% so the head stops grazing the HUD.
+       Desktop rim-follow is untouched. */
+    for (let k = 0; k < 4; k++) { await page.keyboard.press('Space'); await page.waitForTimeout(1600); }
     await page.waitForTimeout(2500);
     const frac = await page.evaluate(() => (mePos.y - cam.y) * cam.scale / window.innerHeight);
-    ok(Math.abs(frac - 0.60) < 0.06, `walker parked low-centre while walking (feet at ${(frac * 100).toFixed(1)}% of screen)`);
+    ok(Math.abs(frac - 0.66) < 0.05, `walker parked low-centre while walking (feet at ${(frac * 100).toFixed(1)}% of screen)`);
     const zh = await page.evaluate(() => parseFloat(getComputedStyle(document.getElementById('zoomhint')).fontSize));
     ok(zh <= 11, `zoom hint is small on phone (${zh}px)`);
 
