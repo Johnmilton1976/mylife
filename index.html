@@ -725,7 +725,7 @@
     #brand small{font-size:9px;letter-spacing:2px}
     #wheelWrap{transform:scale(.78);transform-origin:bottom left}
     #dock{gap:7px}
-    .dockBtn{width:40px;height:40px;font-size:18px}
+    .dockBtn{width:44px;height:44px;font-size:18px}
     /* five rail icons now: shrink the rail so the last one clears the wheel */
     .sideBtn{width:44px;height:44px;font-size:20px}
     #mktBtn{top:150px}
@@ -1348,6 +1348,12 @@
        hint is dead text and, sitting under the HUD, showed as a half string.
        Hide it; desktop keeps the wheel zoom and its hint. */
     #zoomhint{display:none}
+    /* 6) touch targets: these controls were 20-24px tall — hard to hit precisely
+       on a phone. Add VERTICAL padding only; never widen them (the 20% clip came
+       from a horizontal overrun). Panels scroll, so extra height is safe. */
+    #setPanel .tg{padding-top:10px;padding-bottom:10px}
+    #setPanel .seg button{padding-top:10px;padding-bottom:10px}
+    #hudToggle{padding-top:11px;padding-bottom:11px}
   }
   /* very short screens (landscape phones): the HUD shrinks instead of scrolling away */
   @media (max-height:560px){
