@@ -20,14 +20,14 @@
 <link rel="canonical" href="https://mylifesim.com/">
 <meta property="og:title" content="MY LIFE — A Life Simulator on the Streets of New York">
 <meta property="og:description" content="Spin the wheel. Walk Manhattan. Take a job, buy assets that pay you, and try to leave the rat race before the city wears you down.">
-<meta property="og:image" content="https://mylifesim.com/og-cover.png">
+<meta property="og:image" content="https://mylifesim.com/og-cover-v1.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="MY LIFE — a life simulator on the streets of New York">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="MY LIFE — A Life Simulator on the Streets of New York">
 <meta name="twitter:description" content="A free single-file life sim on a hand-built Manhattan grid. Rich Dad rules, no installs, no accounts.">
-<meta name="twitter:image" content="https://mylifesim.com/og-cover.png">
+<meta name="twitter:image" content="https://mylifesim.com/og-cover-v1.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='13' fill='%230a1620'/%3E%3Ccircle cx='32' cy='32' r='23' fill='none' stroke='%23e9c86a' stroke-width='4'/%3E%3Ccircle cx='32' cy='32' r='4' fill='%23e9c86a'/%3E%3Cpath d='M32 9v6M32 49v6M9 32h6M49 32h6' stroke='%23e9c86a' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
 <!-- search engines: what this page is, in their own language -->
 <script type="application/ld+json">
@@ -1400,6 +1400,23 @@
   }
   #lifeEnd button:hover{filter:brightness(1.04)}
   #lifeEnd .le-primary{background:linear-gradient(180deg,#3a2513,#241608);color:#ffe9b0;border-color:#c9a35f}
+  /* leave-a-trace strip: rate / favorite / follow on the host platform (spec 3.x) */
+  .le-engage{display:flex;gap:12px;justify-content:center;align-items:center;flex-wrap:wrap;margin:-4px 0 16px}
+  .le-engage button.le-eng{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    min-width:132px;min-height:44px;padding:9px 16px;
+    font-family:Georgia,serif;font-size:12px;font-weight:bold;letter-spacing:1.6px;
+    border:2px solid #8a5a28;border-radius:9px;color:#5a2a12;
+    background:linear-gradient(180deg,#fdf6dd,#e2cf9c);cursor:pointer;
+  }
+  .le-engage button.le-eng:hover{filter:brightness(1.04)}
+  .le-engage button.le-eng:active{transform:scale(.96);filter:brightness(1.14)}
+  .le-engage .le-ic{width:22px;height:22px;flex:0 0 22px;background-repeat:no-repeat;background-size:contain;background-position:center;
+    filter:brightness(0) saturate(100%) invert(28%) sepia(42%) saturate(1150%) hue-rotate(348deg) brightness(88%);}
+  .le-engage .le-ic-rate{background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAAzElEQVR4nO1X0Q7DIAj0zP7/l1mWbEtjsAVOMrZ5b9Vy4PVE29rGxo8BK0hERN6EAMXZWzH0lepoz/+tkJBqpCqEg5mZQnuFnVXaQ9AGPZJjUIeJLalQHwfYFcLhJy2X+ZOBNK6Vc5pkphSchXl5LsmFUCsSe2lqKAQWn0UXYtplWND4rBzmbQ+iKE9s/T4UObvkOTd7x9Pb6OvHA7OiIrgxxbTAXIpCknAxeyHc4I6w+mVZHzpLMCb52G8QThJrhaZAAt7J9NvGxlfgDk/yhB8aOnW/AAAAAElFTkSuQmCC)}
+  .le-engage .le-ic-favorite{background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAA10lEQVR4nO2X4Q7DIAiEObP3f2WXNmtiNsBTNN0Wvp8NwgEVWpEkSRKb+mKX/QEYp+I5ABCxpwWNZjaKJQysGDQOWLG9M5ooVxCc8kZa4/kvo4EuDmdqhsZzDS3Wh6C7KfJvgtC0h22VxyPqYJWQ32kZFmbbQ4vltqwS82gEZqSUFfuJ4d2HlaRZoetAXbzTetWmb1lthEUmcfiWQQnOBGKX6bCgGVGzYobmEEhRETGnLWvIvFMz79mW1VEX3sTvXx0scFoSmeyhCsH4YpS7qRP/X0kim3gCkF6EQIkJNz4AAAAASUVORK5CYII=)}
+  .le-engage .le-ic-follow{background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAAsklEQVR4nO2V0RIAEQhF5f//+e54M5ZQWWZ1HindqdsIwXGcyyBJEgC8HiISvVUSLcRw50sFoVPUQtRwm1EUy0fE3S0fWa2glX/EglbyD0EoPGO1YYmp2WOgsNZPUx2iTjELcx/nIRoNxIRPNJ3qJkJhWIkwsvxEwcTnd9wbTQ/VvoMEo78aM9vhqiDt30QKUd0tI6FBubwksCXyuLWP5cGo+VbxWUFot2wXcbcAx3Gu5wEIGVwmri1NowAAAABJRU5ErkJggg==)}
+
 
   /* ---------- share card ---------- */
   #shareModal{position:fixed;inset:0;z-index:88;display:none;align-items:center;justify-content:center;
@@ -1683,6 +1700,11 @@
     <div class="le-line" id="leLine"></div>
     <div class="le-grid" id="leGrid"></div>
     <div class="le-quote" id="leQuote">&ldquo;The rich don&rsquo;t work for money.&rdquo;</div>
+    <div class="le-engage" id="leEngage" role="group" aria-label="Leave a trace on itch.io">
+      <button class="le-eng" data-eng="rate"><span class="le-ic le-ic-rate" aria-hidden="true"></span>RATE IT</button>
+      <button class="le-eng" data-eng="favorite"><span class="le-ic le-ic-favorite" aria-hidden="true"></span>FAVORITE</button>
+      <button class="le-eng" data-eng="follow"><span class="le-ic le-ic-follow" aria-hidden="true"></span>FOLLOW</button>
+    </div>
     <div class="le-btns">
       <button id="leKeep" class="le-primary">KEEP WALKING</button>
       <button id="leShare">&#10150; SHARE THIS LIFE</button>
@@ -9764,6 +9786,31 @@ document.getElementById('scCopy').addEventListener('click',async()=>{
   }
 });
 document.getElementById('leShare').addEventListener('click',openShare);
+
+/* ---- leave-a-trace strip (spec 3.x) ---------------------------------------
+   Set ITCH_GAME_URL to the real itch.io game page once confirmed. While empty,
+   the buttons only show a guidance toast — never send players to a dead link. */
+const ITCH_GAME_URL = '';   /* TODO: paste the itch.io game page URL here */
+(function initEngage(){
+  const strip=document.getElementById('leEngage');
+  if(!strip) return;
+  const msg={
+    rate:'RATE IT on the itch.io game page — one tap, helps a lot.',
+    favorite:'FAVORITE it on itch.io so you can find it again.',
+    follow:'FOLLOW on itch.io for the next release.'
+  };
+  strip.addEventListener('click',function(e){
+    const b=e.target.closest('button[data-eng]');
+    if(!b) return;
+    const kind=b.getAttribute('data-eng');
+    if(ITCH_GAME_URL){
+      try{ window.open(ITCH_GAME_URL,'_blank','noopener,noreferrer'); }
+      catch(err){ location.href=ITCH_GAME_URL; }
+    }else{
+      toast(msg[kind]||'Find us on itch.io.');
+    }
+  });
+})();
 
 /* new life: two taps, so a stray click can't restart you */
 let newArm=0;
