@@ -10069,25 +10069,33 @@ window.__mlBooted=true;      /* from here on, script errors are logged, never fa
 <!-- SEO_COPY_START -->
 <!--
   Indexable intro copy for search engines and human readers.
-  position:absolute takes this block OUT of #picker's flex flow, so the cover
-  (title/buttons/guides/legal) keeps its exact on-screen geometry. It sits one
-  viewport below the fold inside the scrollable #picker; users can scroll to it,
-  crawlers can read it. See /mylifesim-首页SEO正文补丁/README.md for the
-  geometry evidence (0px cover shift on 1440x900 and 390x844).
+  This block is a direct child of BODY (NOT #picker) with position:absolute at
+  top:100vh. html,body are overflow:hidden for the full-screen game, so users
+  do NOT scroll to it visually — this copy is for CRAWLERS reading the HTML
+  source (indexable keywords + internal links). Do NOT try to "fix" visibility
+  by changing overflow or nesting it in #picker: that breaks the full-screen
+  cover geometry. Geometry evidence: 0px cover shift on 1440x900 / 390x844.
+  See /mylifesim-首页SEO正文补丁/README.md for details.
 -->
 <section class="seo-copy" style="position:absolute;left:0;right:0;top:100vh;z-index:3;max-width:760px;margin:0 auto;padding:34px 20px 60px;text-align:left;color:#d8c9a3;font:15px/1.7 Georgia,serif">
   <h2 style="font-size:26px;color:#e9c86a;margin:0 0 14px">MY LIFE — a free life simulator you can play in your browser</h2>
   <p>MY LIFE is a free, browser-based life simulator game set on the streets of New York. No download, no sign-up and no account: open the page, name your character and start walking. Each turn of the gold wheel moves you down the route, and at some junctions you will randomly detour down a side street before rejoining — so every playthrough visits the city in a different order. It is a single-player game that runs entirely in your browser, and your progress stays on your device.</p>
   <p>The game is built around one idea from <a href="/rich-dad-poor-dad-game/" style="color:#e9c86a">Rich Dad Poor Dad</a>: buy assets that put money in your pocket, and stay away from liabilities that take it out. A paycheque alone will not set you free. Along the walk you can find a job, buy stocks and property, take loans and manage your mood. Assets pay you on each pass; liabilities charge you. A car, for example, is deliberately a liability. Learn the full <a href="/rich-dad-rules/" style="color:#e9c86a">asset and liability rule</a> behind the game.</p>
+  <h3 style="font-size:20px;color:#e9c86a;margin:22px 0 10px">An incremental economy under the life sim</h3>
+  <p>Beneath the life-sim story sits a real incremental economy &mdash; the reason players who enjoy tycoon and idle games tend to stay the longest. Stocks and property are not one-off purchases: they are assets that pay you again every time your route brings you past them. Reinvest those payouts and your income snowballs in the same compounding loop that drives incremental games. Liabilities run in reverse &mdash; a loan or a car quietly drains cash on every pass, so an early choice compounds just as hard in the wrong direction. There is no grinding for its own sake; each turn of the wheel is a decision about what you own next. Whether you call it an economy game, a management sim or a life simulation, the core is the same: build assets, cut liabilities and watch a balance sheet change turn by turn. The rules behind every payout are spelled out in the asset and liability guide.</p>
   <h3 style="font-size:20px;color:#e9c86a;margin:22px 0 10px">How to play</h3>
   <p>Press START LIFE, type a name, pick a character and GO. Walk the route with the gold wheel (or the space bar), stop on a building to act, and watch the panel in the top-right corner: assets add to your funds, liabilities drain them. Push stress past 80 and bad luck finds you more often; hold happiness above 80 and good luck comes looking. Hover any car to read a line from Munger, Buffett or the Rich Dad. Nothing saves by itself — use the save button on the dock, then CONTINUE on the cover to return. The full walkthrough is in <a href="/how-to-play/" style="color:#e9c86a">How to Play</a>, and <a href="/new-york-map/" style="color:#e9c86a">the New York map</a> shows every street.</p>
   <h3 style="font-size:20px;color:#e9c86a;margin:22px 0 10px">A text-driven life sim, no download needed</h3>
   <p>If you like story-led games where your choices and your balance sheet decide the outcome, MY LIFE sits in the same family as <a href="/text-based-life-simulator/" style="color:#e9c86a">text-based life simulators</a> and is often played as a <a href="/bitlife-alternative/" style="color:#e9c86a">BitLife alternative</a>. It runs in <a href="/life-simulator-browser-game/" style="color:#e9c86a">the browser with no install</a>, works as a <a href="/life-simulator-no-download/" style="color:#e9c86a">no-download life simulator</a>, and you can chase the <a href="/escape-the-rat-race-game/" style="color:#e9c86a">escape-the-rat-race goal</a> or work through all 19 life goals. A deeper <a href="/real-life-simulator/" style="color:#e9c86a">real-life simulator</a> mode and the full goal list are on the cover.</p>
+  <h3 style="font-size:20px;color:#e9c86a;margin:22px 0 10px">Goals, mood and the long game</h3>
+  <p>There are 19 <a href="/goals/" style="color:#e9c86a">life goals</a> to work through, from landing a first job to escaping the rat race, and the full list lives on the cover of the game. How you feel changes your luck: push stress past 80 and bad luck finds you more often; hold happiness above 80 and good luck starts looking for you. That makes mood part of the strategy rather than decoration. A single run is short enough for a coffee break, but the compounding and the goal list give you a reason to come back &mdash; this is a browser game you can dip into for five minutes or build into a longer session. Progress is saved locally on your device; nothing is uploaded and there is no account to maintain. Players who want the full goal tracker and extra character options can read about the optional <a href="/pro/" style="color:#e9c86a">PRO upgrade</a>, though the entire core game stays free.</p>
   <h3 style="font-size:20px;color:#e9c86a;margin:22px 0 10px">Frequently asked questions</h3>
   <p><b>Is MY LIFE free?</b> Yes. The core game is free to play in your browser with no account. An optional one-time PRO upgrade supports development.</p>
   <p><b>Do I need to install anything?</b> No. It is a browser game — open the page and play. Your save is stored locally in your browser.</p>
   <p><b>Can I play on my phone?</b> Yes. The game adapts to phone screens with touch controls.</p>
   <p><b>Is it based on a book?</b> The asset-and-liability mechanic is inspired by Rich Dad Poor Dad and the investing ideas of Buffett and Munger. The game is fan-made, original and not affiliated with any brand or publisher.</p>
+  <p><b>Is it an idle game?</b> Not quite. Assets pay you as you move around the board, so there is an incremental, compounding loop &mdash; but nothing happens unless you turn the wheel and make decisions. It is closer to a tycoon life sim than a clicker.</p>
+  <p><b>Does my progress save?</b> Yes. Your run is stored locally in your browser with the save button, with no account or download. Open the page again and choose CONTINUE to pick up where you left off.</p>
 </section>
 <!-- SEO_COPY_END -->
 
