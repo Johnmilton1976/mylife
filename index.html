@@ -1701,7 +1701,7 @@
     <div class="le-grid" id="leGrid"></div>
     <div class="le-quote" id="leQuote">&ldquo;The rich don&rsquo;t work for money.&rdquo;</div>
     <div class="le-engage" id="leEngage" role="group" aria-label="Leave a trace on itch.io">
-      <button class="le-eng" data-eng="rate"><span class="le-ic le-ic-rate" aria-hidden="true"></span>RATE IT</button>
+      <button class="le-eng" data-eng="rate"><span class="le-ic le-ic-rate" aria-hidden="true"></span>RATE ON ITCH</button>
       <button class="le-eng" data-eng="favorite"><span class="le-ic le-ic-favorite" aria-hidden="true"></span>FAVORITE</button>
       <button class="le-eng" data-eng="follow"><span class="le-ic le-ic-follow" aria-hidden="true"></span>FOLLOW</button>
     </div>
@@ -9789,27 +9789,27 @@ document.getElementById('scCopy').addEventListener('click',async()=>{
 document.getElementById('leShare').addEventListener('click',openShare);
 
 /* ---- leave-a-trace strip (spec 3.x) ---------------------------------------
-   Set ITCH_GAME_URL to the real itch.io game page once confirmed. While empty,
-   the buttons only show a guidance toast — never send players to a dead link. */
-const ITCH_GAME_URL = '';   /* TODO: paste the itch.io game page URL here */
+   2026-11-19: real itch URL filled in (gefei confirmed mylifesim.itch.io/my-life-sim).
+   RATE is the priority: itch ratings are starred reviews, so the button opens the
+   game page and the toast tells the player exactly where to tap and post. */
+const ITCH_GAME_URL = 'https://mylifesim.itch.io/my-life-sim';
 (function initEngage(){
   const strip=document.getElementById('leEngage');
   if(!strip) return;
   const msg={
-    rate:'RATE IT on the itch.io game page — one tap, helps a lot.',
-    favorite:'FAVORITE it on itch.io so you can find it again.',
-    follow:'FOLLOW on itch.io for the next release.'
+    rate:'OPENED ITCH.IO — scroll to "Write a review", tap a star, and post. Your rating is the single biggest help.',
+    favorite:'OPENED ITCH.IO — hit the heart / "Add to collection" to save it.',
+    follow:'OPENED ITCH.IO — hit Follow for the next release.'
   };
   strip.addEventListener('click',function(e){
     const b=e.target.closest('button[data-eng]');
     if(!b) return;
     const kind=b.getAttribute('data-eng');
-    if(ITCH_GAME_URL){
-      try{ window.open(ITCH_GAME_URL,'_blank','noopener,noreferrer'); }
-      catch(err){ location.href=ITCH_GAME_URL; }
-    }else{
-      toast(msg[kind]||'Find us on itch.io.');
-    }
+    /* Open the game page (no anchor guess: itch's review anchor was not verified,
+       so the toast below carries the instruction instead of a possibly-deep link). */
+    try{ window.open(ITCH_GAME_URL,'_blank','noopener,noreferrer'); }
+    catch(err){ location.href=ITCH_GAME_URL; }
+    toast(msg[kind]||'Find us on itch.io.');
   });
 })();
 
