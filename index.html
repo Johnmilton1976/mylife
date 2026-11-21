@@ -1075,6 +1075,13 @@
   #rankList .rn-break .neg{color:#ff9a8a}
   #rankList .rn.no1{color:#ffd76a}
   #rankList .rn.no1 .w{color:#ffd76a}
+  /* daily challenge board: one line of score, shown only on ?daily=1 */
+  #dailyBoard{margin:0 0 10px;padding:9px 11px;border:1px solid #7a6030;border-radius:8px;
+    background:linear-gradient(180deg,rgba(255,220,140,.10),rgba(0,0,0,.12));
+    font-family:Georgia,serif;color:#f0dcae;font-size:12px;line-height:1.65}
+  #dailyBoard .dh{font-size:11px;letter-spacing:2.4px;color:#e9c86a;margin-bottom:3px}
+  #dailyBoard .dv{color:#a8d68a;font-weight:bold}
+  #dailyBoard .dd{font-size:10.5px;color:#9aa99c;margin-top:3px}
   #rankFoot{font-size:10.5px;line-height:1.7;color:#8fae9c;margin-top:8px;
     border-top:1px solid rgba(216,180,112,.2);padding-top:6px}
   #rowRank.champ .val{color:#ffd76a}
@@ -1515,6 +1522,7 @@
 
 <div id="rankPanel">
   <div class="set-h"><span>&#128202;</span><b>CITY RANKINGS</b><span id="rankClose">&#10005;</span></div>
+  <div id="dailyBoard" style="display:none"></div>
   <div id="rankList"></div>
   <div id="rankFoot"></div>
 </div>
@@ -1762,6 +1770,7 @@
     the minds behind <b>Rich Dad Poor Dad</b> and the art of letting money work for you.
   </div>
   <div class="cover-guides">
+    <a href="?daily=1" id="dailyLink" title="One shared seed per day — a fair run against everyone playing today">&#128197; DAILY RUN</a>
     <a href="/pro/">&#9733; GO PRO &mdash; $4.99</a>
     <a href="/how-to-play/">HOW TO PLAY</a>
     <a href="/rich-dad-rules/">RICH DAD RULES</a>
@@ -1854,6 +1863,51 @@
   window.addEventListener('unhandledrejection', e=>{ /* a failed audio play or a blocked fetch is not fatal */ });
   window.__fatal=fatal;
 })();
+
+/* ===================== DAILY CHALLENGE (2026-11-21) =====================
+   A daily-run entry, reached only via ?daily=1 (cover link "DAILY RUN").
+   Every visitor who opens the same day's link gets the SAME random sequence:
+   the roster face, the four birth corners, the five neighbours, the market
+   candles and all in-run events are drawn from one seeded PRNG. That makes a
+   fair daily leaderboard possible on a static site with no backend.
+
+   Design rules, kept deliberately narrow:
+   - The DEFAULT entry (?daily absent) is byte-for-byte behaviour: Math.random
+     is untouched, saves work as before. Zero regression surface.
+   - Only the random SOURCE is swapped. No game rule, balance number, or UI
+     geometry is changed by this block.
+   - The seed is the LOCAL calendar day (YYYYMMDD), so "today" rolls over at
+     midnight in the player's own timezone — the same way a paper does.
+   Seeded mulberry32: tiny, fast, and good enough for a game (not for crypto). */
+const DAILY = (function(){
+  try{
+    if(new URLSearchParams(location.search).get('daily')!=='1') return null;
+    const d=new Date();
+    const seed=(d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate())>>>0;
+    let s=seed>>>0;
+    Math.random=function(){
+      s=(s+0x6D2B79F5)|0;
+      let t=Math.imul(s^(s>>>15), 1|s);
+      t=(t+Math.imul(t^(t>>>7), 61|t))^t;
+      return ((t^(t>>>14))>>>0)/4294967296;
+    };
+    const key='mylife.daily.v1';
+    const pad=n=>String(n).padStart(2,'0');
+    const dayKey=seed+'';                                  // YYYYMMDD as string
+    const label=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+    /* the cover says which day this is, so a shared link reads as a challenge */
+    try{
+      const sub=document.querySelector('.coverSub');
+      if(sub) sub.textContent='Daily run · '+label;
+      const btn=document.getElementById('coverBtn');
+      if(btn) btn.textContent='RUN TODAY\'S LIFE';   /* short: the date is on the subtitle, avoid a phone-line wrap */
+      const imp=document.getElementById('coverImport');
+      if(imp) imp.style.display='none';              /* a daily run never imports a saved life */
+    }catch(e){}
+    return {on:true, seed, dayKey, label, key};
+  }catch(e){ return null; }
+})();
+window.__DAILY__ = DAILY;
 
 /* the OS "reduce motion" switch is a real accessibility setting, not a hint:
    the cinematic camera pull and the stamp animations respect it. */
@@ -8221,6 +8275,7 @@ function publishRank(){
 }
 function renderRank(){
   syncFin();
+  renderDailyBoard();
   const rows=leaderboard();
   const me=rows.findIndex(r=>r.you);
   const host=document.getElementById('rankList');
@@ -8296,6 +8351,7 @@ function marketDayShift(){
   updatePanel();                                  /* holdings are rebuilt inside, property values included */
   refreshMktBoards();
   checkGoals();                                /* celebrate on the day it happens, not on panel open */
+  dailyRecord();                               /* daily run: bank today's best net worth for the board */
   autoSave();                                  /* a new day is a safe checkpoint */
 }
 function driftMarket(dir){
@@ -8989,7 +9045,7 @@ function startGame(opts){
   /* a saved life is precious: starting fresh must never be a stray click */
   let hasSave=false;
   try{ hasSave=!!JSON.parse(STORE.getItem(SAVE_KEY)||'null'); }catch(e){}
-  if(hasSave && !opts && !startGame.confirmFresh){
+  if(hasSave && !opts && !DAILY && !startGame.confirmFresh){
     startGame.confirmFresh=true;
     const cb=document.getElementById('goBtn');
     cb.innerHTML='&#9888; ERASE SAVED LIFE &amp; GO?';
@@ -9009,7 +9065,9 @@ function startGame(opts){
   const myIdx = opts ? opts.selIdx : selIdx;
   const o=ROSTER[myIdx];
   lastLife={name:typed, selIdx:myIdx};
-  try{ STORE.removeItem(SAVE_KEY); }catch(e){}      /* a fresh life, not a resumed one */
+  /* a daily run must NOT delete the player's ordinary saved life — it is a
+     separate score attempt that never writes SAVE_KEY in the first place */
+  if(!DAILY){ try{ STORE.removeItem(SAVE_KEY); }catch(e){} }
   /* the clock no longer runs on the title screen, but reset anyway: a fresh
      life starts at CLOCK_BASE, never at "however long you sat on the cover" */
   clockMin=0; lastShownMin=-1;
@@ -9044,6 +9102,12 @@ function startGame(opts){
   syncJobBeacon();                     /* minute one has a destination, not just a hint card */
   refreshHireMarks();                  /* every open desk wears its level and its money */
   flash(`Welcome to New York, ${typed}. Spin the disc to walk.`);
+  if(DAILY){
+    dailyRecord();                       /* open today's ledger row */
+    renderDailyBoard();                  /* print today's shared-seed scorecard */
+    setTimeout(()=>toast('\uD83D\uDCC5 DAILY RUN · '+DAILY.label+
+      ' — everyone today got the same city, seed '+DAILY.seed+'. Best net worth wins.'), 600);
+  }
   /* first visit? the tutorial card explains the loop in three beats */
   let tutSeen=null; try{ tutSeen=STORE.getItem(TUT_KEY); }catch(e){}
   if(!tutSeen) setTimeout(showTutorial, 1100);
@@ -9907,7 +9971,71 @@ let suppressAutosave=false;          /* set while importing a save: the in-memor
                                         would clobber the code the player just imported */
 function autoSave(){
   if(suppressAutosave) return;
+  if(DAILY) return;                    /* a daily run is a throwaway score attempt, not a saved life */
   if(typeof started!=='undefined' && started){ try{ saveGame(true); }catch(e){} }
+}
+
+/* ---- DAILY CHALLENGE ledger (local, no backend) ---------------------------
+   One row per calendar day: the best net worth reached in that day's seeded run,
+   plus the city rank at that moment. Streak = consecutive days with a row.
+   Stored under mylife.daily.v1, separate from the life save — a daily run is a
+   score attempt, not a persistent life. The DEFAULT game never touches this. */
+function dailyLedger(){
+  if(!DAILY) return null;
+  try{
+    const raw=JSON.parse(STORE.getItem(DAILY.key)||'null');
+    return (raw && typeof raw==='object' && raw.days && typeof raw.days==='object') ? raw : {days:{}};
+  }catch(e){ return {days:{}}; }
+}
+function dailyStreak(led){
+  if(!led || !led.days) return 0;
+  let n=0;
+  const d=new Date();
+  for(;;){
+    const key=d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();
+    if(!led.days[key]) break;
+    n++; d.setDate(d.getDate()-1);
+  }
+  return n;
+}
+function dailyRecord(){
+  if(!DAILY || typeof started==='undefined' || !started) return;
+  const worth=Math.max(0, Math.round(myWorth()));
+  let rank=0;
+  try{ rank=myRank(); }catch(e){}
+  const led=dailyLedger() || {days:{}};
+  const prev=led.days[DAILY.dayKey];
+  /* keep the best net worth of the day, and the best (lowest) rank alongside it */
+  const isBest=!prev || worth>(prev.worth||0);
+  led.days[DAILY.dayKey]={
+    worth: isBest?worth:prev.worth,
+    rank: (!prev || !prev.rank || (rank && rank<prev.rank)) ? (rank||prev.rank) : prev.rank,
+    when: Date.now()
+  };
+  led.last=DAILY.dayKey; led.label=DAILY.label;
+  try{ STORE.setItem(DAILY.key, JSON.stringify(led)); }catch(e){}
+  return led;
+}
+function renderDailyBoard(){
+  const host=document.getElementById('dailyBoard');
+  if(!host) return;
+  if(!DAILY){ host.style.display='none'; return; }
+  host.style.display='block';
+  const led=dailyLedger() || {days:{}};
+  const today=led.days[DAILY.dayKey]||null;
+  const streak=dailyStreak(led);
+  const keys=Object.keys(led.days).map(Number).sort((a,b)=>a-b);
+  const best=keys.length?Math.max.apply(null,keys.map(k=>led.days[k].worth||0)):0;
+  let rank=0; try{ rank=myRank(); }catch(e){}
+  host.innerHTML=
+    '<div class="dh">&#128197; DAILY RUN &middot; '+DAILY.label+'</div>'+
+    '<div>Same seed for everyone today &middot; seed <b>'+DAILY.seed+'</b></div>'+
+    '<div>Your net worth now: <span class="dv">'+fmt$(Math.max(0,Math.round(myWorth())))+'</span>'+
+      (rank?' &middot; <b>#'+rank+'</b> in the city':'')+'</div>'+
+    '<div>Today best: <b>'+fmt$(today?today.worth:0)+'</b>'+
+      (today&&today.rank?' (#'+today.rank+')':'')+' &middot; All-time best: <b>'+fmt$(best)+'</b></div>'+
+    '<div class="dd">Play streak: <b>'+streak+'</b> day'+(streak===1?'':'s')+
+      ' &middot; one shared random seed per calendar day, no save, no install</div>';
 }
 /* no dialog on close anymore: the life is already banked, so leaving is safe.
    A memory-only view (storage blocked) still writes nothing — that is surfaced
@@ -10064,6 +10192,8 @@ syncSetUI();
   const hint=document.getElementById('saveFound');
   let wired=false;
   function checkSave(){
+    /* a daily run never resumes a saved life — it must start from today's seed */
+    if(DAILY){ b.style.display='none'; if(hint) hint.classList.remove('show'); return; }
     let s=null;
     try{ s=JSON.parse(STORE.getItem(SAVE_KEY)||'null'); }catch(e){}
     const has=!!(s && s.ST);
