@@ -84,29 +84,26 @@
 <main>
   <div class="kick">SUPPORT THE WALK</div>
   <h1>GO PRO &mdash; $4.99 ONCE, YOURS FOREVER</h1>
-  <p><strong>MY LIFE stays free.</strong> The whole city, all 15 life goals, every skill, every job &mdash; free, no
-  account, nothing to install. PRO is one optional upgrade: it keeps the lights on, and it pins a little
-  gold on everything you earn.</p>
+  <p><strong>MY LIFE stays free.</strong> The whole city, all 19 goals (15 life goals + the 4-step fortune ladder),
+  every skill, every job &mdash; free, no account, nothing to install. PRO is one optional upgrade: it keeps the lights
+  on, and it pins a little gold on everything you earn.</p>
 
   <div class="priceCard">
     <div class="big">$4.99</div>
     <div class="sub">ONE TIME &middot; NO SUBSCRIPTION &middot; YOURS FOREVER</div>
     <button class="cta" id="buyBtn">&#9733; UNLOCK PRO &mdash; $4.99</button>
-    <div class="note" id="buyNote">Checkout is being finalized. Email <a href="mailto:steven.jones.19760904@gmail.com">steven.jones.19760904@gmail.com</a>
-    and we will send you the direct payment link the moment it opens.</div>
-    <div class="fine">Payments are processed by <strong>Stripe</strong> (card, Apple&nbsp;Pay, Google&nbsp;Pay).
-    We never see your card details. 14-day no-questions refund &mdash; just write to us.</div>
+    <div class="note" id="buyNote">To buy, email <a href="mailto:steven.jones.19760904@gmail.com?subject=MY%20LIFE%20PRO%20purchase">steven.jones.19760904@gmail.com</a>
+    and we will send you the secure payment link and your personal unlock code.</div>
+    <div class="fine">Card, Apple&nbsp;Pay and Google&nbsp;Pay accepted &mdash; we never see your card details.
+    14-day no-questions refund &mdash; just write to us.</div>
   </div>
 
   <div class="unlockBox" id="unlockBox">
     <h2 style="margin:0 0 6px;border:none;padding:0">PAYMENT CONFIRMED &mdash; THANK YOU</h2>
-    <p style="font-size:13.5px">Two ways to turn PRO on:</p>
-    <p style="font-size:13.5px"><strong class="badge">1.</strong> You are probably playing in this browser &mdash; one tap and it is done:</p>
-    <button class="btn" id="unlockNow">&#9733; UNLOCK PRO IN THIS BROWSER</button>
-    <p style="font-size:13.5px;margin-top:18px"><strong class="badge">2.</strong> Or unlock on any device with your code
-    (also shown on your Stripe confirmation page &mdash; enter it in the game: SETTINGS &rarr; SUPPORT MY LIFE):</p>
-    <div class="code" id="proCode">MLPRO-NYC-4999</div>
-    <p class="fine">Keep the receipt email &mdash; the code stays valid even if you change browser or computer.</p>
+    <p style="font-size:13.5px">Your personal unlock code was sent to your email with the receipt. Open MY LIFE,
+    go to <strong>SETTINGS &rarr; SUPPORT MY LIFE</strong>, and enter that code to turn PRO on. It works on any device.</p>
+    <p class="fine">Lost the code? Email us with your receipt and we will resend it. Codes are issued per purchase &mdash;
+    never shared on this page.</p>
   </div>
 
   <h2>WHAT PRO ADDS</h2>
@@ -158,11 +155,13 @@
 </footer>
 <script>
 /* === CHECKOUT CONFIG ===
-   After creating a Stripe Payment Link (dashboard -> Payment links -> $4.99 -> after payment
-   redirect to https://mylifesim.com/pro/?purchased=1 and put the unlock code in the
-   confirmation message), paste the link between the quotes below. */
-const STRIPE_LINK = "";
-const UNLOCK_CODE = "MLPRO-NYC-4999";
+   Paste a Stripe / Lemon Squeezy / Gumroad payment link below (one-time $4.99).
+   Leave empty -> the button opens an email to request the link (no dead button).
+   Set the payment platform's post-payment confirmation message to contain the
+   buyer's UNIQUE code, and redirect to https://mylifesim.com/pro/?purchased=1.
+   Never print a working code on this page — that hands PRO out for free. */
+const PAY_LINK = "";
+const CONTACT = "mailto:steven.jones.19760904@gmail.com?subject=MY%20LIFE%20PRO%20purchase";
 (function(){
   const params=new URLSearchParams(location.search);
   if(params.get("purchased")==="1"){
@@ -170,14 +169,7 @@ const UNLOCK_CODE = "MLPRO-NYC-4999";
     document.getElementById("unlockBox").scrollIntoView({behavior:"smooth",block:"center"});
   }
   document.getElementById("buyBtn").addEventListener("click",function(){
-    if(STRIPE_LINK){ location.href=STRIPE_LINK; }
-    else{ document.getElementById("buyNote").style.display="block"; }
-  });
-  document.getElementById("unlockNow").addEventListener("click",function(){
-    try{ localStorage.setItem("ml_pro","1");
-      this.textContent="\u2713 PRO UNLOCKED IN THIS BROWSER \u2014 GO PLAY";
-      this.disabled=true;
-    }catch(e){ this.textContent="This browser blocks storage \u2014 use the code instead"; }
+    location.href = PAY_LINK || CONTACT;
   });
 })();
 </script>

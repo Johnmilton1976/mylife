@@ -686,7 +686,7 @@
     #picker h1{font-size:clamp(40px,12vw,86px) !important;letter-spacing:clamp(8px,3vw,26px) !important;text-indent:0 !important}
     /* C档 11px / 字距 4→1.5px: the wide tracking was the "scattered" feel */
     .coverSub{font-size:11px;letter-spacing:1.5px;padding:0 14px}
-    /* the H1 subtitle already says "A FREE LIFE SIMULATOR GAME IN YOUR BROWSER";
+    /* the H1 subtitle already says "Free browser life sim";
        this second line repeats it. Hide the WORDS but keep the box: display:none
        would shrink the flex column and re-center the whole title block +85px
        (the cover H1 geometry is pinned by _shot_cover.js). Empty space is the
@@ -1672,7 +1672,7 @@
 
   <div class="set-sec">YOUR LIFE</div>
   <div id="saveStatus" style="font-size:10px;color:#8a7a5c;line-height:1.5;margin:2px 2px 8px">
-    <b>&#128190;</b> SAVES NOW &mdash; your life is only banked when you press it. Close the tab without saving and the walk is gone.<br>
+    <b>&#128190;</b> AUTOSAVES after every walk and each new day &mdash; closing the tab keeps your progress. Press it any time for an instant checkpoint.<br>
     <b>&#9654;</b> RESTORES the last save &mdash; both live on the icon dock below the screen.
   </div>
   <button class="set-btn danger" id="btnNew">&#8635; START A NEW LIFE</button>
@@ -1745,13 +1745,13 @@
   <b>BANK</b> BAD DEBT buys consumption (15% APR) &nbsp;&#183;&nbsp; GOOD DEBT buys an asset yielding more than its 6% APR &nbsp;&#183;&nbsp; interest is a monthly bill<br>
   <b>NIGHT</b> windows, street lamps, bridge lights and neon switch on at dusk and off at dawn &nbsp;&#183;&nbsp; toggle CITY LIGHTS in settings<br>
   <b>GAME STORE</b> &#127918; a few shops sell games of our own invention &mdash; NEON COAST &amp; THE LEGEND OF AURELIA &nbsp;&#183;&nbsp; hover a title for original box art &nbsp;&#183;&nbsp; virtual only, no real purchase<br>
-  <b>SAVE</b> &#128190; on the dock saves right now &nbsp;&#183;&nbsp; nothing saves by itself &nbsp;&#183;&nbsp; <b>&#9654;</b> on the dock (or CONTINUE on the cover) brings it back<br>
+  <b>SAVE</b> &#128190; autosaves every walk &amp; new day &nbsp;&#183;&nbsp; press it for an instant checkpoint &nbsp;&#183;&nbsp; <b>&#9654;</b> on the dock (or CONTINUE on the cover) brings it back<br>
   <b>LEGAL</b> free-to-play &amp; fan-made &nbsp;&#183;&nbsp; not affiliated with any brand or publisher &nbsp;&#183;&nbsp; original art only &nbsp;&#183;&nbsp; in-game items, no real value &nbsp;&#183;&nbsp; optional PRO: <b>/pro/</b>
 </div>
 
 <div id="picker">
   <div id="coverSky"></div>
-  <h1 id="coverTitle" class="coverTitle" style="font-size:86px;letter-spacing:26px"><span class="coverBrand">MY LIFE</span><span class="coverSub">A FREE LIFE SIMULATOR GAME IN YOUR BROWSER</span></h1>
+  <h1 id="coverTitle" class="coverTitle" style="font-size:86px;letter-spacing:26px"><span class="coverBrand">MY LIFE</span><span class="coverSub">Free browser life sim</span></h1>
   <p>A LIFE SIMULATOR ON THE STREETS OF NEW YORK</p>
   <button id="coverBtn" style="margin-top:18px">START LIFE</button>
   <button id="resumeBtn">&#9654; CONTINUE</button>
@@ -1791,13 +1791,13 @@
 <div id="tut">
   <div id="tutCard">
     <h2>WELCOME TO YOUR LIFE</h2>
-    <div class="tutRow"><span class="tutIc">&#127919;</span><div><b>YOUR GOAL</b> &mdash; build a life, not just a bank balance. The <b>&#127919; GOALS</b> button on the left rail lists 19 LIFE GOALS (find work, buy assets, reach $10,000). Aim for the first one: <b>get a job</b> at the golden beacon.</div></div>
+    <div class="tutRow"><span class="tutIc">&#127919;</span><div><b>YOUR GOAL</b> &mdash; build a life, not just a bank balance. The <b>&#127919; GOALS</b> button on the left rail lists 19 LIFE GOALS (find work, buy assets, reach $10,000). <b>First, get moving:</b> spin the wheel, and stop on any shop or caf&eacute; for a same-day <b>GIG</b> &mdash; instant cash, no interview. For a steady salary, walk to the golden beacon and take a job.</div></div>
     <div class="tutRow"><span class="tutIc">&#127922;</span><div><b>SPIN THE GOLD WHEEL</b> (or press SPACE) &mdash; you walk the route. At some junctions you will <b>randomly turn off</b> for a detour, then rejoin. Every street gets visited eventually.</div></div>
     <div class="tutRow"><span class="tutIc">&#127970;</span><div><b>STOP ON A BUILDING CELL</b> to act: find a job, eat, shop, buy stocks &amp; property, take loans. Restaurants feed you once per visit.</div></div>
     <div class="tutRow"><span class="tutIc">&#128200;</span><div><b>THE PANEL</b> (top right) keeps the Rich Dad books: assets pay you, liabilities charge you. A car is a liability. Watch your stress &amp; happiness.</div></div>
     <div class="tutRow"><span class="tutIc">&#128165;</span><div><b>MOOD IS FATE</b> &mdash; push <b>STRESS</b> past 80 and trouble finds you more often (bad luck &amp; illness rise). Hold <b>HAPPINESS</b> above 80 and good luck comes looking for you. Keep both in check.</div></div>
     <div class="tutRow"><span class="tutIc">&#128663;</span><div><b>HOVER ANY CAR</b> (tap it on a phone) &mdash; the driver hands you a line from Munger, Buffett or the Rich Dad, or a tip about this city.</div></div>
-    <div class="tutRow"><span class="tutIc">&#128190;</span><div><b>SAVING</b> &mdash; nothing saves by itself. <b>&#128190;</b> on the dock banks your life; <b>&#9654;</b> (or CONTINUE on the cover) brings it back. Close the tab without saving and the walk is gone. Time speed (&times;1&ndash;&times;8) is the clock, top left.</div></div>
+    <div class="tutRow"><span class="tutIc">&#128190;</span><div><b>SAVING</b> &mdash; your life saves itself after every walk and each new day, so closing the tab is safe. <b>&#9654;</b> (or CONTINUE on the cover) brings it back; <b>&#128190;</b> on the dock saves an instant checkpoint any time. Time speed (&times;1&ndash;&times;8) is the clock, top left.</div></div>
     <button id="tutBtn">GOT IT &mdash; LET'S WALK</button>
   </div>
 </div>
@@ -6278,6 +6278,7 @@ document.getElementById('leKeep').addEventListener('click',()=>{
     +' \u2014 the ladder is yours. Keep walking anyway: there are mountains left.');
 });
 document.getElementById('leNew').addEventListener('click',()=>{
+  suppressAutosave=true;                 /* starting over: don't bank the life we just deleted */
   try{ STORE.removeItem(SAVE_KEY); }catch(e){}
   location.reload();
 });
@@ -8295,6 +8296,7 @@ function marketDayShift(){
   updatePanel();                                  /* holdings are rebuilt inside, property values included */
   refreshMktBoards();
   checkGoals();                                /* celebrate on the day it happens, not on panel open */
+  autoSave();                                  /* a new day is a safe checkpoint */
 }
 function driftMarket(dir){
   STOCKS.forEach(s=>{ s.v=Math.max(3, s.v*(1+dir*(0.4+Math.random()*0.8))); });
@@ -8814,11 +8816,16 @@ if(STORE.memoryOnly){
 }
 
 /* ===================== PRO upgrade =====================
-   Free game stays free. PRO is a one-time $4.99 unlock sold on /pro/ (Stripe Payment Link,
-   no backend). The unlock code is honor-system: shown on the PRO page after payment,
-   entered here once, remembered in localStorage. Rotate the code by editing one line
-   here and the code chip on /pro/. */
-const PRO_CODE='MLPRO-NYC-4999';
+   Free game stays free. PRO is a one-time $4.99 unlock sold on /pro/ (payment link,
+   no backend). Honor-system unlock code: issued privately to each buyer by email,
+   entered once here, remembered in localStorage.
+
+   SECURITY (2026-11-21): the previous code was printed in plaintext on /pro/ AND
+   hard-coded here — anyone could read it and unlock for free. It is now
+   REVOKED. Keep the new code ONLY here and in the buyer's email — never on any page.
+   To sell: put this exact code in your payment platform's confirmation message.
+   To revoke a leaked code: change this one line and reissue to genuine buyers. */
+const PRO_CODE='MLPRO-7Q2K-4VD9';
 
 /* ---- portal guard: nothing is sold or linked out from inside an embed ----
    itch.io / CrazyGames / Poki / GameJolt forbid taking payment (or sending the
@@ -8970,6 +8977,7 @@ applyProUI();
     try{ STORE.setItem(SAVE_KEY, JSON.stringify(snap)); }
     catch(e){ say('<span style="color:#e08a7a">This browser refused to store the save &mdash; it may be full or in a locked-down mode.</span>'); return; }
     saveDirty=false;
+    suppressAutosave=true;           /* don't let the reload's beforeunload overwrite the import */
     say('&#10003; Imported '+who+'. Reloading&hellip;');
     setTimeout(function(){ location.reload(); },500);
   });
@@ -9042,8 +9050,8 @@ function startGame(opts){
   /* a brand-new walker gets three gentle hints; returning lives skip the speech */
   if(!opts){
     setTimeout(()=>flash('\uD83C\uDFB2 Tap the wheel (or SPACE) to walk the city.'),4200);
-    setTimeout(()=>flash('\uD83D\uDCBC Walk into offices to find work \u2014 cash buys everything else.'),9000);
-    setTimeout(()=>flash('\uD83C\uDFC6 Your LIFE GOALS live in the panel, top right. First stop: a job.'),14500);
+    setTimeout(()=>flash('\uD83D\uDCB5 Stop on a shop or caf\u00E9 for a GIG \u2014 quick cash, no interview needed.'),9000);
+    setTimeout(()=>flash('\uD83C\uDFC6 Buy your first stock or rental with that cash \u2014 assets pay you every lap.'),14500);
   }
 }
 
@@ -9493,6 +9501,7 @@ async function spinAndGo(wheels){
   }
   await walkRoute(n, true);   /* one continuous walk over all n cells, stop on the last */
   clearPreview();
+  autoSave();                          /* bank the landed turn — a tab close now loses nothing */
   document.getElementById('wheelSpinLabel').innerHTML='&#127922; SPIN &#183; GO!';
   busy=false;
 }
@@ -9818,7 +9827,8 @@ let newArm=0;
 const btnNew=document.getElementById('btnNew');
 btnNew.addEventListener('click',()=>{
   if(Date.now()<newArm){
-    newArm=0; closeSet(); location.reload();
+    newArm=0; suppressAutosave=true;    /* starting over: don't re-bank the old life on unload */
+    closeSet(); location.reload();
     return;
   }
   newArm=Date.now()+4000;
@@ -9877,26 +9887,36 @@ function saveGame(force){
       const mode=STORE.memoryOnly
         ? '<br><span style="color:#e0a868">&#9888; MEMORY ONLY &mdash; this view blocks browser storage, gone when the tab closes.</span>'
         : '';
-      el.innerHTML='&#128190; SAVED &mdash; your life is only banked when you press it.<br>'+
+      el.innerHTML='&#128190; AUTOSAVED after every walk and new day &mdash; closing the tab is safe.<br>'+
         '&#9654; on the dock restores the last save.<br>'+
         '<span style="color:#a8d68a">&#10003; Last saved '+hh+':'+mm+':'+ss+' \u00B7 '+(lastLife?lastLife.name:'')+' \u00B7 Month '+(Math.floor(ST.day/30)+1)+'</span>'+mode;
     }
     return true;
   }catch(e){ return false; }
 }
-/* no timer, no hidden writes — saving is a decision, not a side effect.
-   The one guardrail: closing the tab with UNSAVED progress asks for a confirm,
-   so an hour of walking is never lost to a mis-click. Measured in game-DAYS:
-   the clock is always moving, so a snapshot diff would nag on every close.
-   Same-day closes stay silent; a day lived but not banked gets a warning. */
+/* ---- AUTOSAVE (2026-11-21) ------------------------------------------------
+   The game used to bank a life ONLY on the manual 💾 press. A player who closed
+   the tab lost everything since the last press — the single biggest reason a
+   returning visitor finds an empty city. Autosave now writes quietly at three
+   safe points: after each spin's walk lands, on each in-game day rollover, and
+   when the tab closes. The manual 💾 button still works (instant checkpoint).
+   localStorage writes are synchronous but tiny (~a few KB) and happen at most
+   a few times a minute, never inside a per-frame hot path. */
+let suppressAutosave=false;          /* set while importing a save: the in-memory ST is
+                                        about to be replaced on reload — writing it now
+                                        would clobber the code the player just imported */
+function autoSave(){
+  if(suppressAutosave) return;
+  if(typeof started!=='undefined' && started){ try{ saveGame(true); }catch(e){} }
+}
+/* no dialog on close anymore: the life is already banked, so leaving is safe.
+   A memory-only view (storage blocked) still writes nothing — that is surfaced
+   in the saveStatus line and the manual-save toast, not by trapping the tab. */
 let lastSavedDay=-1;
-addEventListener('beforeunload',e=>{
-  try{
-    if(started && !ST.ended && !STORE.memoryOnly && (ST.day|0)>lastSavedDay){
-      e.preventDefault(); e.returnValue='';
-    }
-  }catch(err){}
-});
+addEventListener('beforeunload',()=>{ autoSave(); });
+/* visibilitychange fires on tab switch / app background — the reliable signal on
+   phones, where beforeunload often never fires. Same quiet write, no dialog. */
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') autoSave(); });
 
 function resumeGame(){
   mountCity();                          /* the board must exist even for an instant click */
@@ -10086,7 +10106,7 @@ window.__mlBooted=true;      /* from here on, script errors are logged, never fa
   <h3 style="font-size:20px;color:#e9c86a;margin:22px 0 10px">How to play</h3>
   <p>Press START LIFE, type a name, pick a character and GO. Walk the route with the gold wheel (or the space bar), stop on a building to act, and watch the panel in the top-right corner: assets add to your funds, liabilities drain them. Push stress past 80 and bad luck finds you more often; hold happiness above 80 and good luck comes looking. Hover any car to read a line from Munger, Buffett or the Rich Dad. Nothing saves by itself — use the save button on the dock, then CONTINUE on the cover to return. The full walkthrough is in <a href="/how-to-play/" style="color:#e9c86a">How to Play</a>, and <a href="/new-york-map/" style="color:#e9c86a">the New York map</a> shows every street.</p>
   <h3 style="font-size:20px;color:#e9c86a;margin:22px 0 10px">A text-driven life sim, no download needed</h3>
-  <p>If you like story-led games where your choices and your balance sheet decide the outcome, MY LIFE sits in the same family as <a href="/text-based-life-simulator/" style="color:#e9c86a">text-based life simulators</a> and is often played as a <a href="/bitlife-alternative/" style="color:#e9c86a">BitLife alternative</a>. It runs in <a href="/life-simulator-browser-game/" style="color:#e9c86a">the browser with no install</a>, works as a <a href="/life-simulator-no-download/" style="color:#e9c86a">no-download life simulator</a>, and you can chase the <a href="/escape-the-rat-race-game/" style="color:#e9c86a">escape-the-rat-race goal</a> or work through all 19 life goals. A deeper <a href="/real-life-simulator/" style="color:#e9c86a">real-life simulator</a> mode and the full goal list are on the cover.</p>
+  <p>If you like story-led games where your choices and your balance sheet decide the outcome, MY LIFE sits in the same family as <a href="/text-based-life-simulator/" style="color:#e9c86a">text-based life simulators</a> and is often played as a <a href="/bitlife-alternative/" style="color:#e9c86a">BitLife alternative</a>. It runs in <a href="/life-simulator-browser-game/" style="color:#e9c86a">the browser with no install</a>, works as a <a href="/life-simulator-no-download/" style="color:#e9c86a">no-download life simulator</a>, and you can chase the <a href="/escape-the-rat-race-game/" style="color:#e9c86a">escape-the-rat-race goal</a> or work through all 19 life goals. A deeper <a href="/real-life-simulator/" style="color:#e9c86a">real-life simulator</a> mode, a <a href="/stock-market-simulator-game/" style="color:#e9c86a">stock market simulator game</a> built around dividends, and a <a href="/business-simulator-game/" style="color:#e9c86a">business simulator game</a> where a company runs without you are covered on their own pages; the full goal list is on the cover.</p>
   <h3 style="font-size:20px;color:#e9c86a;margin:22px 0 10px">Goals, mood and the long game</h3>
   <p>There are 19 <a href="/goals/" style="color:#e9c86a">life goals</a> to work through, from landing a first job to escaping the rat race, and the full list lives on the cover of the game. How you feel changes your luck: push stress past 80 and bad luck finds you more often; hold happiness above 80 and good luck starts looking for you. That makes mood part of the strategy rather than decoration. A single run is short enough for a coffee break, but the compounding and the goal list give you a reason to come back &mdash; this is a browser game you can dip into for five minutes or build into a longer session. Progress is saved locally on your device; nothing is uploaded and there is no account to maintain. Players who want the full goal tracker and extra character options can read about the optional <a href="/pro/" style="color:#e9c86a">PRO upgrade</a>, though the entire core game stays free.</p>
   <h3 style="font-size:20px;color:#e9c86a;margin:22px 0 10px">Frequently asked questions</h3>

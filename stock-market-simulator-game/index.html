@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stock Market Simulator Game — Trade, Learn Cash Flow, Play Free in Browser</title>
+<meta name="description" content="A stock market simulator game that teaches more than charts: buy dividend stocks, watch monthly cash flow, and reinvest into a whole life. Free in your browser, no download or account.">
+<link rel="canonical" href="https://mylifesim.com/stock-market-simulator-game/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Stock Market Simulator Game — learn cash flow by playing">
+<meta property="og:description" content="Trade a fictional market, collect dividends that pay you every lap, and see how investing fits into a whole life. Free browser game, no account.">
+<meta property="og:url" content="https://mylifesim.com/stock-market-simulator-game/">
+<meta property="og:image" content="https://mylifesim.com/docs/city-overview.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Stock Market Simulator Game — learn cash flow by playing">
+  <meta name="twitter:description" content="Trade a fictional market, collect dividends that pay you every lap, and see how investing fits into a whole life. Free browser game, no account.">
+  <meta name="twitter:image" content="https://mylifesim.com/docs/city-overview.png">
+<link rel="icon" href="data:,">
+<style>
+  :root{--gold:#d8b470;--goldL:#ffd98a;--ink:#fff6e0;--dim:#a8bfae;--bg:#0f1512;--panel:#171d19}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:Verdana,Geneva,sans-serif;font-size:15px;line-height:1.85;
+       background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.012) 0 2px,transparent 2px 14px)}
+  a{color:var(--goldL);text-decoration:none;border-bottom:1px dotted #a8854a}
+  a:hover{color:#fff}
+  header{padding:26px 6vw;border-bottom:1px solid #2a332c;display:flex;align-items:baseline;gap:26px;flex-wrap:wrap}
+  header .brand{font-family:Georgia,serif;font-size:24px;letter-spacing:8px;color:var(--goldL);border:none}
+  header nav a{font-size:11.5px;letter-spacing:2px;color:var(--dim);margin-right:18px}
+  header nav a:hover{color:var(--goldL)}
+  main{max-width:860px;margin:0 auto;padding:56px 6vw 40px}
+  .kick{font-size:11px;letter-spacing:4px;color:#a8854a;font-family:Verdana}
+  h1{font-family:Georgia,serif;font-size:clamp(30px,5vw,44px);letter-spacing:4px;color:var(--goldL);
+     margin:10px 0 6px;text-shadow:0 2px 6px rgba(0,0,0,.6)}
+  h2{font-family:Georgia,serif;font-size:22px;letter-spacing:2px;color:#e8c88a;margin:46px 0 14px;
+     border-left:3px solid var(--gold);padding-left:12px}
+  p{margin:14px 0;color:#dfe6dc}
+  strong{color:var(--goldL)}
+  ul,ol{margin:12px 0 12px 24px;color:#dfe6dc}
+  li{margin:9px 0}
+  table{width:100%;border-collapse:collapse;margin:20px 0;font-size:13.5px}
+  th{font-family:Georgia,serif;color:var(--gold);text-align:left;letter-spacing:1.5px;font-size:12px;
+     border-bottom:1px solid #3a443a;padding:9px 12px}
+  td{border-bottom:1px solid #232b25;padding:9px 12px;color:#cfd8cd}
+  td:first-child{color:var(--goldL);white-space:nowrap}
+  .cta{display:block;text-align:center;margin:56px auto 20px;max-width:420px;padding:16px 30px;
+       font-family:Georgia,serif;font-size:17px;letter-spacing:3px;color:#171519;background:linear-gradient(180deg,#ffe9b0,#d8b470);
+       border:none;border-radius:4px;cursor:pointer;font-weight:bold}
+  .cta:hover{filter:brightness(1.08)}
+  footer{border-top:1px solid #2a332c;margin-top:60px;padding:26px 6vw 40px}
+  footer .fl{display:flex;gap:24px;flex-wrap:wrap;margin-bottom:14px}
+  footer .fl a{font-size:12px;letter-spacing:2px;color:var(--dim)}
+  footer small{color:#5f6b60;font-size:11px;letter-spacing:.5px;display:block;line-height:1.8}
+</style>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","name":"Stock Market Simulator Game — learn cash flow by playing",
+"description":"A browser stock market simulator game: buy fictional dividend stocks, collect monthly cash flow, and reinvest across a whole life.",
+"url":"https://mylifesim.com/stock-market-simulator-game/",
+"isPartOf":{"@type":"WebSite","name":"MY LIFE","url":"https://mylifesim.com/"}}
+</script>
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is this a real-money stock trading game?", "acceptedAnswer": {"@type": "Answer", "text": "No. Every stock and price is fictional and has no real-world value. It simulates how investing works — dividends, cash flow, compound growth — without real money or a brokerage account."}}, {"@type": "Question", "name": "What does a stock market simulator teach here?", "acceptedAnswer": {"@type": "Answer", "text": "That an asset pays you repeatedly, not just once. Dividend stocks credit cash every time your route brings you past them, so you can watch passive income grow and eventually cover your monthly bills."}}, {"@type": "Question", "name": "Is it free and browser-based?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. It runs in any browser with no download, no account, and no in-game ads. Your progress stays in your own browser."}}]}
+</script>
+</head>
+<body>
+<header>
+  <a class="brand" href="/">MY LIFE</a>
+  <nav>
+    <a href="/how-to-play/">HOW TO PLAY</a>
+    <a href="/rich-dad-rules/">RICH DAD RULES</a>
+    <a href="/new-york-map/">NEW YORK MAP</a>
+    <a href="/goals/">19 GOALS</a>
+  </nav>
+</header>
+<main>
+  <div class="kick">INVESTING · CASH FLOW AS PLAY</div>
+  <h1>Stock Market Simulator Game</h1>
+  <p>Most stock market games stop at a chart: buy low, sell high, watch a number climb. This one asks a better question — <strong>what does the portfolio actually do for your life?</strong> In <a href="/">MY LIFE</a>, a fictional market runs inside a whole city. You buy dividend stocks with cash you earned, collect a payout every time your walk brings you past them, and reinvest until your passive income covers your bills. It is a <strong>free browser stock market simulator</strong> with no download, no account and no real money at stake.</p>
+
+  <h2>What makes this stock simulator different</h2>
+  <table>
+    <tr><th>Feature</th><th>How it behaves in the game</th></tr>
+    <tr><td>Dividend stocks</td><td>Assets that pay you cash on every pass, not a one-time sale — the same logic real income investing uses.</td></tr>
+    <tr><td>Live prices</td><td>A fictional market re-prices each in-game day and ticks between turns, so timing matters without a real brokerage.</td></tr>
+    <tr><td>Cash flow, not just gain</td><td>The ledger shows monthly income from holdings, front and centre — the number that actually ends the struggle.</td></tr>
+    <tr><td>Trade-offs</td><td>Buy stocks or a rental, take a loan or stay liquid — every choice competes for the same cash.</td></tr>
+    <tr><td>Compounding</td><td>Reinvest payouts and income snowballs; liabilities like a car drain on the same loop.</td></tr>
+  </table>
+  <p>The rules behind each payout are spelled out on the <a href="/rich-dad-rules/">assets vs liabilities page</a> — written as a game, not a lecture.</p>
+
+  <h2>Learn investing without risking money</h2>
+  <p>Because every ticker and price is invented, the game teaches the mechanics — dividends, recurring income, reinvestment, the cost of debt — without pretending to be a trading platform. You can make the same mistake a real investor makes (buying a liability that quietly drains cash) and feel the consequence in a few minutes instead of a few years. It is a sandbox for the habit, not a substitute for financial advice.</p>
+
+  <h2>Investing inside a whole life, not a spreadsheet</h2>
+  <p>A pure trading sim isolates the market. MY LIFE puts it back in context: you still need a job, rent, food and a sane stress level. A portfolio that pays well is only useful if you can hold it together long enough to collect. That is why the game pairs its market with mood, health and the <a href="/goals/">19 life goals</a> — the investing is part of a life, not the whole of one.</p>
+
+  <h2>Where this sits among browser simulators</h2>
+  <p>If you came looking for a <a href="/business-simulator-game/">business simulator game</a>, the company system here covers that side too; if you wanted something closer to a <a href="/life-simulator-browser-game/">browser life sim</a> or a <a href="/bitlife-alternative/">BitLife alternative</a>, the whole-life arc is there as well. One free game, several ways to play.</p>
+
+  <a class="cta" href="/">PLAY MY LIFE — FREE, NO ACCOUNT</a>
+  <h2>Frequently asked</h2>
+  <p><strong>Is this a real-money stock trading game?</strong> No. Every stock and price is fictional and has no real-world value. It simulates how investing works — dividends, cash flow, compound growth — without real money or a brokerage account.</p>
+  <p><strong>What does a stock market simulator teach here?</strong> That an asset pays you repeatedly, not just once. Dividend stocks credit cash every time your route brings you past them, so you can watch passive income grow and eventually cover your monthly bills.</p>
+  <p><strong>Is it free and browser-based?</strong> Yes. It runs in any browser with no download, no account, and no in-game ads. Your progress stays in your own browser.</p>
+</main>
+<footer>
+  <div class="fl">
+    <a href="/how-to-play/">HOW TO PLAY</a>
+    <a href="/rich-dad-rules/">RICH DAD RULES</a>
+    <a href="/rich-dad-poor-dad-game/">RICH DAD GAME</a>
+    <a href="/new-york-map/">NEW YORK MAP</a>
+    <a href="/goals/">19 LIFE GOALS</a>
+    <a href="/text-based-life-simulator/">TEXT-BASED SIMS</a>
+    <a href="/life-simulator-browser-game/">BROWSER LIFE SIMS</a>
+    <a href="/bitlife-alternative/">BITLIFE ALTERNATIVE</a>
+    <a href="/escape-the-rat-race-game/">ESCAPE THE RAT RACE</a>
+    <a href="/real-life-simulator/">REAL LIFE SIM</a>
+    <a href="/life-simulator-no-download/">NO-DOWNLOAD SIMS</a>
+    <a href="/stock-market-simulator-game/">STOCK MARKET SIM</a>
+    <a href="/business-simulator-game/">BUSINESS SIM</a>
+
+    <a href="/pro/">GO PRO &mdash; $4.99</a>
+    <a href="/privacy/">PRIVACY</a>
+    <a href="/terms/">TERMS</a>
+    <a href="/contact/">CONTACT</a>
+  </div>
+  <small>MY LIFE is a free-to-play life simulator; the optional one-time PRO upgrade supports development. Every company, stock and product name in the game is invented; place names are used only as geographic references. All market prices and financial figures are fictional with no real-world value. The financial ideas referenced here originate with Robert Kiyosaki's Rich Dad teachings; MY LIFE is an independent game and is not affiliated with Rich Dad or its publishers.</small>
+</footer>
+</body>
+</html>
