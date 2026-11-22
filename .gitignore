@@ -20,6 +20,9 @@ route-map.html
 # 只把不可逆指纹放进 index.html；明文码仅本地保存用于导入 itch.io external keys
 PRO-CODES.txt
 
+# 临时网络工具（本地推送代理，不入库）
+tools/_push_proxy.py
+
 # 旧版本备份
 index_v1_backup.html
 
