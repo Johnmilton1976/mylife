@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Daily Life Simulator Challenge — Same Seed, One Life a Day | MY LIFE</title>
+<meta name="description" content="A daily life simulator challenge where everyone gets the same seed, city and first decision. Run today's life, share your score, and come back tomorrow.">
+<link rel="canonical" href="https://mylifesim.com/daily/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Daily Life Simulator Challenge — same seed, one life a day">
+<meta property="og:description" content="Every player today gets the same city, the same random events and the same first decision. One run a day. Share your score.">
+<meta property="og:url" content="https://mylifesim.com/daily/">
+<meta property="og:image" content="https://mylifesim.com/docs/gameplay.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Daily Life Simulator Challenge — same seed, one life a day">
+<meta name="twitter:description" content="Same city, same events, same day for everyone. Run today's life and share your net worth.">
+<meta name="twitter:image" content="https://mylifesim.com/docs/gameplay.png">
+<link rel="icon" href="data:,">
+<style>
+  :root{--gold:#d8b470;--goldL:#ffd98a;--ink:#fff6e0;--dim:#a8bfae;--bg:#0f1512;--panel:#171d19}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:Verdana,Geneva,sans-serif;font-size:15px;line-height:1.85;
+       background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.012) 0 2px,transparent 2px 14px)}
+  a{color:var(--goldL);text-decoration:none;border-bottom:1px dotted #a8854a}
+  a:hover{color:#fff}
+  header{padding:26px 6vw;border-bottom:1px solid #2a332c;display:flex;align-items:baseline;gap:26px;flex-wrap:wrap}
+  header .brand{font-family:Georgia,serif;font-size:24px;letter-spacing:8px;color:var(--goldL);border:none}
+  header nav a{font-size:11.5px;letter-spacing:2px;color:var(--dim);margin-right:18px}
+  header nav a:hover{color:var(--goldL)}
+  main{max-width:860px;margin:0 auto;padding:56px 6vw 40px}
+  .kick{font-size:11px;letter-spacing:4px;color:#a8854a;font-family:Verdana}
+  h1{font-family:Georgia,serif;font-size:clamp(29px,5vw,43px);letter-spacing:3px;color:var(--goldL);
+     margin:10px 0 16px;text-shadow:0 2px 6px rgba(0,0,0,.6);line-height:1.25}
+  h2{font-family:Georgia,serif;font-size:22px;letter-spacing:2px;color:#e8c88a;margin:46px 0 14px;
+     border-left:3px solid var(--gold);padding-left:12px}
+  p{margin:14px 0;color:#dfe6dc}
+  strong{color:var(--goldL)}
+  ul,ol{margin:12px 0 12px 24px;color:#dfe6dc}
+  li{margin:9px 0}
+  table{width:100%;border-collapse:collapse;margin:20px 0;font-size:13.5px}
+  th{font-family:Georgia,serif;color:var(--gold);text-align:left;letter-spacing:1.5px;font-size:12px;
+     border-bottom:1px solid #3a443a;padding:9px 12px}
+  td{border-bottom:1px solid #232b25;padding:9px 12px;color:#cfd8cd}
+  td:first-child{color:var(--goldL);white-space:nowrap}
+  .hero{margin:36px 0 10px;padding:26px 28px;border:1px solid #4a432c;border-radius:8px;
+        background:linear-gradient(160deg,#1e2118,#141a15)}
+  .hero .day{font-family:Georgia,serif;font-size:clamp(25px,4.5vw,36px);letter-spacing:4px;color:var(--goldL)}
+  .hero .meta{font-size:12px;letter-spacing:2px;color:var(--dim);margin:4px 0 22px}
+  .btns{display:flex;gap:12px;flex-wrap:wrap}
+  .cta{display:inline-block;text-align:center;padding:14px 26px;font-family:Georgia,serif;font-size:15px;
+       letter-spacing:2px;color:#171519;background:linear-gradient(180deg,#ffe9b0,#d8b470);
+       border:none;border-radius:4px;cursor:pointer;font-weight:bold}
+  .cta:hover{filter:brightness(1.08)}
+  .ghost{padding:14px 22px;font-family:Georgia,serif;font-size:13px;letter-spacing:2px;color:var(--goldL);
+         background:transparent;border:1px solid #7a6738;border-radius:4px;cursor:pointer}
+  .ghost:hover{border-color:var(--goldL)}
+  .fine{font-size:11.5px;color:#8b9b8e;line-height:1.75;margin-top:14px}
+  footer{border-top:1px solid #2a332c;margin-top:60px;padding:26px 6vw 40px}
+  footer .fl{display:flex;gap:24px;flex-wrap:wrap;margin-bottom:14px}
+  footer .fl a{font-size:12px;letter-spacing:2px;color:var(--dim)}
+  footer small{color:#5f6b60;font-size:11px;letter-spacing:.5px;display:block;line-height:1.8}
+  @media(max-width:600px){.hero{padding:20px 18px}.btns{flex-direction:column}.cta,.ghost{width:100%}td{white-space:normal}}
+</style>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"What is the MY LIFE daily run?","acceptedAnswer":{"@type":"Answer","text":"A single life simulator run where every player gets the same random seed for a given calendar day: the same city, neighbours, market candles and events. It is a fair one-day challenge with no save file to hide behind."}},
+{"@type":"Question","name":"How is the daily seed decided?","acceptedAnswer":{"@type":"Answer","text":"The seed is the local calendar date in YYYYMMDD form. Everyone playing on that date in their own timezone gets the same sequence; the next day brings a new city and a new challenge."}},
+{"@type":"Question","name":"Does a daily run save my progress?","acceptedAnswer":{"@type":"Answer","text":"No. A daily run is a throwaway score attempt: it never reads or overwrites your normal saved life. Your best net worth for each date is kept locally in your own browser."}},
+{"@type":"Question","name":"Can I replay an earlier day?","acceptedAnswer":{"@type":"Answer","text":"Yes. Sharing a daily link with a date such as #2026-11-20 replays that exact seed. The game reads the date and regenerates the same city, so a friend can run the same day you did."}},
+{"@type":"Question","name":"Is the daily challenge free?","acceptedAnswer":{"@type":"Answer","text":"Yes. MY LIFE is free in the browser with no account, no install and no in-game ads. The optional PRO upgrade adds three alternate openings and never gates the daily run."}}
+]}
+</script>
+</head>
+<body>
+<header>
+  <a class="brand" href="/">MY LIFE</a>
+  <nav>
+    <a href="/daily/">DAILY RUN</a>
+    <a href="/how-to-play/">HOW TO PLAY</a>
+    <a href="/goals/">19 GOALS</a>
+    <a href="/new-york-map/">NEW YORK MAP</a>
+    <a href="/pro/">PRO</a>
+  </nav>
+</header>
+<main>
+  <div class="kick">DAILY RUN &middot; ONE LIFE A DAY</div>
+  <h1>One city. One seed. One day.</h1>
+  <p><strong>Every player gets the same life today.</strong> MY LIFE's daily challenge draws the whole city from one
+  shared seed: the same face on the character sheet, the same four birth corners, the same neighbours, the same
+  market candles and the same events. No save file to lean on, no luck advantage &mdash; just how well you read the
+  same city everyone else is walking. Tomorrow the seed rolls over and a new life begins.</p>
+
+  <div class="hero">
+    <div class="day" id="dayLabel">&mdash;</div>
+    <div class="meta" id="dayMeta">seed &mdash;</div>
+    <div class="btns">
+      <button class="cta" id="runBtn">RUN TODAY'S LIFE</button>
+      <button class="ghost" id="copyBtn">COPY SHARE LINK</button>
+    </div>
+    <p class="fine" id="copyNote">The share link carries the date in the URL fragment, so it can be passed around
+    without creating thousands of indexable pages. Open it and you will replay this exact day.</p>
+  </div>
+
+  <h2>Why a daily run plays differently</h2>
+  <p>The normal game is yours: you can reload a saved life, retry a decision and take as long as you like. A daily
+  run strips that away. It never touches your save, it starts from the same sheet for everyone, and it keeps your
+  best net worth for that date in a small local ledger. There is no server and no account &mdash; the comparison is
+  with the city, not with a leaderboard.</p>
+  <ul>
+    <li><strong>Fair by construction.</strong> One seed per date drives every random draw in the run.</li>
+    <li><strong>No save to exploit.</strong> A daily run is a throwaway attempt; your normal life stays untouched.</li>
+    <li><strong>Small enough to finish.</strong> One sitting, one score: net worth at the end of the run.</li>
+    <li><strong>Replayable.</strong> A friend can open the same dated link and walk the identical city.</li>
+  </ul>
+
+  <h2>What the seed actually fixes</h2>
+  <table>
+    <tr><th>SEEDED</th><th>WHAT THAT MEANS</th></tr>
+    <tr><td>Your starting face</td><td>Everyone today begins with the same portrait drawn from the same roster.</td></tr>
+    <tr><td>Four birth corners</td><td>The city's opening roll is identical, so no one starts near a lucky building by chance.</td></tr>
+    <tr><td>Five neighbours</td><td>The same people move into the same blocks for everyone on that date.</td></tr>
+    <tr><td>Market candles</td><td>Thirty days of price history are drawn once, so the stock chart reads the same for all players.</td></tr>
+    <tr><td>In-run events</td><td>Every random event through the run comes from the same stream, in the same order.</td></tr>
+  </table>
+  <p class="fine">Only the random source is swapped. Rules, prices, jobs, skills and all 19 goals are exactly the same
+  as the free game &mdash; see the <a href="/how-to-play/">full guide</a> and the <a href="/goals/">goal list</a>.</p>
+
+  <h2>How to run a day</h2>
+  <ol>
+    <li>Open the link above for today's date, or a shared dated link for another day.</li>
+    <li>Enter a name and start: the cover tells you which date's city you are about to walk.</li>
+    <li>Spin, walk and make the same kind of decisions you would in a normal life &mdash; job, skills, assets, debt.</li>
+    <li>Read your ending card, copy your score, then come back tomorrow for a fresh seed.</li>
+  </ol>
+
+  <h2>Share one day, not a thousand URLs</h2>
+  <p>Press <strong>Copy share link</strong> and send it to a friend. The date lives after a <code>#</code> in the
+  address &mdash; a browser fragment that never reaches the server and is never indexed as a separate page. The only
+  crawlable address is this one, <a href="/daily/">mylifesim.com/daily/</a>, which is why the challenge can be found
+  by search while each day still has its own shareable address. The game itself keeps a single canonical URL.</p>
+
+  <h2>Questions people ask</h2>
+  <p><strong>What is the MY LIFE daily run?</strong> A life simulator run where every player gets the same random
+  seed for a given calendar day &mdash; the same city, neighbours, market candles and events. It is a fair one-day
+  challenge with no save file to hide behind.</p>
+  <p><strong>How is the daily seed decided?</strong> The seed is the local calendar date in YYYYMMDD form. Everyone
+  playing on that date in their own timezone gets the same sequence; the next day brings a new city.</p>
+  <p><strong>Does a daily run save my progress?</strong> No. It never reads or overwrites your normal saved life.
+  Your best net worth for each date is kept locally in your own browser.</p>
+  <p><strong>Can I replay an earlier day?</strong> Yes. A shared link with a date such as <code>#2026-11-20</code>
+  replays that exact seed, so a friend can run the same day you did.</p>
+  <p><strong>Is it free?</strong> Yes. No account, no install and no in-game ads. The optional
+  <a href="/pro/">PRO upgrade</a> adds three alternate openings and never gates the daily run.</p>
+
+  <h2>Keep exploring</h2>
+  <p>Already hooked? Read the <a href="/how-to-play/">step-by-step guide</a>, check the
+  <a href="/new-york-map/">New York map</a>, work through the <a href="/goals/">19 goals</a>, or see what
+  <a href="/pro/">PRO adds on top</a> of the free city. The <a href="/">full game starts here</a>.</p>
+</main>
+<footer>
+  <div class="fl">
+    <a href="/">PLAY THE GAME</a><a href="/daily/">DAILY RUN</a><a href="/how-to-play/">HOW TO PLAY</a>
+    <a href="/goals/">19 GOALS</a><a href="/pro/">PRO</a><a href="/privacy/">PRIVACY</a>
+  </div>
+  <small>MY LIFE is a free-to-play life simulator. Every company, product and business name in the game is invented;
+  place names are used only as geographic references. All prices and financial figures are fictional. The financial
+  ideas referenced here originate with Robert Kiyosaki's Rich Dad teachings; MY LIFE is an independent game and is
+  not affiliated with Rich Dad or its publishers.</small>
+</footer>
+<script>
+(function(){
+  var pad=function(n){return String(n).padStart(2,'0');};
+  function parseFrag(){
+    var m=/^#?(\d{4})-(\d{2})-(\d{2})$/.exec((location.hash||'').trim());
+    if(!m) return null;
+    var y=+m[1],mo=+m[2],d=+m[3],dt=new Date(y,mo-1,d);
+    if(dt.getFullYear()!==y||dt.getMonth()!==mo-1||dt.getDate()!==d) return null;
+    if(y<2025||y>new Date().getFullYear()+1) return null;
+    return {y:y,mo:mo,d:d,label:y+'-'+pad(mo)+'-'+pad(d),seed:y+''+pad(mo)+''+pad(d)};
+  }
+  var chosen;
+  function render(){
+    var picked=parseFrag(), now=new Date();
+    var today={label:now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate()),
+               seed:now.getFullYear()+''+pad(now.getMonth()+1)+''+pad(now.getDate())};
+    chosen=picked||today;
+    document.getElementById('dayLabel').textContent=chosen.label+(picked?' · REPLAY':' · TODAY');
+    document.getElementById('dayMeta').textContent='seed '+chosen.seed+' · same for everyone on this date';
+    document.getElementById('runBtn').textContent=picked?'RUN THIS DAY':"RUN TODAY'S LIFE";
+  }
+  render();
+  addEventListener('hashchange',render);   /* someone pastes a dated link while already here */
+  document.getElementById('runBtn').addEventListener('click',function(){
+    location.href='../?daily=1&d='+chosen.seed;
+  });
+  document.getElementById('copyBtn').addEventListener('click',function(){
+    var url='https://mylifesim.com/daily/#'+chosen.label;
+    function done(){var n=document.getElementById('copyNote');n.textContent='Copied: '+url; }
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done,function(){prompt('Copy this link:',url);});
+    else prompt('Copy this link:',url);
+  });
+})();
+</script>
+</body>
+</html>

@@ -6,7 +6,7 @@
 <title>Free Life Simulator Game in Your Browser — MY LIFE</title>
 
 <!-- what a shared link looks like -->
-<meta name="description" content="A free life simulator game in your browser — no install, no account. Walk New York, work, buy assets that pay you and escape the rat race the Rich Dad way.">
+<meta name="description" content="A free cashflow-style life simulator in your browser — no install, no account. Walk New York, work, buy assets that pay you and escape the rat race.">
 <meta name="author" content="Steven Jones (Zhu)">
 <meta name="theme-color" content="#0a1620">
 <meta name="msvalidate.01" content="16DEFC548C23F6441DC41F7083F4D8F0">
@@ -26,7 +26,7 @@
 <meta property="og:image:alt" content="MY LIFE — a life simulator on the streets of New York">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="MY LIFE — A Life Simulator on the Streets of New York">
-<meta name="twitter:description" content="A free single-file life sim on a hand-built Manhattan grid. Rich Dad rules, no installs, no accounts.">
+<meta name="twitter:description" content="A free single-file life sim on a hand-built Manhattan grid. Asset-and-liability rules, no installs, no accounts.">
 <meta name="twitter:image" content="https://mylifesim.com/og-cover-v1.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='13' fill='%230a1620'/%3E%3Ccircle cx='32' cy='32' r='23' fill='none' stroke='%23e9c86a' stroke-width='4'/%3E%3Ccircle cx='32' cy='32' r='4' fill='%23e9c86a'/%3E%3Cpath d='M32 9v6M32 49v6M9 32h6M49 32h6' stroke='%23e9c86a' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
 <!-- search engines: what this page is, in their own language -->
@@ -38,7 +38,7 @@
   "alternateName": "MY LIFE — Free Life Simulator Game in Your Browser",
   "url": "https://mylifesim.com/",
   "image": "https://mylifesim.com/og-cover.png",
-  "description": "A free life simulator game in your browser — no install, no account. Walk New York, work, buy assets that pay you and escape the rat race the Rich Dad way.",
+  "description": "A free cashflow-style life simulator in your browser — no install, no account. Walk New York, work, buy assets that pay you and escape the rat race.",
   "genre": ["Life simulation", "Business simulation", "Casual"],
   "gamePlatform": ["Web browser", "Mobile web"],
   "playMode": "SinglePlayer",
@@ -1791,7 +1791,7 @@
     the minds behind <b>Rich Dad Poor Dad</b> and the art of letting money work for you.
   </div>
   <div class="cover-guides">
-    <a href="?daily=1" id="dailyLink" title="One shared seed per day — a fair run against everyone playing today">&#128197; DAILY RUN</a>
+    <a href="/daily/" id="dailyLink" title="One shared seed per day — read the rules, then run today's life">&#128197; DAILY RUN</a>
     <a href="/pro/">&#9733; GO PRO &mdash; $4.99</a>
     <a href="/how-to-play/">HOW TO PLAY</a>
     <a href="/rich-dad-rules/">RICH DAD RULES</a>
@@ -1891,7 +1891,8 @@
 })();
 
 /* ===================== DAILY CHALLENGE (2026-11-21) =====================
-   A daily-run entry, reached only via ?daily=1 (cover link "DAILY RUN").
+   A daily-run entry reached from the /daily/ landing page (or directly via
+   ?daily=1). The landing page carries the SEO copy; this game page canonical stays "/".
    Every visitor who opens the same day's link gets the SAME random sequence:
    the roster face, the four birth corners, the five neighbours, the market
    candles and all in-run events are drawn from one seeded PRNG. That makes a
@@ -1907,8 +1908,25 @@
    Seeded mulberry32: tiny, fast, and good enough for a game (not for crypto). */
 const DAILY = (function(){
   try{
-    if(new URLSearchParams(location.search).get('daily')!=='1') return null;
-    const d=new Date();
+    const q=new URLSearchParams(location.search);
+    if(q.get('daily')!=='1') return null;
+    const pad=n=>String(n).padStart(2,'0');
+    const now=new Date();
+    let d=now, replay=false;
+    /* A shared day can be replayed with ?daily=1&d=YYYYMMDD (or YYYY-MM-DD).
+       This is NOT a new indexable page — the game canonical stays "/" and the
+       landing page at /daily/ carries the SEO text. Invalid or far-fetched
+       dates silently fall back to today, so a bad link can never break a run. */
+    const raw=(q.get('d')||'').trim();
+    if(raw){
+      const m=/^(\d{4})-?(\d{2})-?(\d{2})$/.exec(raw);
+      if(m){
+        const y=+m[1], mo=+m[2], dd=+m[3];
+        const cand=new Date(y,mo-1,dd);
+        if(cand.getFullYear()===y && cand.getMonth()===mo-1 && cand.getDate()===dd
+           && y>=2025 && y<=now.getFullYear()+1){ d=cand; replay=true; }
+      }
+    }
     const seed=(d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate())>>>0;
     let s=seed>>>0;
     Math.random=function(){
@@ -1918,19 +1936,18 @@ const DAILY = (function(){
       return ((t^(t>>>14))>>>0)/4294967296;
     };
     const key='mylife.daily.v1';
-    const pad=n=>String(n).padStart(2,'0');
     const dayKey=seed+'';                                  // YYYYMMDD as string
     const label=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
     /* the cover says which day this is, so a shared link reads as a challenge */
     try{
       const sub=document.querySelector('.coverSub');
-      if(sub) sub.textContent='Daily run · '+label;
+      if(sub) sub.textContent='Daily run · '+label+(replay?' · replay':'');
       const btn=document.getElementById('coverBtn');
-      if(btn) btn.textContent='RUN TODAY\'S LIFE';   /* short: the date is on the subtitle, avoid a phone-line wrap */
+      if(btn) btn.textContent=replay?'RUN THIS DAY':'RUN TODAY\'S LIFE';  /* short: no phone-line wrap */
       const imp=document.getElementById('coverImport');
       if(imp) imp.style.display='none';              /* a daily run never imports a saved life */
     }catch(e){}
-    return {on:true, seed, dayKey, label, key};
+    return {on:true, seed, dayKey, label, key, replay};
   }catch(e){ return null; }
 })();
 window.__DAILY__ = DAILY;
@@ -6803,7 +6820,13 @@ const carValue   = () => ST.car ? Math.round(ST.car.price*0.55) : 0;
 const activeIncome  = () => ST.employed ? salaryOf(ST.employed) : 0;
 const passiveIncome = () => netRent()+divIncome()+fundIncome()+bankIncome()+bizIncome()+worksIncome();
 /* the rat race: a bigger paycheck quietly grows the bills too */
-const livingCost   = () => 520 + Math.round(Math.max(0, activeIncome()-5000)*0.06);
+/* PRO openings are HARD MODE, not just a different starting balance: the city
+   charges 10% more to live in them. One rule, applied through the same expense
+   line the free game already shows — no separate economy to keep in sync. */
+const HARD_LIVING_MULT = 1.10;
+const isHardStory = () => !!ST.story && ST.story!=='classic';
+const livingCost   = () => Math.round((520 + Math.round(Math.max(0, activeIncome()-5000)*0.06))
+                                      * (isHardStory() ? HARD_LIVING_MULT : 1));
 const trueExpenses = () => -FIN.expenses.reduce((a,e)=>a+e.v,0);
 const freedomPct   = () => { const e=trueExpenses(); return e>0 ? Math.round(passiveIncome()/e*100) : 0; };
 
@@ -8877,7 +8900,7 @@ function showStoryNow(){
   const s=storyById(ST.story);
   if(!s){ el.style.display='none'; return; }
   el.style.display='block';
-  el.innerHTML='OPENING: <b>'+s.name+'</b> &mdash; '+s.tag;
+  el.innerHTML='HARD MODE: <b>'+s.name+'</b> &mdash; '+s.tag+' &middot; living costs +10%';
 }
 
 document.getElementById('coverBtn').addEventListener('click',()=>{
@@ -10405,7 +10428,7 @@ window.__mlBooted=true;      /* from here on, script errors are logged, never fa
 <section class="seo-copy" style="position:absolute;left:0;right:0;top:100vh;z-index:3;max-width:760px;margin:0 auto;padding:34px 20px 60px;text-align:left;color:#d8c9a3;font:15px/1.7 Georgia,serif">
   <h2 style="font-size:26px;color:#e9c86a;margin:0 0 14px">MY LIFE — a free life simulator you can play in your browser</h2>
   <p>MY LIFE is a free, browser-based life simulator game set on the streets of New York. No download, no sign-up and no account: open the page, name your character and start walking. Each turn of the gold wheel moves you down the route, and at some junctions you will randomly detour down a side street before rejoining — so every playthrough visits the city in a different order. It is a single-player game that runs entirely in your browser, and your progress stays on your device.</p>
-  <p>The game is built around one idea from <a href="/rich-dad-poor-dad-game/" style="color:#e9c86a">Rich Dad Poor Dad</a>: buy assets that put money in your pocket, and stay away from liabilities that take it out. A paycheque alone will not set you free. Along the walk you can find a job, buy stocks and property, take loans and manage your mood. Assets pay you on each pass; liabilities charge you. A car, for example, is deliberately a liability. Learn the full <a href="/rich-dad-rules/" style="color:#e9c86a">asset and liability rule</a> behind the game.</p>
+  <p>The game is built around one cashflow idea explained on our <a href="/rich-dad-poor-dad-game/" style="color:#e9c86a">cashflow-style game page</a>: buy assets that put money in your pocket, and stay away from liabilities that take it out. A paycheque alone will not set you free. Along the walk you can find a job, buy stocks and property, take loans and manage your mood. Assets pay you on each pass; liabilities charge you. A car, for example, is deliberately a liability. Learn the full <a href="/rich-dad-rules/" style="color:#e9c86a">asset and liability rule</a> behind the game.</p>
   <h3 style="font-size:20px;color:#e9c86a;margin:22px 0 10px">An incremental economy under the life sim</h3>
   <p>Beneath the life-sim story sits a real incremental economy &mdash; the reason players who enjoy tycoon and idle games tend to stay the longest. Stocks and property are not one-off purchases: they are assets that pay you again every time your route brings you past them. Reinvest those payouts and your income snowballs in the same compounding loop that drives incremental games. Liabilities run in reverse &mdash; a loan or a car quietly drains cash on every pass, so an early choice compounds just as hard in the wrong direction. There is no grinding for its own sake; each turn of the wheel is a decision about what you own next. Whether you call it an economy game, a management sim or a life simulation, the core is the same: build assets, cut liabilities and watch a balance sheet change turn by turn. The rules behind every payout are spelled out in the asset and liability guide.</p>
   <h3 style="font-size:20px;color:#e9c86a;margin:22px 0 10px">How to play</h3>
