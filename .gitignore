@@ -16,6 +16,10 @@ map_draft.html
 route-map.svg
 route-map.html
 
+# PRO 明文解锁码（绝不可上传：上传后任何人都能免费解锁）
+# 只把不可逆指纹放进 index.html；明文码仅本地保存用于导入 itch.io external keys
+PRO-CODES.txt
+
 # 旧版本备份
 index_v1_backup.html
 

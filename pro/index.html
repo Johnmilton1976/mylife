@@ -99,10 +99,11 @@
 
   <div class="unlockBox" id="unlockBox">
     <h2 style="margin:0 0 6px;border:none;padding:0">PAYMENT CONFIRMED &mdash; THANK YOU</h2>
-    <p style="font-size:13.5px">Your personal unlock code was sent to your email with the receipt. Open MY LIFE,
-    go to <strong>SETTINGS &rarr; SUPPORT MY LIFE</strong>, and enter that code to turn PRO on. It works on any device.</p>
-    <p class="fine">Lost the code? Email us with your receipt and we will resend it. Codes are issued per purchase &mdash;
-    never shared on this page.</p>
+    <p style="font-size:13.5px">Your personal unlock code is on your itch.io download page &mdash; open it, click
+    <strong>Claim your key</strong>, and copy the code. Then open MY LIFE,
+    go to <strong>SETTINGS &rarr; SUPPORT MY LIFE</strong>, and enter it to turn PRO on. It works on any device.</p>
+    <p class="fine">Lost the code? Your itch.io download link is permanent &mdash; open it again to claim your key.
+    Codes are unique to each purchase &mdash; never shared on this page.</p>
   </div>
 
   <h2>THE THREE OPENINGS</h2>
@@ -135,10 +136,11 @@
   <p><strong>Are the PRO openings easier or harder?</strong> Different, not stronger. Debt Heir starts with a loan,
   Founder with a small business and no salary, Newcomer with almost nothing. None of them grants free money or
   skips a goal &mdash; they change your starting sheet, not the rules.</p>
-  <p><strong>Do I need an account?</strong> No. PRO is unlocked in your browser with one tap, or on any device with
-  your personal code. Your saves already live in your own browser and never touch a server.</p>
-  <p><strong>What if I change browser or computer?</strong> Enter your code again in SETTINGS &rarr; SUPPORT MY LIFE.
-  The code does not expire.</p>
+  <p><strong>Do I need an account?</strong> No account on our site. Checkout runs on itch.io (card, PayPal or Apple&nbsp;Pay);
+  after paying, your code is waiting on the itch.io download page. Enter it once in the game and PRO stays on in that
+  browser. Your saves live in your own browser and never touch a server.</p>
+  <p><strong>What if I change browser or computer?</strong> Open your itch.io download link again, claim your key, and
+  enter the same code in SETTINGS &rarr; SUPPORT MY LIFE. The code does not expire and works on every device.</p>
   <p><strong>Refunds?</strong> 14 days, no questions asked. Write to
   <a href="mailto:steven.jones.19760904@gmail.com">steven.jones.19760904@gmail.com</a> or use the
   <a href="/contact/">contact page</a>.</p>
@@ -166,32 +168,28 @@
   <small>MY LIFE is a free-to-play life simulator; the optional one-time PRO upgrade supports development.
   Every company and product name in the game is invented; place names are used only as geographic references.
   In-game items and prices are fictional with no real-world value &mdash; the only real-money transaction on this site
-  is the optional PRO upgrade itself, sold through a secure checkout link. Your save lives in your own browser and is never uploaded.</small>
+  is the optional PRO upgrade itself, sold securely through itch.io. Your save lives in your own browser and is never uploaded.</small>
 </footer>
 <script>
 /* === CHECKOUT CONFIG ===
-   Paste a Stripe / Lemon Squeezy / Gumroad payment link below (one-time $4.99).
-   Leave empty -> the button opens an email to request the link (no dead button).
-   Set the payment platform's post-payment confirmation message to contain the
-   buyer's UNIQUE code, and redirect to https://mylifesim.com/pro/?purchased=1.
-   Never print a working code on this page — that hands PRO out for free. */
-const PAY_LINK = "";
-const CONTACT = "mailto:steven.jones.19760904@gmail.com?subject=MY%20LIFE%20PRO%20purchase";
+   PRO is sold on itch.io as a $4.99 individually-priced "PRO unlock" file on
+   the same project page as the free game. itch.io handles card / PayPal /
+   Apple Pay and tax — no payment gateway to apply for, no backend here.
+   Each buyer receives ONE unique code via itch.io external keys.
+   To fulfil: import PRO-CODES.txt into the project's external keys; buyers
+   claim a key on their download page. To revoke a leaked code, remove its
+   fingerprint from index.html (see PRO_FINGERPRINTS). */
+const PAY_LINK = "https://mylifesim.itch.io/my-life-sim";
+const CONTACT = "mailto:steven.jones.19760904@gmail.com?subject=MY%20LIFE%20PRO%20help";
 (function(){
-  /* One checkout story, never two: with a link configured we describe self-serve
-     card checkout; without one we describe the email route. No mixed signals. */
   const note=document.getElementById("buyNote");
   const fine=document.getElementById("buyFine");
   const btn=document.getElementById("buyBtn");
-  if(PAY_LINK){
-    note.innerHTML='Secure checkout &mdash; card, Apple&nbsp;Pay or Google&nbsp;Pay. Your personal code is emailed with the receipt.';
-    fine.innerHTML='14-day no-questions refund &mdash; just write to us. The whole game stays free.';
-    btn.addEventListener("click",()=>{ location.href=PAY_LINK; });
-  }else{
-    note.innerHTML='Checkout is opening soon. Email <a href="'+CONTACT+'">steven.jones.19760904@gmail.com</a> and we will send you the secure payment link and your personal unlock code.';
-    fine.innerHTML='The whole game stays free; PRO is a one-time support upgrade. 14-day no-questions refund.';
-    btn.addEventListener("click",()=>{ location.href=CONTACT; });
-  }
+  /* One checkout story: secure itch.io checkout, code on the download page. */
+  note.innerHTML='Secure checkout on itch.io &mdash; card, PayPal or Apple&nbsp;Pay. Tick the <b>PRO unlock ($4.99)</b> file; your personal code is on the download page right after payment.';
+  fine.innerHTML='14-day no-questions refund &mdash; just write to us. The whole game stays free.';
+  btn.addEventListener("click",()=>{ try{ window.open(PAY_LINK,'_blank','noopener,noreferrer'); }catch(e){ location.href=PAY_LINK; } });
+  /* Some payment platforms redirect back with ?purchased=1 — keep that hint. */
   const params=new URLSearchParams(location.search);
   if(params.get("purchased")==="1"){
     const box=document.getElementById("unlockBox");

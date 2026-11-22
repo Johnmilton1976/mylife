@@ -1,7 +1,10 @@
 /* verify_pro.js — Pro upgrade end-to-end: settings UI, wrong-code rejection,
    correct-code unlock, dock badge, share-card PRO seal. Run: node tests/verify_pro.js */
 const { chromium } = require('C:/Users/Johnmilton/.workbuddy/binaries/node/versions/24.14.0/node_modules/@playwright/cli/node_modules/playwright');
+const fs = require('fs');
 const URL = 'file:///C:/Users/Johnmilton/WorkBuddy/2026-11-08-10-33-18/my-life-game/index.html';
+const GOOD_CODE = fs.readFileSync('C:/Users/Johnmilton/WorkBuddy/2026-11-08-10-33-18/my-life-game/PRO-CODES.txt', 'utf8')
+  .split('\n').find(x => /^MLPRO-/.test(x)).trim();
 
 (async () => {
   const browser = await chromium.launch({ channel: 'msedge' });
@@ -24,7 +27,7 @@ const URL = 'file:///C:/Users/Johnmilton/WorkBuddy/2026-11-08-10-33-18/my-life-g
   const stillLocked = await page.evaluate(() => localStorage.getItem('ml_pro') !== '1');
 
   // correct code unlocks
-  await page.fill('#proCodeIn', 'MLPRO-NYC-4999');
+  await page.fill('#proCodeIn', GOOD_CODE);
   await page.click('#proUnlock'); await page.waitForTimeout(300);
   const flag = await page.evaluate(() => localStorage.getItem('ml_pro'));
   const badgeShown = await page.evaluate(() => document.getElementById('proDock').style.display === 'flex');

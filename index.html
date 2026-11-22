@@ -1693,8 +1693,8 @@
     publisher and vehicle brand that appears here is invented for the game; any
     resemblance to real companies is coincidental. Every in-game item is fictional and has
     no real-world value &mdash; nothing inside the game can be bought, sold or won for real money.
-    The only real-money transaction is the optional one-time PRO upgrade, sold on the PRO page
-    through a secure checkout link. Place and landmark names are used geographically, nothing more. Your save and
+    The only real-money transaction is the optional one-time PRO upgrade, sold securely through itch.io.
+    Place and landmark names are used geographically, nothing more. Your save and
     your name live only in your own browser (localStorage) and are never uploaded
     to any server.
   </div>
@@ -8968,16 +8968,79 @@ if(STORE.memoryOnly){
 }
 
 /* ===================== PRO upgrade =====================
-   Free game stays free. PRO is a one-time $4.99 unlock sold on /pro/ (payment link,
-   no backend). Honor-system unlock code: issued privately to each buyer by email,
-   entered once here, remembered in localStorage.
+   Free game stays free. PRO is a one-time $4.99 unlock sold through itch.io's
+   built-in checkout (no payment gateway to apply for, no backend here).
 
-   SECURITY (2026-11-21): the previous code was printed in plaintext on /pro/ AND
-   hard-coded here — anyone could read it and unlock for free. It is now
-   REVOKED. Keep the new code ONLY here and in the buyer's email — never on any page.
-   To sell: put this exact code in your payment platform's confirmation message.
-   To revoke a leaked code: change this one line and reissue to genuine buyers. */
-const PRO_CODE='MLPRO-7Q2K-4VD9';
+   SECURITY (2026-11-22): one-to-one buyer codes. This file stores ONLY the
+   SHA-256 fingerprint (first 16 hex) of each valid code — never a usable code.
+   Reading the source cannot unlock PRO: a fingerprint is irreversible.
+   Plaintext codes live in PRO-CODES.txt (git-ignored) and are imported into
+   itch.io "external keys", so every buyer gets one unique code.
+     - To revoke a leaked code: delete its fingerprint from PRO_FINGERPRINTS and
+       re-upload. That code stops working; every other buyer is unaffected.
+     - To add codes: run `node tools/gen_pro_codes.js`, import the new plaintext
+       list to itch.io, and paste the printed fingerprint array here.
+   Codes are checked case-insensitively. */
+const PRO_FINGERPRINTS = [
+  '1f5a3f0296194ea4','43cd014d76b282f9','c6a42b77000f4ee4','2523733245886541',
+  '62b44ce15dd08700','175935ffa4f402ca','fea7e54ac6030c33','6ae12c9384ce28ba',
+  '559125b8122f3ba5','dd8a2e465753e3d4','9091e9313b70c757','1c25539214607790',
+  '96247712d66b1c50','588b3fd8eda21f90','bb4602c94e7f5d46','8e746c03062774b9',
+  'fa1e66a105f69221','cf16f997445efdc6','d77c60e3d21a603e','ebeeb303afda7b07',
+  'b8212433f7b15452','75293dd72785ddef','340fef04e4516592','2b53f87d559beb75',
+  '3511a6e3918e64e9','1ab41c2e2c8c905d','8e3096c0d83a6c59','586fa321df3ef872',
+  '8bd179539d9b6644','1ebf557c92f52122','56417d4f12da5e1c','bbcd016b73ab977f',
+  '43123fbfff9db3ef','a6301240bd5a9638','d7f9c85dfb104df3','66417f35ffee076f',
+  'a70626fc1db9ac72','71af443bba6e88b4','f2479f2c085b4f21','76aec27412c23d95',
+  '7342b77b1f08994d','fafbdfc77327173a','92d9cde5d9bb7d91','800439c4a32c0d74',
+  '893eefb42ab9528a','9385651279ce9497','df765eecc4ed5747','5e35e48767f1d0c8',
+  '69f12fae976003df','bf6f89d3afd2ef30','664c535a128dd7be','6979c7520b41a329',
+  'b5af7bf12756c628','ff966f4da6749d8a','061be6a7d43cad9a','7b27497d638ee955',
+  'a3ac90689ce9067b','056a3de53808fff2','47fba52c1e0f88fa','fd2f734503347610',
+  '2b14c432a4a7dca7','e79201cb824a0571','d901c6eb1fbdebb1','c9f07fb81f5713d5',
+  'b03b7ea79479b396','78d369ab9f30ca7b','b3cf38aed8ee2dc6','87d09147b34eb6f3',
+  '007df9c573f0f60b','408cc0be7acd11f2','36d4c6c54ac3e779','aa5b3b1047244a2d',
+  'aa1b318def68b2b5','99fd3817d1cf0274','2d5e41a8ce2ac352','5f93d1ebdf5b5fd6',
+  '86c03ace84f044f9','34712dd4ffbc17b4','f1562b94c90ad3bb','5daa1d22afb7bb01',
+  'a21d06199f292ac9','9b7d889587d4594a','2a50c37ee0d77c9f','b25e22c6f34538c4',
+  'a77ccb8e6d0836e1','3e36e1bac7e7ca40','d640267dbb695a35','52cd084b22b61572',
+  '63667828f8a6d51d','a46982b76948d53d','84b08bb06fe02f14','9ca22f73d696095c',
+  '1b8e74b802c6d59c','92a960aa8c62630f','3d930692844273d5','11eabf65870d2f82',
+  '39a2157940601d8f','13491a7428b3f419','d1d4f8d8fbb5e379','be610b0f5c30c347',
+  '87d0e25038fd81b4','85c9b613c833b50c','262cf17126e69371','653f8a21d780bb31',
+  '206b0503f0048f09','aed049a4b521dd81','f4c9a7bb2699008b','80c129cd6aace343',
+  '41fcd7440f6a85d5','78722fbeb1b6d0f1','ff9bd1bbc4ffa25b','28d6d3b4eaad871a',
+  'c87e6ed5d89069e9','80875dfe12570d6f','146d107b7b2c482a','3bd9028f9c9d0f20',
+  'e94b746911bc4d5e','50b4ef75f3867146','08cdec563f69371c','a6d18f55d0466aef'
+];
+/* Dependency-free synchronous SHA-256 so verification works even on file://
+   (no Web Crypto / secure-context requirement). Mirrors tools/sha256.js. */
+function proFP(msg){
+  const K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  let H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  const bytes=[]; for(const ch of String(msg)) bytes.push(ch.charCodeAt(0)&0xff);
+  const ml=bytes.length*8; bytes.push(0x80);
+  while(bytes.length%64!==56) bytes.push(0);
+  const hi=Math.floor(ml/0x100000000),lo=ml>>>0;
+  bytes.push((hi>>>24)&255,(hi>>>16)&255,(hi>>>8)&255,hi&255,(lo>>>24)&255,(lo>>>16)&255,(lo>>>8)&255,lo&255);
+  const p=bytes.map(b=>String.fromCharCode(b)).join('');
+  const rotr=(x,n)=>(x>>>n)|(x<<(32-n));
+  for(let off=0;off<p.length;off+=64){
+    const w=new Array(64);
+    for(let i=0;i<16;i++) w[i]=(p.charCodeAt(off+i*4)<<24)|(p.charCodeAt(off+i*4+1)<<16)|(p.charCodeAt(off+i*4+2)<<8)|p.charCodeAt(off+i*4+3);
+    for(let i=16;i<64;i++){ const s0=rotr(w[i-15],7)^rotr(w[i-15],18)^(w[i-15]>>>3),s1=rotr(w[i-2],17)^rotr(w[i-2],19)^(w[i-2]>>>10); w[i]=(w[i-16]+s0+w[i-7]+s1)>>>0; }
+    let [a,b,c,d,e,f,g,h]=H;
+    for(let i=0;i<64;i++){ const S1=rotr(e,6)^rotr(e,11)^rotr(e,25),ch=(e&f)^(~e&g),t1=(h+S1+ch+K[i]+w[i])>>>0,S0=rotr(a,2)^rotr(a,13)^rotr(a,22),maj=(a&b)^(a&c)^(b&c),t2=(S0+maj)>>>0; h=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0; }
+    H=[(H[0]+a)>>>0,(H[1]+b)>>>0,(H[2]+c)>>>0,(H[3]+d)>>>0,(H[4]+e)>>>0,(H[5]+f)>>>0,(H[6]+g)>>>0,(H[7]+h)>>>0];
+  }
+  return H.map(x=>x.toString(16).padStart(8,'0')).join('');
+}
+function validProCode(code){
+  const c=String(code||'').trim().toUpperCase();
+  if(!/^MLPRO-[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(c)) return false;
+  const fp=proFP(c).slice(0,16);
+  return PRO_FINGERPRINTS.indexOf(fp)!==-1;
+}
 
 /* ---- portal guard: nothing is sold or linked out from inside an embed ----
    itch.io / CrazyGames / Poki / GameJolt forbid taking payment (or sending the
@@ -9023,7 +9086,7 @@ function applyProUI(){
   if(typeof renderStoryPicker==='function') renderStoryPicker();
 }
 function unlockPro(code){
-  if((code||'').trim().toUpperCase()===PRO_CODE){
+  if(validProCode(code)){
     try{ STORE.setItem('ml_pro','1'); }catch(e){}
     applyProUI();
     if(typeof renderStoryPicker==='function') renderStoryPicker();
