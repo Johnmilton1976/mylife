@@ -582,6 +582,19 @@
     color:#2e1c08;background:linear-gradient(180deg,#fdf0b8,#e8c88a);border-color:#8a6a2a;
     box-shadow:0 0 0 3px rgba(232,200,138,.22),0 6px 18px rgba(0,0,0,.45);
   }
+  /* PRO story picker — only rendered when the PRO code is active */
+  .storyRow{width:min(620px,calc(100vw - 44px));margin-top:2px;text-align:center}
+  .storyHead{font-family:Georgia,serif;font-size:11px;letter-spacing:3px;color:#e9c86a;margin-bottom:7px}
+  .storyBtns{display:flex;gap:9px;justify-content:center;flex-wrap:wrap}
+  .storyBtn{flex:1 1 150px;max-width:196px;padding:9px 10px;cursor:pointer;font-family:Georgia,serif;
+    font-size:12.5px;font-weight:bold;letter-spacing:1.5px;color:#cdbc86;
+    background:rgba(10,22,16,.75);border:2px solid #6a5a34;border-radius:9px;
+    transition:color .15s,border-color .15s,background .15s}
+  .storyBtn .ic{font-size:15px;margin-right:5px;vertical-align:-1px}
+  .storyBtn:hover{border-color:#b8965a;color:#ffe9b0}
+  .storyBtn.on{color:#2e1c08;background:linear-gradient(180deg,#fdf0b8,#e8c88a);border-color:#8a6a2a;
+    box-shadow:0 0 0 3px rgba(232,200,138,.22)}
+  .storyNote{font-size:10.5px;color:#9fb0a0;margin-top:6px;line-height:1.55;min-height:16px;letter-spacing:.3px}
   #faceBox{
     position:relative;width:186px;height:244px;
     display:flex;align-items:flex-end;justify-content:center;
@@ -703,6 +716,12 @@
     .sexRow{width:calc(100vw - 44px);max-width:340px;gap:10px}
     #goBtn{padding:12px 18px;font-size:17px;letter-spacing:2px}
     .sexBtn{flex:1;min-width:0;padding:11px 8px;font-size:14px;letter-spacing:2px}
+    .storyRow{margin-top:4px}
+    .storyHead{font-size:10px;letter-spacing:1.6px}
+    .storyBtns{gap:6px}
+    .storyBtn{flex:1 1 28%;max-width:none;min-width:0;padding:8px 3px;font-size:10px;letter-spacing:.4px}
+    .storyBtn .ic{display:block;margin:0 0 2px;font-size:15px}
+    .storyNote{font-size:9.5px;min-height:0}
     #faceBox{width:140px;height:184px}
     #faceTag{left:-24px;right:-24px;letter-spacing:1.8px}
     /* Caption C档: 12.5/1.8 → 11/1.5, four lines become three */
@@ -1650,13 +1669,15 @@
 
   <div class="set-sec">SUPPORT MY LIFE</div>
   <div id="proLocked" style="font-size:11px;color:#8a7a5c;line-height:1.6;margin:2px 2px 8px">
-    MY LIFE is free. <b style="color:#ffd98a">PRO ($4.99 once)</b> pins a gold badge on your dock, seals your
-    &ldquo;A LIFE, LIVED&rdquo; share card and funds every new feature.
+    MY LIFE is free. <b style="color:#ffd98a">PRO ($4.99 once)</b> unlocks three alternate openings
+    &mdash; Debt Heir, Founder and Newcomer &mdash; each a different starting balance sheet and first decision.
+    A gold badge, share-card seal and cover theme come with it.
   </div>
   <div class="set-row"><span>GO PRO</span><button class="set-btn" id="proOpen" style="text-transform:none">&starf; $4.99 &mdash; OPEN PRO PAGE</button></div>
   <div class="set-row" style="margin-top:6px"><span>I PAID &mdash; CODE</span><input id="proCodeIn" maxlength="24" placeholder="MLPRO-XXXX-XXXX" spellcheck="false" style="background:#0a0f0c;border:1px solid #3a443a;border-radius:4px;color:#ecdcbc;padding:6px 8px;width:150px;font-family:Georgia,serif;letter-spacing:1px"></div>
   <div class="set-row"><span>&nbsp;</span><button class="set-btn" id="proUnlock">UNLOCK</button></div>
   <div id="proActive" style="display:none;font-size:11px;color:#ffd98a;letter-spacing:2px;margin:2px 2px 8px">&#9733; PRO ACTIVE &mdash; THANK YOU. THE CITY SMILES ON YOU.</div>
+  <div id="storyNow" style="display:none;font-size:10.5px;color:#a8d68a;letter-spacing:1px;margin:2px 2px 8px;line-height:1.5"></div>
 
   <div class="set-sec">CREATOR / CONTACT</div>
   <div class="set-row cc-row"><span>GMAIL</span><input id="ccMail" type="email" value="steven.jones.19760904@gmail.com" readonly spellcheck="false" style="opacity:.75;cursor:not-allowed" title="Fixed by the creator"></div>
@@ -1673,7 +1694,7 @@
     resemblance to real companies is coincidental. Every in-game item is fictional and has
     no real-world value &mdash; nothing inside the game can be bought, sold or won for real money.
     The only real-money transaction is the optional one-time PRO upgrade, sold on the PRO page
-    through Stripe. Place and landmark names are used geographically, nothing more. Your save and
+    through a secure checkout link. Place and landmark names are used geographically, nothing more. Your save and
     your name live only in your own browser (localStorage) and are never uploaded
     to any server.
   </div>
@@ -1759,7 +1780,7 @@
 
 <div id="picker">
   <div id="coverSky"></div>
-  <h1 id="coverTitle" class="coverTitle" style="font-size:86px;letter-spacing:26px"><span class="coverBrand">MY LIFE</span><span class="coverSub">Free browser life sim</span></h1>
+  <h1 id="coverTitle" class="coverTitle" style="font-size:86px;letter-spacing:26px"><span class="coverBrand">MY LIFE</span><span class="coverSub">Free Life Simulator Game</span></h1>
   <p>A LIFE SIMULATOR ON THE STREETS OF NEW YORK</p>
   <button id="coverBtn" style="margin-top:18px">START LIFE</button>
   <button id="resumeBtn">&#9654; CONTINUE</button>
@@ -1818,6 +1839,11 @@
   <div class="sexRow">
     <button id="sexM" class="sexBtn on"><span class="ic">&#9794;</span>MALE</button>
     <button id="sexF" class="sexBtn"><span class="ic">&#9792;</span>FEMALE</button>
+  </div>
+  <div id="storyRow" class="storyRow" style="display:none">
+    <div class="storyHead">&#9733; PRO STORIES &mdash; CHOOSE YOUR OPENING</div>
+    <div class="storyBtns" id="storyBtns"></div>
+    <div class="storyNote" id="storyNote"></div>
   </div>
   <div id="faceBox"><div id="faceTag">A FACE HANDED TO YOU AT BIRTH</div></div>
   <button id="goBtn">THIS IS ME &mdash; GO!</button>
@@ -6161,6 +6187,41 @@ const workMonthly = id => {
 };
 const worksIncome = () => Object.keys(ST.works||{}).reduce((a,id)=>a+workMonthly(id),0);
 
+/* ===================== PRO STORY MODES (2026-11-21) =====================
+   Three paid opening scenarios, built ONLY from systems the game already has
+   (loan, bizs, skills, cash, credit, mood). No new engine, no new map, no new
+   balance rules — a different starting SHEET and a different first decision.
+   'classic' is the free default; the three stories are PRO-only and selected
+   on the character sheet. ST.story is saved in the snapshot and restored, so
+   a continued run keeps its scenario label. Themes are cosmetic extras. */
+const STORIES=[
+  {id:'debt',   icon:'\uD83D\uDCB8', name:'DEBT HEIR',     tag:'INHERITED DEBT',
+   blurb:'$6,000 bad debt on day one. High credit, $500 cash. Clear the loan before you can breathe.'},
+  {id:'founder',icon:'\uD83D\uDE9A', name:'FOUNDER',       tag:'A HEAD START IN TRADE',
+   blurb:'You already own a coffee cart. No job, no salary — make the little business pay.'},
+  {id:'newcomer',icon:'\uD83C\uDFD9', name:'NEWCOMER',     tag:'FROM NOTHING',
+   blurb:'$300, a thin credit file, no skills. The whole ladder starts at zero — and so do you.'}
+];
+/* Apply a PRO story to a freshly-created ST. Called once at birth, before the
+   city is populated. Every field here is one the free game already uses. */
+function applyStoryStart(story){
+  if(!story || story==='classic') return;
+  if(story==='debt'){
+    ST.cash=500; ST.credit=68; ST.stress=34; ST.happy=42;
+    ST.loan={principal:6000, left:12, payment:Math.round(6000*(1+BAD_APR)/12), apr:BAD_APR, kind:'bad'};
+    ST.flags=ST.flags||{}; ST.flags.storyDebt=true;
+  } else if(story==='founder'){
+    ST.cash=1000; ST.credit=40;
+    ST.bizs=ST.bizs||{}; ST.bizs['cart']={months:0};
+    ST.flags=ST.flags||{}; ST.flags.storyFounder=true;
+  } else if(story==='newcomer'){
+    ST.cash=300; ST.credit=20; ST.happy=68; ST.stress=12; ST.health=100;
+    ST.skills={prog:0, write:0, proj:0, drive:0, cook:0, art:0, fin:0, fit:0, eng:0};
+    ST.flags=ST.flags||{}; ST.flags.storyNewcomer=true;
+  }
+}
+function storyById(id){ return STORIES.find(s=>s.id===id)||null; }
+
 /* ---- a fresh start: 18 years old, $1,000 in the pocket, nothing else ---- */
 const AGE_START = 18;
 const CASH_START = 1000;
@@ -6169,6 +6230,7 @@ const CASH_START = 1000;
    paid, and falls when they are not. Nothing you can BUY raises it. */
 const CREDIT_START = 35;
 const ST={age:AGE_START, cash:CASH_START, bank:0, happy:50, credit:CREDIT_START, health:100, stress:20, employed:null, biz:null, bizs:{}, loan:null, freshStart:false,
+  story:'classic',                                         /* PRO opening scenario; 'classic' = free default */
   fund:0, paySelf:0.10, paySelfMonths:0,                    /* pay yourself first: the asset fund */
   skills:{prog:0, write:0, proj:0, drive:0, cook:0, art:0, fin:0, fit:0, eng:0},
   works:{},                                                /* skill id -> day the work went on sale */
@@ -8784,6 +8846,40 @@ document.getElementById('sexM').addEventListener('click',()=>setSex('m'));
 document.getElementById('sexF').addEventListener('click',()=>setSex('f'));
 renderFace();
 
+/* ---- PRO story picker ---- */
+let chosenStory='classic';
+function renderStoryPicker(){
+  const row=document.getElementById('storyRow');
+  if(!row) return;
+  const pro=(typeof isPro==='function') && isPro();
+  row.style.display=pro?'block':'none';
+  if(!pro){ chosenStory='classic'; return; }
+  const btns=document.getElementById('storyBtns');
+  if(btns && !btns.childElementCount){
+    btns.innerHTML=STORIES.map(s=>
+      '<button type="button" class="storyBtn'+(s.id===chosenStory?' on':'')+'" data-story="'+s.id+'">'+
+      '<span class="ic">'+s.icon+'</span>'+s.name+'</button>').join('');
+    btns.addEventListener('click',e=>{
+      const b=e.target.closest('.storyBtn'); if(!b) return;
+      chosenStory=b.getAttribute('data-story')||'classic';
+      [...btns.children].forEach(x=>x.classList.toggle('on',x===b));
+      const s=storyById(chosenStory);
+      const note=document.getElementById('storyNote');
+      if(note) note.textContent=s?s.blurb:'';
+    });
+    const note=document.getElementById('storyNote');
+    const s0=storyById(chosenStory); if(note&&s0) note.textContent=s0.blurb;
+  }
+}
+renderStoryPicker();
+function showStoryNow(){
+  const el=document.getElementById('storyNow'); if(!el) return;
+  const s=storyById(ST.story);
+  if(!s){ el.style.display='none'; return; }
+  el.style.display='block';
+  el.innerHTML='OPENING: <b>'+s.name+'</b> &mdash; '+s.tag;
+}
+
 document.getElementById('coverBtn').addEventListener('click',()=>{
   /* INP: the screen swap classes paint instantly; the rolled face SVG builds
      right after — the previous face is still on show for that one frame */
@@ -8921,11 +9017,16 @@ function applyProUI(){
   /* gold cover theme: the title glow warms up for supporters */
   const h1=document.querySelector('#picker h1');
   if(h1) h1.style.textShadow=on?'0 0 26px rgba(216,180,112,.55),0 2px 6px rgba(0,0,0,.6)':'';
+  /* The picker's early call (before STORE exists) can't know PRO status and
+     hides itself. Refresh here — applyProUI runs once STORE is ready, both on
+     load and on unlock — so buyers actually see the three openings. */
+  if(typeof renderStoryPicker==='function') renderStoryPicker();
 }
 function unlockPro(code){
   if((code||'').trim().toUpperCase()===PRO_CODE){
     try{ STORE.setItem('ml_pro','1'); }catch(e){}
     applyProUI();
+    if(typeof renderStoryPicker==='function') renderStoryPicker();
     const inEl=document.getElementById('proCodeIn');
     if(inEl) inEl.value='';
     if(typeof flash==='function') flash('\u2605 PRO UNLOCKED \u2014 thank you for supporting the walk!');
@@ -9065,6 +9166,16 @@ function startGame(opts){
   const myIdx = opts ? opts.selIdx : selIdx;
   const o=ROSTER[myIdx];
   lastLife={name:typed, selIdx:myIdx};
+  /* PRO stories: inject the chosen opening sheet BEFORE the HUD/panel read it.
+     Guarded by isPro so a non-payer can never slip a paid start into a save.
+     ST is at its const-initial values here (a fresh birth), so injection is clean. */
+  let pickedStory='classic';
+  if(typeof chosenStory==='string' && storyById(chosenStory)){
+    if(typeof isPro==='function' && isPro()) pickedStory=chosenStory;
+  }
+  ST.story=pickedStory;
+  if(pickedStory!=='classic') applyStoryStart(pickedStory);
+  if(typeof showStoryNow==='function') showStoryNow();
   /* a daily run must NOT delete the player's ordinary saved life — it is a
      separate score attempt that never writes SAVE_KEY in the first place */
   if(!DAILY){ try{ STORE.removeItem(SAVE_KEY); }catch(e){} }
@@ -10062,6 +10173,7 @@ function resumeGame(){
   if(window.syncHudFace) syncHudFace();        /* the corner badge wears the same face */
   /* restore the life itself */
   Object.keys(ST).forEach(k=>{ if(k in s.ST) ST[k]=s.ST[k]; });
+  if(typeof showStoryNow==='function') showStoryNow();
   /* CHARM became CREDIT. They are not the same thing — charm was bought with a suit
      and a round of drinks, credit is a record of bills paid — so an old save does not
      inherit the number: it opens with a thin file, the same as a new life. */
@@ -10234,7 +10346,7 @@ window.__mlBooted=true;      /* from here on, script errors are logged, never fa
   <h3 style="font-size:20px;color:#e9c86a;margin:22px 0 10px">An incremental economy under the life sim</h3>
   <p>Beneath the life-sim story sits a real incremental economy &mdash; the reason players who enjoy tycoon and idle games tend to stay the longest. Stocks and property are not one-off purchases: they are assets that pay you again every time your route brings you past them. Reinvest those payouts and your income snowballs in the same compounding loop that drives incremental games. Liabilities run in reverse &mdash; a loan or a car quietly drains cash on every pass, so an early choice compounds just as hard in the wrong direction. There is no grinding for its own sake; each turn of the wheel is a decision about what you own next. Whether you call it an economy game, a management sim or a life simulation, the core is the same: build assets, cut liabilities and watch a balance sheet change turn by turn. The rules behind every payout are spelled out in the asset and liability guide.</p>
   <h3 style="font-size:20px;color:#e9c86a;margin:22px 0 10px">How to play</h3>
-  <p>Press START LIFE, type a name, pick a character and GO. Walk the route with the gold wheel (or the space bar), stop on a building to act, and watch the panel in the top-right corner: assets add to your funds, liabilities drain them. Push stress past 80 and bad luck finds you more often; hold happiness above 80 and good luck comes looking. Hover any car to read a line from Munger, Buffett or the Rich Dad. Nothing saves by itself — use the save button on the dock, then CONTINUE on the cover to return. The full walkthrough is in <a href="/how-to-play/" style="color:#e9c86a">How to Play</a>, and <a href="/new-york-map/" style="color:#e9c86a">the New York map</a> shows every street.</p>
+  <p>Press START LIFE, type a name, pick a character and GO. Walk the route with the gold wheel (or the space bar), stop on a building to act, and watch the panel in the top-right corner: assets add to your funds, liabilities drain them. Push stress past 80 and bad luck finds you more often; hold happiness above 80 and good luck comes looking. Hover any car to read a line from Munger, Buffett or the Rich Dad. Your life autosaves every time you finish a walk and every new day — just reopen and press CONTINUE on the cover. The 💾 button on the dock saves instantly whenever you want a checkpoint. The full walkthrough is in <a href="/how-to-play/" style="color:#e9c86a">How to Play</a>, and <a href="/new-york-map/" style="color:#e9c86a">the New York map</a> shows every street.</p>
   <h3 style="font-size:20px;color:#e9c86a;margin:22px 0 10px">A text-driven life sim, no download needed</h3>
   <p>If you like story-led games where your choices and your balance sheet decide the outcome, MY LIFE sits in the same family as <a href="/text-based-life-simulator/" style="color:#e9c86a">text-based life simulators</a> and is often played as a <a href="/bitlife-alternative/" style="color:#e9c86a">BitLife alternative</a>. It runs in <a href="/life-simulator-browser-game/" style="color:#e9c86a">the browser with no install</a>, works as a <a href="/life-simulator-no-download/" style="color:#e9c86a">no-download life simulator</a>, and you can chase the <a href="/escape-the-rat-race-game/" style="color:#e9c86a">escape-the-rat-race goal</a> or work through all 19 life goals. A deeper <a href="/real-life-simulator/" style="color:#e9c86a">real-life simulator</a> mode, a <a href="/stock-market-simulator-game/" style="color:#e9c86a">stock market simulator game</a> built around dividends, and a <a href="/business-simulator-game/" style="color:#e9c86a">business simulator game</a> where a company runs without you are covered on their own pages; the full goal list is on the cover.</p>
   <h3 style="font-size:20px;color:#e9c86a;margin:22px 0 10px">Goals, mood and the long game</h3>
