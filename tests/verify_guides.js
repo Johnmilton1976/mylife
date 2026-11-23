@@ -41,13 +41,15 @@ const http = require('http');
   await page.goto(base + '/', { waitUntil: 'load' });
   await page.waitForTimeout(1200);
   const coverLinks = await page.$$eval('.cover-guides a', as => as.map(a => a.getAttribute('href')));
-  /* 15 links since the footer-nav fix (764bd5c): pro + 11 guides + privacy/terms/contact.
-     The old hard-coded 11 went stale when 4 orphaned guides were added to the
-     shared footer; count the real set and keep the must-link checks below. */
+  /* 15 links: DAILY + 11 guides + privacy/terms/contact. The old PRO link was
+     removed with the paid tier (5ffd7f2) and must not come back. */
   ok(coverLinks.length === 15, 'cover guides nav has 15 links: ' + coverLinks.join(','));
-  for (const must of ['/pro/', '/privacy/', '/terms/', '/contact/']) {
+  for (const must of ['/daily/', '/privacy/', '/terms/', '/contact/']) {
     ok(coverLinks.includes(must), 'cover nav includes ' + must);
   }
+  ok(!coverLinks.includes('/pro/'), 'cover nav has no /pro/ link');
+  const gameHtml = await page.content();
+  ok(!/\bPRO\b|\$4\.99|MLPRO-/.test(gameHtml), 'game page has no paid-tier copy');
   for (const h of coverLinks) {
     const code = await page.evaluate(async u => (await fetch(u)).status, base + h);
     ok(code === 200, 'cover link ' + h + ' -> ' + code);
