@@ -582,19 +582,6 @@
     color:#2e1c08;background:linear-gradient(180deg,#fdf0b8,#e8c88a);border-color:#8a6a2a;
     box-shadow:0 0 0 3px rgba(232,200,138,.22),0 6px 18px rgba(0,0,0,.45);
   }
-  /* PRO story picker — only rendered when the PRO code is active */
-  .storyRow{width:min(620px,calc(100vw - 44px));margin-top:2px;text-align:center}
-  .storyHead{font-family:Georgia,serif;font-size:11px;letter-spacing:3px;color:#e9c86a;margin-bottom:7px}
-  .storyBtns{display:flex;gap:9px;justify-content:center;flex-wrap:wrap}
-  .storyBtn{flex:1 1 150px;max-width:196px;padding:9px 10px;cursor:pointer;font-family:Georgia,serif;
-    font-size:12.5px;font-weight:bold;letter-spacing:1.5px;color:#cdbc86;
-    background:rgba(10,22,16,.75);border:2px solid #6a5a34;border-radius:9px;
-    transition:color .15s,border-color .15s,background .15s}
-  .storyBtn .ic{font-size:15px;margin-right:5px;vertical-align:-1px}
-  .storyBtn:hover{border-color:#b8965a;color:#ffe9b0}
-  .storyBtn.on{color:#2e1c08;background:linear-gradient(180deg,#fdf0b8,#e8c88a);border-color:#8a6a2a;
-    box-shadow:0 0 0 3px rgba(232,200,138,.22)}
-  .storyNote{font-size:10.5px;color:#9fb0a0;margin-top:6px;line-height:1.55;min-height:16px;letter-spacing:.3px}
   #faceBox{
     position:relative;width:186px;height:244px;
     display:flex;align-items:flex-end;justify-content:center;
@@ -1667,18 +1654,6 @@
   <div class="set-row"><span>&nbsp;</span><button class="set-btn" id="saveApply" style="display:none">&#10003; IMPORT THIS SAVE</button></div>
   <div id="saveMsg" style="font-size:10px;color:#8a7a5c;line-height:1.5;margin:2px 2px 8px"></div>
 
-  <div class="set-sec">SUPPORT MY LIFE</div>
-  <div id="proLocked" style="font-size:11px;color:#8a7a5c;line-height:1.6;margin:2px 2px 8px">
-    MY LIFE is free. <b style="color:#ffd98a">PRO ($4.99 once)</b> unlocks three alternate openings
-    &mdash; Debt Heir, Founder and Newcomer &mdash; each a different starting balance sheet and first decision.
-    A gold badge, share-card seal and cover theme come with it.
-  </div>
-  <div class="set-row"><span>GO PRO</span><button class="set-btn" id="proOpen" style="text-transform:none">&starf; $4.99 &mdash; OPEN PRO PAGE</button></div>
-  <div class="set-row" style="margin-top:6px"><span>I PAID &mdash; CODE</span><input id="proCodeIn" maxlength="24" placeholder="MLPRO-XXXX-XXXX" spellcheck="false" style="background:#0a0f0c;border:1px solid #3a443a;border-radius:4px;color:#ecdcbc;padding:6px 8px;width:150px;font-family:Georgia,serif;letter-spacing:1px"></div>
-  <div class="set-row"><span>&nbsp;</span><button class="set-btn" id="proUnlock">UNLOCK</button></div>
-  <div id="proActive" style="display:none;font-size:11px;color:#ffd98a;letter-spacing:2px;margin:2px 2px 8px">&#9733; PRO ACTIVE &mdash; THANK YOU. THE CITY SMILES ON YOU.</div>
-  <div id="storyNow" style="display:none;font-size:10.5px;color:#a8d68a;letter-spacing:1px;margin:2px 2px 8px;line-height:1.5"></div>
-
   <div class="set-sec">CREATOR / CONTACT</div>
   <div class="set-row cc-row"><span>GMAIL</span><input id="ccMail" type="email" value="steven.jones.19760904@gmail.com" readonly spellcheck="false" style="opacity:.75;cursor:not-allowed" title="Fixed by the creator"></div>
   <div style="font-size:10px;color:#8a7a5c;line-height:1.5;margin:2px 2px 8px">
@@ -1693,7 +1668,7 @@
     publisher and vehicle brand that appears here is invented for the game; any
     resemblance to real companies is coincidental. Every in-game item is fictional and has
     no real-world value &mdash; nothing inside the game can be bought, sold or won for real money.
-    The only real-money transaction is the optional one-time PRO upgrade, sold securely through itch.io.
+    The game is completely free &mdash; no purchases, no subscriptions, no real-money transactions at all.
     Place and landmark names are used geographically, nothing more. Your save and
     your name live only in your own browser (localStorage) and are never uploaded
     to any server.
@@ -1761,7 +1736,6 @@
   <button id="btnSaveNow" class="dockBtn" title="Save now">&#128190;</button>
   <button id="btnLoad" class="dockBtn" title="Load last save">&#9654;</button>
   <button id="btnShare" class="dockBtn" title="Share my life">&#10150;</button>
-  <button id="proDock" class="dockBtn" title="PRO active — thank you!" style="display:none;color:#ffd98a;border-color:#8a6d2f">&#9733;</button>
   <button id="setBtn" class="dockBtn" title="Settings">&#9881;</button>
 </div>
 <div id="hintPop">
@@ -1775,7 +1749,7 @@
   <b>NIGHT</b> windows, street lamps, bridge lights and neon switch on at dusk and off at dawn &nbsp;&#183;&nbsp; toggle CITY LIGHTS in settings<br>
   <b>GAME STORE</b> &#127918; a few shops sell games of our own invention &mdash; NEON COAST &amp; THE LEGEND OF AURELIA &nbsp;&#183;&nbsp; hover a title for original box art &nbsp;&#183;&nbsp; virtual only, no real purchase<br>
   <b>SAVE</b> &#128190; autosaves every walk &amp; new day &nbsp;&#183;&nbsp; press it for an instant checkpoint &nbsp;&#183;&nbsp; <b>&#9654;</b> on the dock (or CONTINUE on the cover) brings it back<br>
-  <b>LEGAL</b> free-to-play &amp; fan-made &nbsp;&#183;&nbsp; not affiliated with any brand or publisher &nbsp;&#183;&nbsp; original art only &nbsp;&#183;&nbsp; in-game items, no real value &nbsp;&#183;&nbsp; optional PRO: <b>/pro/</b>
+  <b>LEGAL</b> free-to-play &amp; fan-made &nbsp;&#183;&nbsp; not affiliated with any brand or publisher &nbsp;&#183;&nbsp; original art only &nbsp;&#183;&nbsp; in-game items, no real value &nbsp;&#183;&nbsp; no purchases of any kind
 </div>
 
 <div id="picker">
@@ -1792,7 +1766,6 @@
   </div>
   <div class="cover-guides">
     <a href="/daily/" id="dailyLink" title="One shared seed per day — read the rules, then run today's life">&#128197; DAILY RUN</a>
-    <a href="/pro/">&#9733; GO PRO &mdash; $4.99</a>
     <a href="/how-to-play/">HOW TO PLAY</a>
     <a href="/rich-dad-rules/">RICH DAD RULES</a>
     <a href="/rich-dad-poor-dad-game/">RICH DAD GAME</a>
@@ -1810,7 +1783,7 @@
     <a href="/contact/">CONTACT</a>
   </div>
   <div class="cover-legal">
-    A free-to-play game with original art; the optional one-time PRO upgrade supports development. Not affiliated with, endorsed or sponsored by any brand, publisher or rights holder.
+    A free-to-play game with original art, with no purchases of any kind. Not affiliated with, endorsed or sponsored by any brand, publisher or rights holder.
     Every company and product name in the game is invented; place and landmark names are used only as geographic,
     nominative references. 100% original procedural art &middot; every in-game item, price and currency is virtual and has no
     real-world value &middot; your save stays in your browser (localStorage), never uploaded.
@@ -1839,11 +1812,6 @@
   <div class="sexRow">
     <button id="sexM" class="sexBtn on"><span class="ic">&#9794;</span>MALE</button>
     <button id="sexF" class="sexBtn"><span class="ic">&#9792;</span>FEMALE</button>
-  </div>
-  <div id="storyRow" class="storyRow" style="display:none">
-    <div class="storyHead">&#9733; PRO STORIES &mdash; CHOOSE YOUR OPENING</div>
-    <div class="storyBtns" id="storyBtns"></div>
-    <div class="storyNote" id="storyNote"></div>
   </div>
   <div id="faceBox"><div id="faceTag">A FACE HANDED TO YOU AT BIRTH</div></div>
   <button id="goBtn">THIS IS ME &mdash; GO!</button>
@@ -6204,41 +6172,6 @@ const workMonthly = id => {
 };
 const worksIncome = () => Object.keys(ST.works||{}).reduce((a,id)=>a+workMonthly(id),0);
 
-/* ===================== PRO STORY MODES (2026-11-21) =====================
-   Three paid opening scenarios, built ONLY from systems the game already has
-   (loan, bizs, skills, cash, credit, mood). No new engine, no new map, no new
-   balance rules — a different starting SHEET and a different first decision.
-   'classic' is the free default; the three stories are PRO-only and selected
-   on the character sheet. ST.story is saved in the snapshot and restored, so
-   a continued run keeps its scenario label. Themes are cosmetic extras. */
-const STORIES=[
-  {id:'debt',   icon:'\uD83D\uDCB8', name:'DEBT HEIR',     tag:'INHERITED DEBT',
-   blurb:'$6,000 bad debt on day one. High credit, $500 cash. Clear the loan before you can breathe.'},
-  {id:'founder',icon:'\uD83D\uDE9A', name:'FOUNDER',       tag:'A HEAD START IN TRADE',
-   blurb:'You already own a coffee cart. No job, no salary — make the little business pay.'},
-  {id:'newcomer',icon:'\uD83C\uDFD9', name:'NEWCOMER',     tag:'FROM NOTHING',
-   blurb:'$300, a thin credit file, no skills. The whole ladder starts at zero — and so do you.'}
-];
-/* Apply a PRO story to a freshly-created ST. Called once at birth, before the
-   city is populated. Every field here is one the free game already uses. */
-function applyStoryStart(story){
-  if(!story || story==='classic') return;
-  if(story==='debt'){
-    ST.cash=500; ST.credit=68; ST.stress=34; ST.happy=42;
-    ST.loan={principal:6000, left:12, payment:Math.round(6000*(1+BAD_APR)/12), apr:BAD_APR, kind:'bad'};
-    ST.flags=ST.flags||{}; ST.flags.storyDebt=true;
-  } else if(story==='founder'){
-    ST.cash=1000; ST.credit=40;
-    ST.bizs=ST.bizs||{}; ST.bizs['cart']={months:0};
-    ST.flags=ST.flags||{}; ST.flags.storyFounder=true;
-  } else if(story==='newcomer'){
-    ST.cash=300; ST.credit=20; ST.happy=68; ST.stress=12; ST.health=100;
-    ST.skills={prog:0, write:0, proj:0, drive:0, cook:0, art:0, fin:0, fit:0, eng:0};
-    ST.flags=ST.flags||{}; ST.flags.storyNewcomer=true;
-  }
-}
-function storyById(id){ return STORIES.find(s=>s.id===id)||null; }
-
 /* ---- a fresh start: 18 years old, $1,000 in the pocket, nothing else ---- */
 const AGE_START = 18;
 const CASH_START = 1000;
@@ -6247,7 +6180,6 @@ const CASH_START = 1000;
    paid, and falls when they are not. Nothing you can BUY raises it. */
 const CREDIT_START = 35;
 const ST={age:AGE_START, cash:CASH_START, bank:0, happy:50, credit:CREDIT_START, health:100, stress:20, employed:null, biz:null, bizs:{}, loan:null, freshStart:false,
-  story:'classic',                                         /* PRO opening scenario; 'classic' = free default */
   fund:0, paySelf:0.10, paySelfMonths:0,                    /* pay yourself first: the asset fund */
   skills:{prog:0, write:0, proj:0, drive:0, cook:0, art:0, fin:0, fit:0, eng:0},
   works:{},                                                /* skill id -> day the work went on sale */
@@ -6820,13 +6752,7 @@ const carValue   = () => ST.car ? Math.round(ST.car.price*0.55) : 0;
 const activeIncome  = () => ST.employed ? salaryOf(ST.employed) : 0;
 const passiveIncome = () => netRent()+divIncome()+fundIncome()+bankIncome()+bizIncome()+worksIncome();
 /* the rat race: a bigger paycheck quietly grows the bills too */
-/* PRO openings are HARD MODE, not just a different starting balance: the city
-   charges 10% more to live in them. One rule, applied through the same expense
-   line the free game already shows — no separate economy to keep in sync. */
-const HARD_LIVING_MULT = 1.10;
-const isHardStory = () => !!ST.story && ST.story!=='classic';
-const livingCost   = () => Math.round((520 + Math.round(Math.max(0, activeIncome()-5000)*0.06))
-                                      * (isHardStory() ? HARD_LIVING_MULT : 1));
+const livingCost   = () => 520 + Math.round(Math.max(0, activeIncome()-5000)*0.06);
 const trueExpenses = () => -FIN.expenses.reduce((a,e)=>a+e.v,0);
 const freedomPct   = () => { const e=trueExpenses(); return e>0 ? Math.round(passiveIncome()/e*100) : 0; };
 
@@ -8869,40 +8795,6 @@ document.getElementById('sexM').addEventListener('click',()=>setSex('m'));
 document.getElementById('sexF').addEventListener('click',()=>setSex('f'));
 renderFace();
 
-/* ---- PRO story picker ---- */
-let chosenStory='classic';
-function renderStoryPicker(){
-  const row=document.getElementById('storyRow');
-  if(!row) return;
-  const pro=(typeof isPro==='function') && isPro();
-  row.style.display=pro?'block':'none';
-  if(!pro){ chosenStory='classic'; return; }
-  const btns=document.getElementById('storyBtns');
-  if(btns && !btns.childElementCount){
-    btns.innerHTML=STORIES.map(s=>
-      '<button type="button" class="storyBtn'+(s.id===chosenStory?' on':'')+'" data-story="'+s.id+'">'+
-      '<span class="ic">'+s.icon+'</span>'+s.name+'</button>').join('');
-    btns.addEventListener('click',e=>{
-      const b=e.target.closest('.storyBtn'); if(!b) return;
-      chosenStory=b.getAttribute('data-story')||'classic';
-      [...btns.children].forEach(x=>x.classList.toggle('on',x===b));
-      const s=storyById(chosenStory);
-      const note=document.getElementById('storyNote');
-      if(note) note.textContent=s?s.blurb:'';
-    });
-    const note=document.getElementById('storyNote');
-    const s0=storyById(chosenStory); if(note&&s0) note.textContent=s0.blurb;
-  }
-}
-renderStoryPicker();
-function showStoryNow(){
-  const el=document.getElementById('storyNow'); if(!el) return;
-  const s=storyById(ST.story);
-  if(!s){ el.style.display='none'; return; }
-  el.style.display='block';
-  el.innerHTML='HARD MODE: <b>'+s.name+'</b> &mdash; '+s.tag+' &middot; living costs +10%';
-}
-
 document.getElementById('coverBtn').addEventListener('click',()=>{
   /* INP: the screen swap classes paint instantly; the rolled face SVG builds
      right after — the previous face is still on show for that one frame */
@@ -8989,147 +8881,6 @@ if(STORE.memoryOnly){
   const el=document.getElementById('saveStatus');
   if(el) el.innerHTML='<span style="color:#e0a868">&#9888; This view blocks browser storage &mdash; saves live in memory for THIS session only.<br>Open the game file directly in Edge for saves that survive closing.</span>';
 }
-
-/* ===================== PRO upgrade =====================
-   Free game stays free. PRO is a one-time $4.99 unlock sold through itch.io's
-   built-in checkout (no payment gateway to apply for, no backend here).
-
-   SECURITY (2026-11-22): one-to-one buyer codes. This file stores ONLY the
-   SHA-256 fingerprint (first 16 hex) of each valid code — never a usable code.
-   Reading the source cannot unlock PRO: a fingerprint is irreversible.
-   Plaintext codes live in PRO-CODES.txt (git-ignored) and are imported into
-   itch.io "external keys", so every buyer gets one unique code.
-     - To revoke a leaked code: delete its fingerprint from PRO_FINGERPRINTS and
-       re-upload. That code stops working; every other buyer is unaffected.
-     - To add codes: run `node tools/gen_pro_codes.js`, import the new plaintext
-       list to itch.io, and paste the printed fingerprint array here.
-   Codes are checked case-insensitively. */
-const PRO_FINGERPRINTS = [
-  '1f5a3f0296194ea4','43cd014d76b282f9','c6a42b77000f4ee4','2523733245886541',
-  '62b44ce15dd08700','175935ffa4f402ca','fea7e54ac6030c33','6ae12c9384ce28ba',
-  '559125b8122f3ba5','dd8a2e465753e3d4','9091e9313b70c757','1c25539214607790',
-  '96247712d66b1c50','588b3fd8eda21f90','bb4602c94e7f5d46','8e746c03062774b9',
-  'fa1e66a105f69221','cf16f997445efdc6','d77c60e3d21a603e','ebeeb303afda7b07',
-  'b8212433f7b15452','75293dd72785ddef','340fef04e4516592','2b53f87d559beb75',
-  '3511a6e3918e64e9','1ab41c2e2c8c905d','8e3096c0d83a6c59','586fa321df3ef872',
-  '8bd179539d9b6644','1ebf557c92f52122','56417d4f12da5e1c','bbcd016b73ab977f',
-  '43123fbfff9db3ef','a6301240bd5a9638','d7f9c85dfb104df3','66417f35ffee076f',
-  'a70626fc1db9ac72','71af443bba6e88b4','f2479f2c085b4f21','76aec27412c23d95',
-  '7342b77b1f08994d','fafbdfc77327173a','92d9cde5d9bb7d91','800439c4a32c0d74',
-  '893eefb42ab9528a','9385651279ce9497','df765eecc4ed5747','5e35e48767f1d0c8',
-  '69f12fae976003df','bf6f89d3afd2ef30','664c535a128dd7be','6979c7520b41a329',
-  'b5af7bf12756c628','ff966f4da6749d8a','061be6a7d43cad9a','7b27497d638ee955',
-  'a3ac90689ce9067b','056a3de53808fff2','47fba52c1e0f88fa','fd2f734503347610',
-  '2b14c432a4a7dca7','e79201cb824a0571','d901c6eb1fbdebb1','c9f07fb81f5713d5',
-  'b03b7ea79479b396','78d369ab9f30ca7b','b3cf38aed8ee2dc6','87d09147b34eb6f3',
-  '007df9c573f0f60b','408cc0be7acd11f2','36d4c6c54ac3e779','aa5b3b1047244a2d',
-  'aa1b318def68b2b5','99fd3817d1cf0274','2d5e41a8ce2ac352','5f93d1ebdf5b5fd6',
-  '86c03ace84f044f9','34712dd4ffbc17b4','f1562b94c90ad3bb','5daa1d22afb7bb01',
-  'a21d06199f292ac9','9b7d889587d4594a','2a50c37ee0d77c9f','b25e22c6f34538c4',
-  'a77ccb8e6d0836e1','3e36e1bac7e7ca40','d640267dbb695a35','52cd084b22b61572',
-  '63667828f8a6d51d','a46982b76948d53d','84b08bb06fe02f14','9ca22f73d696095c',
-  '1b8e74b802c6d59c','92a960aa8c62630f','3d930692844273d5','11eabf65870d2f82',
-  '39a2157940601d8f','13491a7428b3f419','d1d4f8d8fbb5e379','be610b0f5c30c347',
-  '87d0e25038fd81b4','85c9b613c833b50c','262cf17126e69371','653f8a21d780bb31',
-  '206b0503f0048f09','aed049a4b521dd81','f4c9a7bb2699008b','80c129cd6aace343',
-  '41fcd7440f6a85d5','78722fbeb1b6d0f1','ff9bd1bbc4ffa25b','28d6d3b4eaad871a',
-  'c87e6ed5d89069e9','80875dfe12570d6f','146d107b7b2c482a','3bd9028f9c9d0f20',
-  'e94b746911bc4d5e','50b4ef75f3867146','08cdec563f69371c','a6d18f55d0466aef'
-];
-/* Dependency-free synchronous SHA-256 so verification works even on file://
-   (no Web Crypto / secure-context requirement). Mirrors tools/sha256.js. */
-function proFP(msg){
-  const K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
-  let H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
-  const bytes=[]; for(const ch of String(msg)) bytes.push(ch.charCodeAt(0)&0xff);
-  const ml=bytes.length*8; bytes.push(0x80);
-  while(bytes.length%64!==56) bytes.push(0);
-  const hi=Math.floor(ml/0x100000000),lo=ml>>>0;
-  bytes.push((hi>>>24)&255,(hi>>>16)&255,(hi>>>8)&255,hi&255,(lo>>>24)&255,(lo>>>16)&255,(lo>>>8)&255,lo&255);
-  const p=bytes.map(b=>String.fromCharCode(b)).join('');
-  const rotr=(x,n)=>(x>>>n)|(x<<(32-n));
-  for(let off=0;off<p.length;off+=64){
-    const w=new Array(64);
-    for(let i=0;i<16;i++) w[i]=(p.charCodeAt(off+i*4)<<24)|(p.charCodeAt(off+i*4+1)<<16)|(p.charCodeAt(off+i*4+2)<<8)|p.charCodeAt(off+i*4+3);
-    for(let i=16;i<64;i++){ const s0=rotr(w[i-15],7)^rotr(w[i-15],18)^(w[i-15]>>>3),s1=rotr(w[i-2],17)^rotr(w[i-2],19)^(w[i-2]>>>10); w[i]=(w[i-16]+s0+w[i-7]+s1)>>>0; }
-    let [a,b,c,d,e,f,g,h]=H;
-    for(let i=0;i<64;i++){ const S1=rotr(e,6)^rotr(e,11)^rotr(e,25),ch=(e&f)^(~e&g),t1=(h+S1+ch+K[i]+w[i])>>>0,S0=rotr(a,2)^rotr(a,13)^rotr(a,22),maj=(a&b)^(a&c)^(b&c),t2=(S0+maj)>>>0; h=g;g=f;f=e;e=(d+t1)>>>0;d=c;c=b;b=a;a=(t1+t2)>>>0; }
-    H=[(H[0]+a)>>>0,(H[1]+b)>>>0,(H[2]+c)>>>0,(H[3]+d)>>>0,(H[4]+e)>>>0,(H[5]+f)>>>0,(H[6]+g)>>>0,(H[7]+h)>>>0];
-  }
-  return H.map(x=>x.toString(16).padStart(8,'0')).join('');
-}
-function validProCode(code){
-  const c=String(code||'').trim().toUpperCase();
-  if(!/^MLPRO-[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(c)) return false;
-  const fp=proFP(c).slice(0,16);
-  return PRO_FINGERPRINTS.indexOf(fp)!==-1;
-}
-
-/* ---- portal guard: nothing is sold or linked out from inside an embed ----
-   itch.io / CrazyGames / Poki / GameJolt forbid taking payment (or sending the
-   player to a payment page) inside the embedded game. On those hosts the whole
-   PRO block is hidden and replaced by a neutral line, so the same build can be
-   shipped to a portal without a separate version. On mylifesim.com nothing
-   changes: PORTAL is false there. */
-const PORTAL=(function(){
-  const h=(location.hostname||'').toLowerCase();
-  if(/(^|\.)(itch\.zone|itch\.io|crazygames\.com|poki\.com|gamejolt\.com|newgrounds\.com)$/.test(h)) return true;
-  try{ return window.self!==window.top; }catch(e){ return true; }   /* any third-party iframe */
-})();
-if(PORTAL){
-  try{
-    ['proOpen','proCodeIn','proUnlock'].forEach(function(id){
-      const el=document.getElementById(id);
-      if(!el) return;
-      const row=el.closest('.set-row');
-      if(row) row.style.display='none';
-    });
-    const lockedEl=document.getElementById('proLocked');
-    if(lockedEl) lockedEl.innerHTML='<span style="color:#c9a866;letter-spacing:1px">&#9733; THE FULL GAME IS FREE HERE &mdash; every option, no paywall. If you want to support the walk, use the project page on this platform. Nothing is sold inside the game.</span>';
-  }catch(e){}
-}
-
-function isPro(){ try{ return STORE.getItem('ml_pro')==='1'; }catch(e){ return false; } }
-function applyProUI(){
-  const on=isPro();
-  const dock=document.getElementById('proDock');
-  const locked=document.getElementById('proLocked');
-  const active=document.getElementById('proActive');
-  if(dock) dock.style.display=on?'flex':'none';
-  if(locked) locked.style.display=on?'none':'block';
-  if(active) active.style.display=on?'block':'none';
-  const openBtn=document.getElementById('proOpen');
-  if(openBtn) openBtn.style.display=on?'none':'';
-  /* gold cover theme: the title glow warms up for supporters */
-  const h1=document.querySelector('#picker h1');
-  if(h1) h1.style.textShadow=on?'0 0 26px rgba(216,180,112,.55),0 2px 6px rgba(0,0,0,.6)':'';
-  /* The picker's early call (before STORE exists) can't know PRO status and
-     hides itself. Refresh here — applyProUI runs once STORE is ready, both on
-     load and on unlock — so buyers actually see the three openings. */
-  if(typeof renderStoryPicker==='function') renderStoryPicker();
-}
-function unlockPro(code){
-  if(validProCode(code)){
-    try{ STORE.setItem('ml_pro','1'); }catch(e){}
-    applyProUI();
-    if(typeof renderStoryPicker==='function') renderStoryPicker();
-    const inEl=document.getElementById('proCodeIn');
-    if(inEl) inEl.value='';
-    if(typeof flash==='function') flash('\u2605 PRO UNLOCKED \u2014 thank you for supporting the walk!');
-    return true;
-  }
-  return false;
-}
-document.getElementById('proOpen').addEventListener('click',()=>{ window.open('/pro/','_blank'); });
-document.getElementById('proUnlock').addEventListener('click',()=>{
-  const ok=unlockPro(document.getElementById('proCodeIn').value);
-  if(!ok){ const inEl=document.getElementById('proCodeIn');
-    inEl.style.borderColor='#c06048'; inEl.placeholder='NOT A VALID CODE';
-    setTimeout(()=>{ inEl.style.borderColor='#3a443a'; inEl.placeholder='MLPRO-XXXX-XXXX'; },2500); }
-});
-const proDockBtn=document.getElementById('proDock');
-if(proDockBtn) proDockBtn.addEventListener('click',()=>{ const p=document.getElementById('setPanel'); if(p&&!p.classList.contains('show')){ try{ document.getElementById('setBtn').click(); }catch(e){} } });
-applyProUI();
 
 /* ---- save codes: one life, two sites ----
    itch serves this build from html.itch.zone, a different origin from
@@ -9252,16 +9003,6 @@ function startGame(opts){
   const myIdx = opts ? opts.selIdx : selIdx;
   const o=ROSTER[myIdx];
   lastLife={name:typed, selIdx:myIdx};
-  /* PRO stories: inject the chosen opening sheet BEFORE the HUD/panel read it.
-     Guarded by isPro so a non-payer can never slip a paid start into a save.
-     ST is at its const-initial values here (a fresh birth), so injection is clean. */
-  let pickedStory='classic';
-  if(typeof chosenStory==='string' && storyById(chosenStory)){
-    if(typeof isPro==='function' && isPro()) pickedStory=chosenStory;
-  }
-  ST.story=pickedStory;
-  if(pickedStory!=='classic') applyStoryStart(pickedStory);
-  if(typeof showStoryNow==='function') showStoryNow();
   /* a daily run must NOT delete the player's ordinary saved life — it is a
      separate score attempt that never writes SAVE_KEY in the first place */
   if(!DAILY){ try{ STORE.removeItem(SAVE_KEY); }catch(e){} }
@@ -9984,23 +9725,6 @@ function drawShareCard(){
   [[44,44,1,1],[W-44,44,-1,1],[44,H-44,1,-1],[W-44,H-44,-1,-1]].forEach(([px,py,dx,dy])=>{
     c.beginPath(); c.moveTo(px+dx*t,py); c.lineTo(px,py); c.lineTo(px,py+dy*t); c.stroke();
   });
-
-  /* PRO seal — supporters carry the gold stamp on their card */
-  if(typeof isPro==='function' && isPro()){
-    c.save();
-    c.translate(W-170,H-190); c.rotate(-0.16);
-    c.globalAlpha=0.92;
-    c.strokeStyle='#e8c88a'; c.lineWidth=4;
-    c.strokeRect(-92,-34,184,68);
-    c.fillStyle='#0f1512'; c.fillRect(-92,-34,184,68);
-    c.strokeStyle='#e8c88a'; c.lineWidth=4; c.strokeRect(-92,-34,184,68);
-    c.fillStyle='#ffd98a'; c.textAlign='center';
-    c.font='bold 30px Georgia, serif';
-    c.fillText('\u2605 PRO \u2605',0,-2);
-    c.fillStyle='#a8854a'; c.font='13px Georgia, serif';
-    c.fillText('SUPPORTER',0,22);
-    c.restore();
-  }
 }
 
 function openShare(){
@@ -10259,7 +9983,6 @@ function resumeGame(){
   if(window.syncHudFace) syncHudFace();        /* the corner badge wears the same face */
   /* restore the life itself */
   Object.keys(ST).forEach(k=>{ if(k in s.ST) ST[k]=s.ST[k]; });
-  if(typeof showStoryNow==='function') showStoryNow();
   /* CHARM became CREDIT. They are not the same thing — charm was bought with a suit
      and a round of drinks, credit is a record of bills paid — so an old save does not
      inherit the number: it opens with a thin file, the same as a new life. */
@@ -10436,9 +10159,9 @@ window.__mlBooted=true;      /* from here on, script errors are logged, never fa
   <h3 style="font-size:20px;color:#e9c86a;margin:22px 0 10px">A text-driven life sim, no download needed</h3>
   <p>If you like story-led games where your choices and your balance sheet decide the outcome, MY LIFE sits in the same family as <a href="/text-based-life-simulator/" style="color:#e9c86a">text-based life simulators</a> and is often played as a <a href="/bitlife-alternative/" style="color:#e9c86a">BitLife alternative</a>. It runs in <a href="/life-simulator-browser-game/" style="color:#e9c86a">the browser with no install</a>, works as a <a href="/life-simulator-no-download/" style="color:#e9c86a">no-download life simulator</a>, and you can chase the <a href="/escape-the-rat-race-game/" style="color:#e9c86a">escape-the-rat-race goal</a> or work through all 19 life goals. A deeper <a href="/real-life-simulator/" style="color:#e9c86a">real-life simulator</a> mode, a <a href="/stock-market-simulator-game/" style="color:#e9c86a">stock market simulator game</a> built around dividends, and a <a href="/business-simulator-game/" style="color:#e9c86a">business simulator game</a> where a company runs without you are covered on their own pages; the full goal list is on the cover.</p>
   <h3 style="font-size:20px;color:#e9c86a;margin:22px 0 10px">Goals, mood and the long game</h3>
-  <p>There are 19 <a href="/goals/" style="color:#e9c86a">life goals</a> to work through, from landing a first job to escaping the rat race, and the full list lives on the cover of the game. How you feel changes your luck: push stress past 80 and bad luck finds you more often; hold happiness above 80 and good luck starts looking for you. That makes mood part of the strategy rather than decoration. A single run is short enough for a coffee break, but the compounding and the goal list give you a reason to come back &mdash; this is a browser game you can dip into for five minutes or build into a longer session. Progress is saved locally on your device; nothing is uploaded and there is no account to maintain. Players who want the full goal tracker and extra character options can read about the optional <a href="/pro/" style="color:#e9c86a">PRO upgrade</a>, though the entire core game stays free.</p>
+  <p>There are 19 <a href="/goals/" style="color:#e9c86a">life goals</a> to work through, from landing a first job to escaping the rat race, and the full list lives on the cover of the game. How you feel changes your luck: push stress past 80 and bad luck finds you more often; hold happiness above 80 and good luck starts looking for you. That makes mood part of the strategy rather than decoration. A single run is short enough for a coffee break, but the compounding and the goal list give you a reason to come back &mdash; this is a browser game you can dip into for five minutes or build into a longer session. Progress is saved locally on your device; nothing is uploaded and there is no account to maintain. The entire game is free &mdash; every goal, every option, with no purchases of any kind.</p>
   <h3 style="font-size:20px;color:#e9c86a;margin:22px 0 10px">Frequently asked questions</h3>
-  <p><b>Is MY LIFE free?</b> Yes. The core game is free to play in your browser with no account. An optional one-time PRO upgrade supports development.</p>
+  <p><b>Is MY LIFE free?</b> Yes. The entire game is free to play in your browser with no account and no purchases of any kind.</p>
   <p><b>Do I need to install anything?</b> No. It is a browser game — open the page and play. Your save is stored locally in your browser.</p>
   <p><b>Can I play on my phone?</b> Yes. The game adapts to phone screens with touch controls.</p>
   <p><b>Is it based on a book?</b> The asset-and-liability mechanic is inspired by Rich Dad Poor Dad and the investing ideas of Buffett and Munger. The game is fan-made, original and not affiliated with any brand or publisher.</p>
