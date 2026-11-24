@@ -143,3 +143,22 @@
 | 本文件 | UI 体检清单 v1（规格） |
 
 版本：v1 ｜ 依据：2026-11-24 真实游戏截图 + 脚本实测 ｜ 下一版：确认项落地后再出 v2。
+
+---
+
+## 6. P3 · 第二轮体检补项（2026-11-24，已落地）
+
+P0/P1/P2 完成后又跑了一轮全面板点击区体检（`qa/ui-shots/_ui_audit_round2.js`），发现两项剩余问题，均已修：
+
+| 项 | 实测（改前） | 改后 | 说明 |
+|---|---|---|---|
+| 设置面板按钮 | `.tg` 34px / `.seg button` 34px / `.set-btn` 32px，共 16 个 | **全部 ≥44px** | 旧补丁用 padding 10px 以为够，实际差 10px |
+| 封面献词 | 4 行（height 66px / line-height 16.5） | **3 行**（height 50px） | P2 规格写了 4→3 但上一轮漏做 |
+
+- **根因**：设置按钮的"加大点击区"补丁（第 ~1376 行）落在全局作用域、用 `padding:10px` 硬凑到 34px；改成显式 `min-height:44px`（保留原 padding），**只加高度不加宽**——加宽会让之前修过的"PAY YOURSELF FIRST 20% 按钮裁切"复发。
+- **实测**：`#tgMusic` / `#segSpeed button` / `#saveExport` / `#hudToggle` 均 **44px 高**；`#segPaySelf` 的 20% 按钮右边缘 330 < 面板右界 345，留 15px 余量，**无裁切**。
+- 献词：字距 1px→0.2px、max-width 640→660px（仅移动端断点），文案零删改。
+- 截图：`qa/ui-shots/audit2/p_04_settings_after_p3.png`、`p_01_cover_after_p3.png`。
+- 回归：smoke / verify_mobile 38/38 / verify_guides 146/146 / DAILY / 存读码 / 迁移 / 恢复 / balance 全绿，零报错。
+
+**状态：P0/P1/P2/P3 全部完成，UI 体检收尾。**

@@ -712,8 +712,8 @@
     .sexBtn{flex:1;min-width:0;padding:11px 8px;font-size:14px;letter-spacing:2px}
     #faceBox{width:140px;height:184px}
     #faceTag{left:-24px;right:-24px;letter-spacing:1.8px}
-    /* Caption C档: 12.5/1.8 → 11/1.5, four lines become three */
-    .picker-dedi{font-size:11px;line-height:1.5}
+    /* Caption C档: 12.5/1.8 → 11/1.5, tighter tracking so four lines become three */
+    .picker-dedi{font-size:11px;line-height:1.5;letter-spacing:.2px;max-width:660px}
     /* Micro M档: 3 grouped rows, tight tracking; P2 */
     .cover-guides{gap:10px;margin-top:11px}
     .cg-row{gap:7px 8px}
@@ -1374,9 +1374,12 @@
     /* 6) touch targets: these controls were 20-24px tall — hard to hit precisely
        on a phone. Add VERTICAL padding only; never widen them (the 20% clip came
        from a horizontal overrun). Panels scroll, so extra height is safe. */
-    #setPanel .tg{padding-top:10px;padding-bottom:10px}
-    #setPanel .seg button{padding-top:10px;padding-bottom:10px}
-    #hudToggle{padding-top:11px;padding-bottom:11px}
+    /* P3: explicit 44px touch targets — vertical only, never widen (the 20% clip came
+       from horizontal overrun). min-height beats padding math across font stackups. */
+    #setPanel .tg{min-height:44px;padding-top:10px;padding-bottom:10px}
+    #setPanel .seg button{min-height:44px;padding-top:10px;padding-bottom:10px}
+    #setPanel .set-btn{min-height:44px}
+    #hudToggle{min-height:44px;padding-top:11px;padding-bottom:11px}
   }
   /* very short screens (landscape phones): the HUD shrinks instead of scrolling away */
   @media (max-height:560px){
