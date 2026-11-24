@@ -646,11 +646,14 @@
     font-family:Georgia,serif;font-size:11.5px;letter-spacing:2.4px;color:#8a7a5c;
     text-decoration:underline dotted rgba(201,163,95,.5);text-underline-offset:4px}
   #coverImport:hover{color:#ffe9b0;filter:none}
+  /* P2: guides grouped into 3 semantic rows (play / articles / legal) */
   .cover-guides{
-    margin-top:14px;display:flex;gap:22px;justify-content:center;flex-wrap:wrap;
+    margin-top:14px;display:flex;flex-direction:column;align-items:center;gap:12px;
   }
+  .cg-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;max-width:100%}
+  .cg-play{padding-bottom:10px;border-bottom:1px solid rgba(216,180,112,.22)}
   .cover-guides a{
-    color:#a8854a;font-size:10px;letter-spacing:2.5px;font-family:Verdana,sans-serif;
+    color:#a8854a;font-size:10px;letter-spacing:1px;font-family:Verdana,sans-serif;
     text-decoration:none;text-shadow:0 1px 3px rgba(0,0,0,.6);border:none;
   }
   .cover-guides a:hover{color:#ffe9b0}
@@ -711,8 +714,9 @@
     #faceTag{left:-24px;right:-24px;letter-spacing:1.8px}
     /* Caption C档: 12.5/1.8 → 11/1.5, four lines become three */
     .picker-dedi{font-size:11px;line-height:1.5}
-    /* Micro M档: tighter tracking + gap so eight links stop filling a whole band */
-    .cover-guides{gap:14px 12px;margin-top:11px}
+    /* Micro M档: 3 grouped rows, tight tracking; P2 */
+    .cover-guides{gap:10px;margin-top:11px}
+    .cg-row{gap:7px 8px}
     .cover-guides a{font-size:10px;letter-spacing:1px}
     .cover-legal{font-size:9.5px;line-height:1.5;margin-top:12px}
     /* tutorial card — H1档 title, B档 body at 1.5 line-height, 22px icons */
@@ -1771,22 +1775,27 @@
     the minds behind <b>Rich Dad Poor Dad</b> and the art of letting money work for you.
   </div>
   <div class="cover-guides">
-    <a href="/daily/" id="dailyLink" title="One shared seed per day — read the rules, then run today's life">&#128197; DAILY RUN</a>
-    <a href="/how-to-play/">HOW TO PLAY</a>
-    <a href="/rich-dad-rules/">RICH DAD RULES</a>
-    <a href="/rich-dad-poor-dad-game/">RICH DAD GAME</a>
-    <a href="/new-york-map/">NEW YORK MAP</a>
-    <a href="/goals/">19 LIFE GOALS</a>
-    <a href="/text-based-life-simulator/">TEXT-BASED SIMS</a>
-    <a href="/life-simulator-browser-game/">BROWSER LIFE SIMS</a>
-    <a href="/bitlife-alternative/">BITLIFE ALTERNATIVE</a>
-    <a href="/escape-the-rat-race-game/">ESCAPE THE RAT RACE</a>
-    <a href="/real-life-simulator/">REAL LIFE SIM</a>
-    <a href="/life-simulator-no-download/">NO-DOWNLOAD SIMS</a>
-
-    <a href="/privacy/">PRIVACY</a>
-    <a href="/terms/">TERMS</a>
-    <a href="/contact/">CONTACT</a>
+    <div class="cg-row cg-play">
+      <a href="/daily/" id="dailyLink" title="One shared seed per day — read the rules, then run today's life">&#128197; DAILY RUN</a>
+      <a href="/how-to-play/">HOW TO PLAY</a>
+    </div>
+    <div class="cg-row cg-articles">
+      <a href="/rich-dad-rules/">RICH DAD RULES</a>
+      <a href="/rich-dad-poor-dad-game/">RICH DAD GAME</a>
+      <a href="/new-york-map/">NEW YORK MAP</a>
+      <a href="/goals/">19 LIFE GOALS</a>
+      <a href="/text-based-life-simulator/">TEXT-BASED SIMS</a>
+      <a href="/life-simulator-browser-game/">BROWSER LIFE SIMS</a>
+      <a href="/bitlife-alternative/">BITLIFE ALTERNATIVE</a>
+      <a href="/escape-the-rat-race-game/">ESCAPE THE RAT RACE</a>
+      <a href="/real-life-simulator/">REAL LIFE SIM</a>
+      <a href="/life-simulator-no-download/">NO-DOWNLOAD SIMS</a>
+    </div>
+    <div class="cg-row cg-legal">
+      <a href="/privacy/">PRIVACY</a>
+      <a href="/terms/">TERMS</a>
+      <a href="/contact/">CONTACT</a>
+    </div>
   </div>
   <div class="cover-legal">
     A free-to-play game with original art, with no purchases of any kind. Not affiliated with, endorsed or sponsored by any brand, publisher or rights holder.
@@ -2219,15 +2228,15 @@ put(`<path d="${ISLAND}" fill="none" stroke="#8f8a7e" stroke-width="84" opacity=
 put(`<path d="${ISLAND}" fill="none" stroke="#6e6a60" stroke-width="40" opacity=".8"/>`);
 put(`<defs>
   <pattern id="grass" width="96" height="96" patternUnits="userSpaceOnUse">
-    <rect width="96" height="96" fill="#5f8a40"/>
-    <circle cx="14" cy="18" r="3" fill="#4e7034"/><circle cx="58" cy="10" r="2.4" fill="#71984e"/>
-    <circle cx="78" cy="52" r="3.2" fill="#4a6a30"/><circle cx="32" cy="70" r="2.6" fill="#71984e"/>
-    <circle cx="8" cy="58" r="2" fill="#406028"/><circle cx="66" cy="84" r="2" fill="#406028"/>
-    <circle cx="88" cy="26" r="2.2" fill="#4a6a30"/><circle cx="42" cy="44" r="2" fill="#7ba254"/>
-    <path d="M20 32 l4 -8 M24 32 l1 -9 M28 32 l-2 -7" stroke="#7ba254" stroke-width="1.6" opacity=".7"/>
-    <path d="M62 78 l4 -8 M66 78 l1 -9 M70 78 l-2 -7" stroke="#6a9448" stroke-width="1.6" opacity=".6"/>
-    <rect x="46" y="34" width="30" height="14" rx="7" fill="#51773a" opacity=".55"/>
-    <rect x="4" y="6" width="24" height="12" rx="6" fill="#71984e" opacity=".5"/>
+    <rect width="96" height="96" fill="#4a5e42"/>
+    <circle cx="14" cy="18" r="3" fill="#4c6143"/><circle cx="58" cy="10" r="2.4" fill="#6d8360"/>
+    <circle cx="78" cy="52" r="3.2" fill="#3c5038"/><circle cx="32" cy="70" r="2.6" fill="#6d8360"/>
+    <circle cx="8" cy="58" r="2" fill="#35472f"/><circle cx="66" cy="84" r="2" fill="#35472f"/>
+    <circle cx="88" cy="26" r="2.2" fill="#3c5038"/><circle cx="42" cy="44" r="2" fill="#7a9068"/>
+    <path d="M20 32 l4 -8 M24 32 l1 -9 M28 32 l-2 -7" stroke="#7a9068" stroke-width="1.6" opacity=".7"/>
+    <path d="M62 78 l4 -8 M66 78 l1 -9 M70 78 l-2 -7" stroke="#687d5b" stroke-width="1.6" opacity=".6"/>
+    <rect x="46" y="34" width="30" height="14" rx="7" fill="#586b50" opacity=".55"/>
+    <rect x="4" y="6" width="24" height="12" rx="6" fill="#6d8360" opacity=".5"/>
     <circle cx="84" cy="88" r="1.6" fill="#e8d48a" opacity=".5"/>
     <circle cx="10" cy="88" r="1.4" fill="#f0f0d8" opacity=".4"/>
   </pattern>
@@ -4862,12 +4871,12 @@ function setWeather(){
   document.getElementById('wxSnow').style.opacity = w==='snow' ? '.9' : '0';
   if(w!=='clear') flash(w==='snow' ? '\u2744\uFE0F Snow is falling over New York.' : '\uD83C\uDF27\uFE0F Rain sweeps across the city.');
 }
-const GRASS_SEASON={0:'#5a8a5e',1:'#5a8a5e',2:'#5f9a46',3:'#63a24a',4:'#5f9a44',5:'#58903e',
-                    6:'#568c3c',7:'#568c3c',8:'#7a9a44',9:'#8f9448',10:'#7a8a4e',11:'#5f8a60'};
+const GRASS_SEASON={0:'#596b5b',1:'#596b5b',2:'#5a6f51',3:'#5f7556',4:'#5a6f50',5:'#53674a',
+                    6:'#516448',7:'#516448',8:'#636f50',9:'#6b6c51',10:'#626852',11:'#5c6c5d'};
 function seasonApply(){
   const m=clockNow().getMonth();
   const g=document.querySelector('#grass rect');
-  if(g) g.setAttribute('fill',GRASS_SEASON[m]||'#5f8a40');
+  if(g) g.setAttribute('fill',GRASS_SEASON[m]||'#4a5e42');
 }
 
 let lastWxPaint=0;
