@@ -265,13 +265,17 @@
   #portPanel{top:350px;max-height:calc(100vh - 440px)}
   #estatePanel{top:350px;max-height:calc(100vh - 440px)}
   #mktPanel.show,#realtyPanel.show,#portPanel.show,#estatePanel.show{display:block}
-  .mk-act{display:flex;gap:6px;justify-content:flex-end;margin:3px 3px 2px}
+  .mk-act{display:flex;gap:8px;justify-content:flex-end;margin:3px 3px 2px}
   .mk-act button{
-    font-family:Verdana,sans-serif;font-size:11.5px;font-weight:bold;letter-spacing:1px;
-    padding:4px 14px;border-radius:5px;cursor:pointer;
+    font-family:Verdana,sans-serif;font-size:12.5px;font-weight:bold;letter-spacing:1px;
+    min-height:44px;min-width:60px;padding:0 12px;border-radius:7px;cursor:pointer;
+    display:inline-flex;align-items:center;justify-content:center;
     color:#3a2210;background:linear-gradient(180deg,#ffe9a8,#e0b84a);border:2px solid #6b4a26;
   }
+  /* P0: BUY is the primary decision -> 4px wider than SELL (64 vs 60) */
+  .mk-act button[data-sb],.mk-act button[data-rb]{min-width:64px}
   .mk-act button:hover{filter:brightness(1.08)}
+  .mk-act button:active:not(:disabled){filter:brightness(.92)}
   .mk-act button:disabled{opacity:.45;cursor:default}
   .pt-total{
     display:flex;align-items:baseline;font-size:14px;font-weight:bold;color:#4a3210;
@@ -1276,8 +1280,16 @@
   .mk-v{color:#f5efe2 !important}
   .mk-note{color:#8a7a5c !important}
   .mk-act button{background:rgba(255,244,214,.06) !important;border:1px solid rgba(216,180,112,.3) !important;color:#e8c88a !important;border-radius:7px !important}
+  /* P0: BUY = primary solid gold, SELL = secondary ghost. Same gold token as .kl-tabs .on */
+  .mk-act button[data-sb]:not(:disabled),.mk-act button[data-rb]:not(:disabled){
+    background:linear-gradient(180deg,#c9a35f,#8a6a2a) !important;
+    color:#1c1712 !important;border:1px solid #e8c88a !important;
+  }
+  .mk-act button[data-sb]:hover:not(:disabled),.mk-act button[data-rb]:hover:not(:disabled){filter:brightness(1.1)}
   .mk-act button:hover:not(:disabled){background:rgba(255,233,176,.12) !important}
   .mk-act button:disabled{opacity:.35}
+  /* P0: disabled state uses the muted ink token, not the bright gold */
+  .mk-act button:disabled{color:#6b6355 !important}
   /* chart window tabs: keep the unselected ones readable on glass */
   .kl-tabs button{color:#c9b78e !important;background:rgba(255,244,214,.05) !important;border:1px solid rgba(216,180,112,.3) !important}
   .kl-tabs button.on{color:#1a1208 !important;background:linear-gradient(180deg,#f2d99b,#c9a35f) !important;border-color:#c9a35f !important}
