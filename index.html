@@ -1461,6 +1461,25 @@
   #shareClose{position:absolute;top:6px;right:9px;width:26px;height:26px;line-height:1;font-size:17px;
     background:none;border:none;color:#9d8a68;cursor:pointer;z-index:2}
   #shareClose:hover{color:#ffe9b0}
+
+  /* ============================================================
+     P4 · chart-modal & misc touch targets (narrow/touch screens only).
+     Full-site audit found the trade chart's −/+/MAX/BUY/SELL and the
+     5/10/30-DAY tabs were 25–26px tall — the same class of problem P0
+     fixed in the market panel. Height only, never width: the .km-side
+     row is already tight at 390px. Modal gets a scroll safety net.
+     ============================================================ */
+  @media (max-width:760px),(pointer:coarse){
+    #kModal{max-height:90vh;overflow-y:auto}
+    #kChart .km-side button,
+    #kChart .km-side input,
+    #kChart .km-go{min-height:44px;height:44px}
+    #kChart .kl-tabs button{min-height:44px}
+    #kChart .km-max{min-width:42px}
+    #backBtn{min-height:44px;padding:0 10px}
+    #coverImport{min-height:44px}
+    #coverMusicBtn.coverMusic{min-height:44px}
+  }
 </style>
 </head>
 <body>

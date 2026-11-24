@@ -162,3 +162,22 @@ P0/P1/P2 完成后又跑了一轮全面板点击区体检（`qa/ui-shots/_ui_aud
 - 回归：smoke / verify_mobile 38/38 / verify_guides 146/146 / DAILY / 存读码 / 迁移 / 恢复 / balance 全绿，零报错。
 
 **状态：P0/P1/P2/P3 全部完成，UI 体检收尾。**
+
+---
+
+## 7. P4 · 全站枚举补项（2026-11-24，已落地）
+
+P3 后用全站枚举脚本（`_ui_audit_round3.js`）扫了 16 个界面状态（封面/创角/教程/街景/9 个面板/图表弹窗/横屏）的所有可点元素。
+
+- **去噪**：脚本报 524 个"违规"，其中 32 个是跨所有状态的固定基线噪声（隐藏弹窗里的 `#evOk`/`#hudMin`、SEO 正文内联链接——非游戏控件，不该按按钮处理）。按"状态间增量"定位到真正漏网的：
+  - **图表弹窗交易控件** `.km-side button/input`/`.km-go`/`.km-max` 25–26px、`#kChart .kl-tabs button` 25px —— 与 P0 同类、高频、更严重（比市场面板按钮还小）。
+  - 封面 `#coverImport` 15px、`#coverMusicBtn` 37px、创角 `#backBtn` 19px。
+- **改法**：CSS 末尾加集中式 P4 规则块，用 `@media (max-width:760px),(pointer:coarse)` 限定窄屏/触屏（桌面不动，把改动面压到最低）；`#kModal` 加 `max-height:90vh;overflow-y:auto` 作滚动安全网；控件只加高（44px）不加宽（`.km-side` 行在 390px 已很挤）。
+- **实测**（`_ui_verify_p4.js`）：图表弹窗 10 个交易控件 + 3 个 DAYS 标签**全部 44px**；弹窗高 410px 落在 844px 屏内、`overflow-y:auto` 生效；**水平裁切 0**；封面 IMPORT/MUSIC、返回按钮均 44px。
+- 截图：`qa/ui-shots/audit2/p_05_chart_after_p4.png`（改前 `..._before_p4.png`）。
+- 回归：smoke / verify_mobile 38/38 / verify_guides 146/146 / DAILY / 存读码 / 迁移 / 恢复 / balance 全绿，零报错。
+
+**状态：P0/P1/P2/P3/P4 全部完成，UI 体检收尾。**
+
+### 结构备注（重要）
+体检中发现：多个标注为"移动端覆盖"的 CSS 块（如原第 748/1360/1377 行）实际落在**全局作用域**——前面的 `@media` 提前闭合。所以 P0/P3 加的 `min-height:44px` 在桌面端也生效了（回归通过、无破坏）。P4 故改用**独立集中规则块 + 显式媒体查询**收口，不再散落改动。以后维护注意：本文件注释声称的媒体归属不可全信，改前用脚本验证作用域。
