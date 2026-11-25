@@ -1480,6 +1480,21 @@
     #coverImport{min-height:44px}
     #coverMusicBtn.coverMusic{min-height:44px}
   }
+  /* P5 onboarding: progressive disclosure. Core 3 beats stay open; the rest
+     folds into <details> so the GOT IT button lands inside the first screen. */
+  #tutMore{margin:14px 0 0;border-top:1px solid rgba(201,163,95,.28);padding-top:6px}
+  #tutMore summary{display:flex;align-items:center;min-height:44px;cursor:pointer;
+    color:#c9a35f;font-size:12.5px;letter-spacing:1.4px;font-family:Verdana,sans-serif;
+    list-style:none;-webkit-tap-highlight-color:transparent}
+  #tutMore summary::-webkit-details-marker{display:none}
+  #tutMore summary::before{content:'\25B8';margin-right:9px;color:#c9a35f;font-size:13px;transition:transform .15s}
+  #tutMore[open] summary::before{transform:rotate(90deg)}
+  #tutMore summary:hover{color:#ffe9b0}
+  #tutMore[open] summary{margin-bottom:10px}
+  #tutMore .tutRow{font-size:12.5px;line-height:1.6;margin-bottom:11px}
+  #tutGuide{display:block;text-align:center;margin:12px auto 0;color:#a8854a;font-size:11.5px;
+    letter-spacing:1.2px;font-family:Verdana,sans-serif;text-decoration:none;min-height:44px;line-height:44px}
+  #tutGuide:hover{color:#ffe9b0;text-decoration:underline}
 </style>
 </head>
 <body>
@@ -1810,13 +1825,21 @@
 <div id="tut">
   <div id="tutCard">
     <h2>WELCOME TO YOUR LIFE</h2>
-    <div class="tutRow"><span class="tutIc">&#127919;</span><div><b>YOUR GOAL</b> &mdash; build a life, not just a bank balance. The <b>&#127919; GOALS</b> button on the left rail lists 19 GOALS &mdash; 15 LIFE goals finish the run, 4 FORTUNE rungs sit above them (find work, buy assets, reach $10,000). <b>First, get moving:</b> spin the wheel, and stop on any shop or caf&eacute; for a same-day <b>GIG</b> &mdash; instant cash, no interview. For a steady salary, walk to the golden beacon and take a job.</div></div>
-    <div class="tutRow"><span class="tutIc">&#127922;</span><div><b>SPIN THE GOLD WHEEL</b> (or press SPACE) &mdash; you walk the route. At some junctions you will <b>randomly turn off</b> for a detour, then rejoin. Every street gets visited eventually.</div></div>
-    <div class="tutRow"><span class="tutIc">&#127970;</span><div><b>STOP ON A BUILDING CELL</b> to act: find a job, eat, shop, buy stocks &amp; property, take loans. Restaurants feed you once per visit.</div></div>
-    <div class="tutRow"><span class="tutIc">&#128200;</span><div><b>THE PANEL</b> (top right) keeps the Rich Dad books: assets pay you, liabilities charge you. A car is a liability. Watch your stress &amp; happiness.</div></div>
-    <div class="tutRow"><span class="tutIc">&#128165;</span><div><b>MOOD IS FATE</b> &mdash; push <b>STRESS</b> past 80 and trouble finds you more often (bad luck &amp; illness rise). Hold <b>HAPPINESS</b> above 80 and good luck comes looking for you. Keep both in check.</div></div>
-    <div class="tutRow"><span class="tutIc">&#128663;</span><div><b>HOVER ANY CAR</b> (tap it on a phone) &mdash; the driver hands you a line from Munger, Buffett or the Rich Dad, or a tip about this city.</div></div>
-    <div class="tutRow"><span class="tutIc">&#128190;</span><div><b>SAVING</b> &mdash; your life saves itself after every walk and each new day, so closing the tab is safe. <b>&#9654;</b> (or CONTINUE on the cover) brings it back; <b>&#128190;</b> on the dock saves an instant checkpoint any time. Time speed (&times;1&ndash;&times;8) is the clock, top left.</div></div>
+    <!-- P5: three beats a first-timer needs before touching anything. Everything
+         else folds into <details> below — no copy is deleted, just deferred. -->
+    <div class="tutRow"><span class="tutIc">&#127919;</span><div><b>YOUR GOAL</b> &mdash; build a life, not just a bank balance. Get a job, buy assets that pay you every month, and bank the <b>15 LIFE goals</b> to win. The <b>&#127919; GOALS</b> rail tracks them.</div></div>
+    <div class="tutRow"><span class="tutIc">&#127922;</span><div><b>SPIN THE GOLD WHEEL</b> (or press SPACE) &mdash; that is how you walk the city. Stop on a building to act.</div></div>
+    <div class="tutRow"><span class="tutIc">&#127970;</span><div><b>ON A BUILDING</b> &mdash; get a job, eat, shop, buy stocks &amp; property. Need quick cash? Stop at a shop or caf&eacute; for a same-day <b>GIG</b> &mdash; no interview.</div></div>
+    <details id="tutMore">
+      <summary>MORE BEFORE YOU GO &mdash; money, mood, saving &amp; more</summary>
+      <div class="tutRow"><span class="tutIc">&#128200;</span><div><b>THE PANEL</b> (top right) keeps the Rich Dad books: assets pay you, liabilities charge you. A car is a liability. Watch your stress &amp; happiness.</div></div>
+      <div class="tutRow"><span class="tutIc">&#128165;</span><div><b>MOOD IS FATE</b> &mdash; push <b>STRESS</b> past 80 and trouble finds you more often (bad luck &amp; illness rise). Hold <b>HAPPINESS</b> above 80 and good luck comes looking for you. Keep both in check.</div></div>
+      <div class="tutRow"><span class="tutIc">&#128663;</span><div><b>HOVER ANY CAR</b> (tap it on a phone) &mdash; the driver hands you a line from Munger, Buffett or the Rich Dad, or a tip about this city.</div></div>
+      <div class="tutRow"><span class="tutIc">&#128190;</span><div><b>SAVING</b> &mdash; your life saves itself after every walk and each new day, so closing the tab is safe. <b>&#9654;</b> (or CONTINUE on the cover) brings it back; <b>&#128190;</b> on the dock saves an instant checkpoint any time. Time speed (&times;1&ndash;&times;8) is the clock, top left.</div></div>
+      <div class="tutRow"><span class="tutIc">&#127922;</span><div><b>DETOURS</b> &mdash; at some junctions you will <b>randomly turn off</b> for a detour, then rejoin. Every street gets visited eventually.</div></div>
+      <div class="tutRow"><span class="tutIc">&#127919;</span><div><b>THE GOAL RAIL</b> &mdash; 19 milestones: 15 LIFE goals finish the run, and 4 FORTUNE rungs above them (find work, buy assets, reach $10,000) sit beyond the finish line.</div></div>
+    </details>
+    <a id="tutGuide" href="/how-to-play/" target="_blank" rel="noopener">Full beginner guide &rarr;</a>
     <button id="tutBtn">GOT IT &mdash; LET'S WALK</button>
   </div>
 </div>
