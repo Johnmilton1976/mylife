@@ -1726,27 +1726,6 @@
     <div id="gpNote">FAN-MADE PARODY &#183; ORIGINAL PROGRAMMATIC ART &#183; NO OFFICIAL LOGOS, SCREENS OR CHARACTERS<br>
     NOT AFFILIATED WITH OR ENDORSED BY ANY PUBLISHER &#183; NO REAL-MONEY TRANSACTIONS INSIDE THE GAME</div></div>
 </div>
-<!-- the finish line: the 15 LIFE goals banked (the fortune rungs above them stay open).
-     A life needs a closing card, not just a slot in a list. -->
-<div id="lifeEnd" role="dialog" aria-modal="true" aria-labelledby="leTitle">
-  <div class="le-card">
-    <div class="le-kicker" id="leKicker">LIFE GOALS &middot; 15 / 15</div>
-    <h2 id="leTitle">A LIFE, LIVED</h2>
-    <div class="le-name" id="leName">JOHN &middot; AGE 24</div>
-    <div class="le-line" id="leLine"></div>
-    <div class="le-grid" id="leGrid"></div>
-    <div class="le-quote" id="leQuote">&ldquo;The rich don&rsquo;t work for money.&rdquo;</div>
-    <div class="le-engage" id="leEngage" role="group" aria-label="Leave a trace on itch.io">
-      <button class="le-eng" data-eng="rate"><span class="le-ic le-ic-rate" aria-hidden="true"></span>RATE ON ITCH</button>
-      <button class="le-eng" data-eng="favorite"><span class="le-ic le-ic-favorite" aria-hidden="true"></span>FAVORITE</button>
-      <button class="le-eng" data-eng="follow"><span class="le-ic le-ic-follow" aria-hidden="true"></span>FOLLOW</button>
-    </div>
-    <div class="le-btns">
-      <button id="leKeep" class="le-primary">KEEP WALKING</button>
-      <button id="leShare">&#10150; SHARE THIS LIFE</button>
-      <button id="leNew">START ANOTHER LIFE</button>
-    </div>
-  </div>
 </div>
 
 <div id="shareModal" role="dialog" aria-modal="true" aria-label="Share your life">
@@ -1805,7 +1784,7 @@
       <a href="/rich-dad-rules/">RICH DAD RULES</a>
       <a href="/rich-dad-poor-dad-game/">RICH DAD GAME</a>
       <a href="/new-york-map/">NEW YORK MAP</a>
-      <a href="/goals/">19 LIFE GOALS</a>
+      <a href="/goals/">19 GOALS</a>
       <a href="/text-based-life-simulator/">TEXT-BASED SIMS</a>
       <a href="/life-simulator-browser-game/">BROWSER LIFE SIMS</a>
       <a href="/bitlife-alternative/">BITLIFE ALTERNATIVE</a>
@@ -1831,7 +1810,7 @@
 <div id="tut">
   <div id="tutCard">
     <h2>WELCOME TO YOUR LIFE</h2>
-    <div class="tutRow"><span class="tutIc">&#127919;</span><div><b>YOUR GOAL</b> &mdash; build a life, not just a bank balance. The <b>&#127919; GOALS</b> button on the left rail lists 19 LIFE GOALS (find work, buy assets, reach $10,000). <b>First, get moving:</b> spin the wheel, and stop on any shop or caf&eacute; for a same-day <b>GIG</b> &mdash; instant cash, no interview. For a steady salary, walk to the golden beacon and take a job.</div></div>
+    <div class="tutRow"><span class="tutIc">&#127919;</span><div><b>YOUR GOAL</b> &mdash; build a life, not just a bank balance. The <b>&#127919; GOALS</b> button on the left rail lists 19 GOALS &mdash; 15 LIFE goals finish the run, 4 FORTUNE rungs sit above them (find work, buy assets, reach $10,000). <b>First, get moving:</b> spin the wheel, and stop on any shop or caf&eacute; for a same-day <b>GIG</b> &mdash; instant cash, no interview. For a steady salary, walk to the golden beacon and take a job.</div></div>
     <div class="tutRow"><span class="tutIc">&#127922;</span><div><b>SPIN THE GOLD WHEEL</b> (or press SPACE) &mdash; you walk the route. At some junctions you will <b>randomly turn off</b> for a detour, then rejoin. Every street gets visited eventually.</div></div>
     <div class="tutRow"><span class="tutIc">&#127970;</span><div><b>STOP ON A BUILDING CELL</b> to act: find a job, eat, shop, buy stocks &amp; property, take loans. Restaurants feed you once per visit.</div></div>
     <div class="tutRow"><span class="tutIc">&#128200;</span><div><b>THE PANEL</b> (top right) keeps the Rich Dad books: assets pay you, liabilities charge you. A car is a liability. Watch your stress &amp; happiness.</div></div>
@@ -1854,6 +1833,28 @@
   <button id="goBtn">THIS IS ME &mdash; GO!</button>
   <button id="backBtn">&#10094; BACK</button>
 </div>
+
+<!-- the finish line: the 15 LIFE goals banked (the fortune rungs above them stay open).
+     A life needs a closing card, not just a slot in a list. -->
+<div id="lifeEnd" role="dialog" aria-modal="true" aria-labelledby="leTitle">
+  <div class="le-card">
+    <div class="le-kicker" id="leKicker">LIFE GOALS &middot; 15 / 15</div>
+    <h2 id="leTitle">A LIFE, LIVED</h2>
+    <div class="le-name" id="leName">JOHN &middot; AGE 24</div>
+    <div class="le-line" id="leLine"></div>
+    <div class="le-grid" id="leGrid"></div>
+    <div class="le-quote" id="leQuote">&ldquo;The rich don&rsquo;t work for money.&rdquo;</div>
+    <div class="le-engage" id="leEngage" role="group" aria-label="Leave a trace on itch.io">
+      <button class="le-eng" data-eng="rate"><span class="le-ic le-ic-rate" aria-hidden="true"></span>RATE ON ITCH</button>
+      <button class="le-eng" data-eng="favorite"><span class="le-ic le-ic-favorite" aria-hidden="true"></span>FAVORITE</button>
+      <button class="le-eng" data-eng="follow"><span class="le-ic le-ic-follow" aria-hidden="true"></span>FOLLOW</button>
+    </div>
+    <div class="le-btns">
+      <button id="leKeep" class="le-primary">KEEP WALKING</button>
+      <button id="leShare">&#10150; SHARE THIS LIFE</button>
+      <button id="leNew">START ANOTHER LIFE</button>
+    </div>
+  </div>
 
 <script>
 /* ===================== last-resort guard =====================
