@@ -1557,7 +1557,7 @@
   <div class="row" id="rowFree" title="Passive income vs monthly bills"><span class="ic">&#127793;</span><span class="lab">FREE</span><span class="val" id="vFree">0%</span></div>
   <!-- GOALS and RANK moved to the left icon rail. These rows stay in the DOM (display:none)
        as the anchors their click handlers hang on; the live numbers live in the rail badges. -->
-  <div class="row" id="rowGoals" style="display:none"><span class="ic">&#127942;</span><span class="lab">GOALS</span><span class="val" id="vGoalsOld">0 / 19</span></div>
+  <div class="row" id="rowGoals" style="display:none"><span class="ic">&#127942;</span><span class="lab">GOALS</span><span class="val" id="vGoalsOld">0 / 15</span></div>
   <div class="row" id="rowRank" style="display:none"><span class="ic">&#128202;</span><span class="lab">RANK</span><span class="val" id="vRankOld">&mdash;</span></div>
   <div class="sub" id="moodRow" title="Tap to see why the numbers moved">
     <div class="chip">AGE<b id="cAge">18</b></div>
@@ -1629,7 +1629,7 @@
 <button id="mktBtn" class="sideBtn" title="Stock market">&#128200;</button>
 <button id="realtyBtn" class="sideBtn" title="Real estate market">&#127968;</button>
 <button id="portBtn" class="sideBtn" title="My portfolio">&#128188;</button>
-<button id="goalsBtn" class="sideBtn" title="Life goals &mdash; 15 to live, 4 to climb">&#127919;<span class="sbNum" id="vGoals">0 / 19</span></button>
+<button id="goalsBtn" class="sideBtn" title="Life goals &mdash; 15 to live, 4 to climb">&#127919;<span class="sbNum" id="vGoals">0 / 15</span></button>
 <button id="rankBtn" class="sideBtn" title="City rankings &mdash; net worth of everyone on this map" style="display:none">&#128202;<span class="sbNum" id="vRank">&mdash;</span></button>
 
 <div id="mktPanel">
@@ -7129,9 +7129,9 @@ function updatePanel(){
   if(leveled) refreshHireMarks();   /* the plates answer a new question now */
   /* life goals: check, celebrate, and keep the HUD count fresh */
   const nDone=checkGoals();
-  document.getElementById('vGoals').textContent=nDone+' / '+GOALS.length;
+  document.getElementById('vGoals').textContent=lifeDoneCount()+' / '+LIFE_GOALS.length;
   const gb=document.getElementById('goalsBtn');
-  if(gb) gb.classList.toggle('allDone', nDone>=GOALS.length);
+  if(gb) gb.classList.toggle('allDone', lifeDoneCount()>=LIFE_GOALS.length);
 }
 
 /* ---- location action modal ---- */
@@ -9755,7 +9755,7 @@ function drawShareCard(){
   const rows=[
     ['PASSIVE INCOME', passive?money(passive)+' / mo':'nothing yet'],
     ['FINANCIAL FREEDOM', free+'% of the bills'],
-    ['LIFE GOALS', goals+' / '+GOALS.length],
+    ['LIFE GOALS', lifeDoneCount()+' / '+LIFE_GOALS.length],
     ['CITY RANK', rank?('#'+rank+' of '+rankOf):'not on the board']
   ];
   let y=706;
